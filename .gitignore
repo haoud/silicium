@@ -1,0 +1,10 @@
+# Ignore all bin files
+*.o
+*.a
+*.so
+*.elf
+silicium
+
+# Ignore some directories
+bin
+toolchain

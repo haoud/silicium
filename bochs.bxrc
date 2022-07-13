@@ -1,0 +1,60 @@
+# Bochs settings
+plugin_ctrl: unmapped=true, biosdev=true, speaker=true, extfpuirq=true, parallel=true, serial=true, iodebug=true
+config_interface: textconfig
+display_library: term
+memory: host=32, guest=32
+romimage: file="/usr/share/bochs/BIOS-bochs-legacy"
+vgaromimage: file="/usr/share/bochs/VGABIOS-lgpl-latest"
+
+# CDROM boot
+boot: cdrom
+
+# Disk on controler 0 
+ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+#ata0-master: type=disk, path="bin/dd.img", mode=flat
+ata0-master: type=none
+ata0-slave: type=cdrom, path="bin/silicium.iso", status=inserted, biosdetect=auto, model="Generic 1234"
+
+# No other controler 
+ata1: enabled=0
+ata2: enabled=0
+ata3: enabled=0
+
+pci: enabled=1, chipset=i440fx, slot1=pcivga
+vga: extension=vbe, update_freq=24, realtime=1
+
+# 100 MHz P4 processor
+cpu: count=1, ips=100000000, model=p4_willamette, reset_on_triple_fault=0, cpuid_limit_winnt=0, ignore_bad_msrs=1, mwait_is_nop=0
+cpuid: family=6, model=0x03, stepping=3, mmx=1, apic=xapic, sse4a=0, sep=1, aes=0, xsave=0, xsaveopt=0, movbe=0, adx=0, smep=0
+print_timestamps: enabled=0
+
+# For debugging
+debugger_log: -
+port_e9_hack: enabled=1
+private_colormap: enabled=0
+
+# Slow down clock for accurate time
+clock: sync=slowdown, time0=local
+
+# Logging settings
+log: -
+logprefix: %t%e%d
+panic: action=ask
+error: action=report
+info: action=report
+debug: action=ignore
+
+# Keyboard
+keyboard: type=mf, serial_delay=250, paste_delay=100000, keymap=/usr/share/bochs/keymaps/x11-pc-fr.map
+#user_shortcut: keys=none
+
+# Mouse 
+mouse: enabled=0, type=ps2, toggle=ctrl+mbutton
+parport1: enabled=0
+parport2: enabled=0
+
+# No COM 
+com1: enabled=0
+com2: enabled=0
+com3: enabled=0
+com4: enabled=0

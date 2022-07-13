@@ -1,0 +1,37 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/*.o" : true,
+        "**/*.a" : true
+    },
+    "files.associations": {
+        "stdatomic.h": "c",
+        "cpu.h": "c",
+        "exception.h": "c",
+        "string.h": "c",
+        "spinlock.h": "c",
+        "string": "cpp",
+        "buffer": "cpp",
+        "internet": "cpp",
+        "socket": "cpp",
+        "string_view": "cpp",
+        "array": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "kernel.h": "c",
+        "any": "cpp",
+        "executor": "cpp",
+        "charconv": "cpp",
+        "functional": "cpp",
+        "memory_resource": "cpp",
+        "ratio": "cpp",
+        "scoped_allocator": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "variant": "cpp",
+        "utility": "cpp",
+        "compare": "cpp",
+        "*.inc": "cpp",
+        "log.h": "c"
+    },
+}
