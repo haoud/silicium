@@ -75,6 +75,7 @@ _start:
 
     lea esp, stack_top                  # Setup the stack with the virtual address
     lea eax, start                      # Absolute address of the function
+    xor ebp, ebp                        # First stack frame
     push ebx                            # Multiboot structure (physical address !)
     call eax                            # Let's go !
 

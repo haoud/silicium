@@ -16,10 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 #include <kernel.h>
 
-void startup()
-{
-    info("Boot completed !");
-    for(;;);
-}
+#define VMALLOC_NONE    0x00
+#define VMALLOC_MAP     0x01
+
+void vmalloc_setup(void);
+
+void *vmalloc(size_t size, int flags);
+void vmfree(void *ptr);

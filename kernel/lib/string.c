@@ -44,7 +44,7 @@ char *strchr(const char *str, char c)
 {
 	do {
 		if (*str == c)
-			return (char *)str;
+			return (char *) str;
 	} while (*str++);
 	return NULL;
 }
@@ -61,15 +61,12 @@ int strcmp(const char *s1, const char *s2)
 {
 	uint32_t i = 0;
 	while (1) {
-		if (s1[i] < s2[i]) {
+		if (s1[i] < s2[i])
 			return -1;
-		}
-		else if (s1[i] > s2[i]) {
+		else if (s1[i] > s2[i])
 			return 1;
-		}
-		else if (s1[i++] == '\0') {
+		else if (s1[i++] == '\0') 
 			return 0;
-		}
 	}
 }
 
@@ -125,7 +122,7 @@ char *number(
 	char sign = 0;
 	int i = 0;
 
-#ifdef CONFIG_EXTRA_CHECK
+#ifndef CONFIG_DISABLE_CHECKS
 	base = clamp(base, 2, 16);
 	pad = clamp(pad, 0, 32);
 #endif
@@ -224,8 +221,9 @@ int vsnprintf(char *str, size_t len, const char *fmt, va_list arg)
 								buf = number(buf, &n, value, pad, 2, flags);
 								break;
 							case 'd':
+								flags |= VSNPRINTF_SIGN;
 								value = va_arg(arg, uint64_t);
-								buf = number(buf, &n, value, pad, 10, flags | VSNPRINTF_SIGN);
+								buf = number(buf, &n, value, pad, 10, flags);
 								break;
 							case 'o':
 								value = va_arg(arg, uint64_t);
@@ -257,12 +255,14 @@ int vsnprintf(char *str, size_t len, const char *fmt, va_list arg)
 				vsnprintf_putbuf(buf, n, (char)value & 0xFFFFFFFF);
 				break;
 			case 'd':
+				flags |= VSNPRINTF_SIGN;
 				value = va_arg(arg, int32_t);
-				buf = number(buf, &n, value & 0xFFFFFFFF, pad, 10, flags | VSNPRINTF_SIGN);
+				buf = number(buf, &n, value & 0xFFFFFFFF, pad, 10, flags);
 				break;
 			case 'i':
+				flags |= VSNPRINTF_SIGN;
 				value = va_arg(arg, int32_t);
-				buf = number(buf, &n, value & 0xFFFFFFFF, pad, 10, flags | VSNPRINTF_SIGN);
+				buf = number(buf, &n, value & 0xFFFFFFFF, pad, 10, flags);
 				break;
 			case 'o':
 				value = va_arg(arg, int32_t);
@@ -277,16 +277,18 @@ int vsnprintf(char *str, size_t len, const char *fmt, va_list arg)
 				buf = number(buf, &n, value & 0xFFFFFFFF, pad, 16, flags);
 				break;
 			case 'X':
+				flags |= VSNPRINTF_LARGE;
 				value = va_arg(arg, int32_t);
-				buf = number(buf, &n, value & 0xFFFFFFFF, pad, 16, flags | VSNPRINTF_LARGE);
+				buf = number(buf, &n, value & 0xFFFFFFFF, pad, 16, flags);
 				break;
 			case 'u':
 				value = va_arg(arg, int32_t);
 				buf = number(buf, &n, value & 0xFFFFFFFF, pad, 10, flags);
 				break;
 			case 'p':
+				flags |= VSNPRINTF_ZERO;
 				value = va_arg(arg, int32_t);
-				buf = number(buf, &n, value & 0xFFFFFFFF, 8, 16, flags | VSNPRINTF_ZERO);
+				buf = number(buf, &n, value & 0xFFFFFFFF, 8, 16, flags);
 				break;
 			case '%':
 				vsnprintf_putbuf(buf, n, '%');
@@ -297,5 +299,5 @@ int vsnprintf(char *str, size_t len, const char *fmt, va_list arg)
 	}
 
 	*buf++ = '\0';
-	return (int)(len - n - 1);
+	return (int) (len - n - 1);
 }

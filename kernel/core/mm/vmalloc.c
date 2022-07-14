@@ -16,10 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <kernel.h>
+#include <lib/log.h>
+#include <lib/maths.h>
+#include <arch/x86/paging.h>
+#include <core/mm/vmalloc.h>
 
-void startup()
+void vmalloc_setup(void)
 {
-    info("Boot completed !");
-    for(;;);
+    // TODO
+}
+
+void *vmalloc(size_t size, int flags)
+{
+    // TODO
+    return NULL;
+}
+
+void vmfree(void *ptr)
+{
+    // TODO
 }

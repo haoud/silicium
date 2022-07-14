@@ -19,14 +19,15 @@
 #pragma once
 
 #ifdef CONFIG_DEBUG
-#define assert_warning(expr, msg)                                                           \
-    if (!(expr)) {                                                                          \
-        log(LOG_LEVEL_WARNING, "Warning (%s:%i) %s: %s", __FILE__, __LINE__, #expr, msg);   \
+#define assert_warning(expr, msg)                                       \
+    if (!(expr)) {                                                      \
+        warn("Warning (%s:%i) %s: %s", __FILE__, __LINE__, #expr, msg); \
     }
 
-#define assert_msg(expr)                                                            \
-    if (!(expr)) {                                                                  \
-        panic("Assertion failed (%s:%i) %s : %s", __FILE__, __LINE__, #expr, msg);  \
+#define assert_msg(expr)                          \
+    if (!(expr)) {                                \
+        panic("Assertion failed (%s:%i) %s : %s", \
+              __FILE__, __LINE__, #expr, msg);    \
     }
 
 #define assert(expr)                                                        \

@@ -19,7 +19,8 @@
 #pragma once
 #include <kernel.h>
 
-#define iowait(void) outb(0x80, 0) // TODO: More accurate way to wait for I/O to finish ?
+ // TODO: More accurate way to wait for I/O to finish ?
+#define iowait(void) outb(0x80, 0)
 #define outb(port, data) asm volatile("out dx, al" ::"d"(port), "a"(data));
 #define outw(port, data) asm volatile("out dx, ax" ::"d"(port), "a"(data));
 #define outd(port, data) asm volatile("out dx, eax" ::"d"(port), "a"(data));

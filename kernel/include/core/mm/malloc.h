@@ -16,10 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 #include <kernel.h>
 
-void startup()
-{
-    info("Boot completed !");
-    for(;;);
-}
+#define GFP_NONE 0x00
+#define GFP_ATOMIC 0x01
+#define GFP_KERNEL 0x02
+
+#define malloc(size) kmalloc(size, GFP_KERNEL)
+#define free(obj) kfree(obj)
+
+typedef struct malloc_slub {
+    unsigned int length;
+    slub_allocator_t *allocator;
+    unsigned int obj_per_slub;
+    unsigned int initial_slub_count;
+} malloc_slub_t;
+
+void kmalloc_setup(void);
+
+_malloc void *kmalloc(size_t size, int flags);
+void kfree(void *obj);

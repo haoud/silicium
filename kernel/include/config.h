@@ -17,7 +17,9 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#define CONFIG_EXTRA_CHECK          // Enable extra check in kernel
+// Disable some checks in kernel: assume kernel & modules are bug-free
+#define CONFIG_DISABLE_CHECKS
+#define CONFIG_EXTRA_CHECKS         // Enable extra checks to improve security
 #define CONFIG_VSNPRINTF_64BITS     // Enable parsing 64 bits numbers
 #define CONFIG_LOG                  // Enable logging (bochs only)
 #define CONFIG_SMP                  // Enable SMP (unsupported now)

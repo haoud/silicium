@@ -40,8 +40,8 @@ void *_memset(void *dst, uint8_t fill, size_t len)
 
 void *_memmove(void *dst, const void *src, size_t len)
 {
-	const char *src8 = (const char *)src;
-	char *dst8 = (char *)dst;
+	const char *src8 = (const char *) src;
+	char *dst8 = (char *) dst;
 
 	if (dst > src) {
 		asm volatile("std" ::
@@ -65,7 +65,7 @@ void *_memmove(void *dst, const void *src, size_t len)
 void *_aligned_memcpy(void *restrict dst, const void *restrict src, size_t len)
 {
 	int d0, d1, d2;
-	asm volatile("	cld; rep movsl	\n\
+	asm volatile("	cld; rep movsd	\n\
 					mov ecx, %6		\n\
 					rep movsb"
 				 : "=&D"(d0), "=&S"(d1), "=&c"(d2)
@@ -77,9 +77,9 @@ void *_aligned_memcpy(void *restrict dst, const void *restrict src, size_t len)
 void *_aligned_memset(void *dst, uint32_t fill, size_t len)
 {
 	int d0, d1;
-	asm volatile("	cld; rep stosl	\n\
+	asm volatile("	cld; rep stosd	\n\
 					mov ecx, %5 	\n\
-					rep stosl"
+					rep stosb"
 				 : "=&D"(d0), "=&c"(d1)
 				 : "a"(fill), "0"(dst), "1"(len >> 2), "g"(len & 3)
 				 : "memory", "cc");
@@ -88,10 +88,10 @@ void *_aligned_memset(void *dst, uint32_t fill, size_t len)
 
 int _memcmp(const void *p1, const void *p2, size_t len)
 {
-	const char *mem1_8 = (const char *)p1;
-	const char *mem2_8 = (const char *)p2;
+	const char *mem1_8 = (const char *) p1;
+	const char *mem2_8 = (const char *) p2;
 	while (len--) {
-		if (*(mem1_8++) != *(mem2_8++))
+		if (*mem1_8++ != *mem2_8++)
 			return mem1_8[-1] - mem2_8[-1];
 	}
 	return 0;
@@ -102,14 +102,14 @@ void *memscan(const void *src,
 			  const void *pattern,
 			  const size_t len)
 {
-	const char *pattern8 = (const char *)pattern;
-	const char *mem8 = (const char *)src;
-
+	const char *pattern8 = (const char *) pattern;
+	const char *mem8 = (const char *) src;
 	if (len > size)
 		return NULL;
+
 	while ((size - len - 1) > 0) {
 		if (!memcmp(mem8, pattern8, len))
-			return (void *)mem8;
+			return (void *) mem8;
 		mem8++;
 		size--;
 	}
@@ -121,7 +121,11 @@ void *memscan(const void *src,
 #undef memcmp
 #undef memcpy
 
-void *memset(void *dst, uint8_t fill, size_t len) __attribute__((weak, alias("_memset")));
-void *memcpy(void *dst, const void *src, size_t len) __attribute__((weak, alias("_memcpy")));
-void *memmove(void *dst, const void *src, size_t len) __attribute__((weak, alias("_memmove")));
-int memcmp(const void *p1, const void *p2, size_t len) __attribute__((weak, alias("_memcmp")));
+void *memset(void *dst, uint8_t fill, size_t len)
+__attribute__((weak, alias("_memset")));
+void *memcpy(void *dst, const void *src, size_t len)
+__attribute__((weak, alias("_memcpy")));
+void *memmove(void *dst, const void *src, size_t len)
+__attribute__((weak, alias("_memmove")));
+int memcmp(const void *p1, const void *p2, size_t len)
+__attribute__((weak, alias("_memcmp")));

@@ -17,14 +17,21 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <config.h>
 #include <kernel.h>
 
 #define PAGE_SIZE 4096
 #define PAGE_SHIFT 12
 #define PAGE_MASK ~(PAGE_SIZE - 1)
-#define PAGE_ALIGN(x) ((x)&PAGE_MASK)
+#define PAGE_ALIGN(x) ((x) & PAGE_MASK)
 #define PAGE_ALIGNED(x) (((x) & ~PAGE_MASK) == 0)
 
 #define KERNEL_BASE 0xC0000000
 
-#define null_ptr(addr) ((uintptr_t)(addr) < PAGE_SIZE)
+#ifdef CONFIG_EXTRA_CHECKS
+#define null(addr) ((uintptr_t) (addr) < PAGE_SIZE)
+#else
+#define null(addr) (!(uintptr_t) (addr))
+#endif
+
+#define kernel(addr) ((uintptr_t) (addr) > KERNEL_BASE)

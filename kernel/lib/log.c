@@ -56,7 +56,7 @@ static void putb(const char c)
 
 static void print(const char *s)
 {
-	while(*s != '\0')
+	while (*s != '\0')
 		putb(*s++);
 }
 
@@ -88,7 +88,7 @@ void log(const int gravity, const char *const fmt, ...)
 	vsnprintf(str, LOG_MAX_LEN, fmt, arg);
 	va_end(arg);
 
-#ifdef CONFIG_EXTRA_CHECK
+#ifndef CONFIG_DISABLE_CHECKS
 	const int g = clamp(gravity, LOG_LEVEL_UNDEFINED, LOG_LEVEL_FATAL);
 	printf("%s %s\n", level_icon_colored[g], str);
 #else

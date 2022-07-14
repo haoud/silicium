@@ -122,15 +122,12 @@ struct mb_info
     uint8_t fb_bpp;
     uint8_t fb_type;
 
-    union
-    {
-        struct
-        {
+    union {
+        struct {
             uint32_t fb_palette_addr;
             uint16_t fb_palette_num_colors;
         } palette;
-        struct
-        {
+        struct {
             uint8_t fb_red_field_position;
             uint8_t fb_red_mask_size;
             uint8_t fb_green_field_position;
