@@ -66,7 +66,7 @@ typedef struct slub_allocator {
     uatomic_t free_count;
 } slub_allocator_t;
 
-void slub_setup(void);
+_init void slub_setup(void);
 
 _export void *slub_allocate(slub_allocator_t *allocator);
 _export int slub_free(slub_allocator_t *allocator, void *object);

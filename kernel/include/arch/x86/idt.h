@@ -50,8 +50,7 @@ typedef struct idt_register {
     uint32_t base;
 } _packed idt_register_t;
 
-void idt_flush(void);
-void idt_install(void);
+_init void idt_install(void);
 void idt_install_handler(
     const uint32_t offset,
     const uint32_t handler,

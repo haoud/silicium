@@ -40,7 +40,7 @@ void gdt_install_desc(
     gdt[index].access = (is_tss) ? (access) : (access | 0x10);
 }
 
-void gdt_flush(void)
+_init void gdt_flush(void)
 {
     gdtr.base = (uint32_t)gdt;
     gdtr.size = GDT_MAX_ENTRY * sizeof(gdt_entry_t);
@@ -56,7 +56,7 @@ void gdt_flush(void)
                      : "eax");
 }
 
-void gdt_install(void)
+_init void gdt_install(void)
 {
     gdt_install_desc(0, 0, 0, 0, 0, 0);
     gdt_install_desc(1, 0, 0xFFFFFFFF, GDT_IS_CODE_SEGMENT | GDT_SEGMENT_PRESENT | GDT_RING0,

@@ -21,7 +21,7 @@
 #include <arch/x86/idt.h>
 #include <arch/x86/exception.h>
 
-void exception_install(void)
+_init void exception_install(void)
 {
     install_exception(0);
     install_exception(1);

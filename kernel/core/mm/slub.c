@@ -154,7 +154,7 @@ static int slub_creat_and_add(slub_allocator_t *allocator)
  * and slub_t
  * TODO: Make this code cleaner
  */
-void slub_setup(void)
+_init void slub_setup(void)
 {
     static char buffer1[SLUB_DEFAULT_LENGTH] _align(PAGE_SIZE);
     static char buffer2[SLUB_DEFAULT_LENGTH] _align(PAGE_SIZE);

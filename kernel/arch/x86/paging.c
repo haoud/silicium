@@ -25,9 +25,10 @@ static pde_t kernel_pd[1024] _align(PAGE_SIZE);
 extern const char _rodata_start, _rodata_end;
 extern const char _data_start, _data_end;
 extern const char _text_start, _text_end;
+extern const char _init_start, _init_end;
 extern const char _bss_start, _bss_end;
 
-void paging_map_page_helper(
+static _init void paging_map_page_helper(
     const vaddr_t vaddr,
     const paddr_t paddr,
     const int access,
@@ -57,14 +58,14 @@ void paging_map_page_helper(
     pte->present = 1;
 }
 
-void paging_map_interval_helper(
+static _init void paging_map_interval_helper(
     const vaddr_t vaddr,
     const paddr_t paddr,
-    const size_t length,
+    const int length,
     const int access,
     const int flags)
 {
-    for (size_t i = 0; i < length; i += PAGE_SIZE) {
+    for (int i = 0; i < length; i += PAGE_SIZE) {
         paging_map_page_helper(
             vaddr + i,
             paddr + i,
@@ -73,9 +74,21 @@ void paging_map_interval_helper(
     }
 }
 
-void paging_remap_kernel(void)
+_init void paging_remap_kernel(void)
 {
     memset(kernel_pd, 0, PAGE_SIZE);
+
+    const vaddr_t bss_start = align((vaddr_t) &_bss_start, PAGE_SIZE);
+    const vaddr_t data_start = align((vaddr_t) &_data_start, PAGE_SIZE);
+    const vaddr_t init_start = align((vaddr_t) &_init_start, PAGE_SIZE);
+    const vaddr_t text_start = align((vaddr_t) &_text_start, PAGE_SIZE);
+    const vaddr_t rodata_start = align((vaddr_t) &_rodata_start, PAGE_SIZE);
+
+    const int bss_length = (int) &_bss_end - bss_start;
+    const int data_length = (int) &_data_end - data_start;
+    const int init_length = (int) &_init_end - init_start;
+    const int text_length = (int) &_text_end - text_start;
+    const int rodata_length = (int) &_rodata_end - rodata_start;
 
     // Identity map the first 3 GO
     for (unsigned int i = 0; i < pd_offset(KERNEL_BASE); i++) {
@@ -87,33 +100,41 @@ void paging_remap_kernel(void)
 
     // Map the .text segment
     paging_map_interval_helper(
-        (vaddr_t) &_text_start,
-        (vaddr_t) &_text_start - KERNEL_BASE,
-        (vaddr_t) &_text_end - (vaddr_t) &_text_start,
+        text_start,
+        text_start - KERNEL_BASE,
+        text_length,
         PAGING_EXECUTE,
         PAGING_PRESENT);
-    
-    // Map the .data segment
-    paging_map_interval_helper(
-        (vaddr_t) &_data_start,
-        (vaddr_t) &_data_start - KERNEL_BASE,
-        (vaddr_t) &_data_end - (vaddr_t) &_data_start,
-        PAGING_READ | PAGING_WRITE,
-        PAGING_PRESENT);
-   
+       
     // Map the .rodata segment
     paging_map_interval_helper(
-        (vaddr_t) &_rodata_start,
-        (vaddr_t) &_rodata_start - KERNEL_BASE,
-        (vaddr_t) &_rodata_end - (vaddr_t) &_rodata_start,
+        rodata_start,
+        rodata_start - KERNEL_BASE,
+        rodata_length,
         PAGING_READ,
+        PAGING_PRESENT);
+
+    // Map the .data segment
+    paging_map_interval_helper(
+        data_start,
+        data_start - KERNEL_BASE,
+        data_length,
+        PAGING_READ | PAGING_WRITE,
+        PAGING_PRESENT);
+
+     // Map the .init segment
+    paging_map_interval_helper(
+        init_start,
+        init_start - KERNEL_BASE,
+        init_length,
+        PAGING_EXECUTE | PAGING_READ | PAGING_WRITE,
         PAGING_PRESENT);
 
     // Map the .bss segment
    paging_map_interval_helper(
-        (vaddr_t) &_bss_start,
-        (vaddr_t) &_bss_start - KERNEL_BASE,
-        (vaddr_t) &_bss_end - (vaddr_t) &_bss_start,
+        bss_start,
+        bss_start - KERNEL_BASE,
+        bss_length,
         PAGING_READ | PAGING_WRITE,
         PAGING_PRESENT);
 

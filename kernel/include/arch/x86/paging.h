@@ -114,7 +114,7 @@ typedef struct pte {
     x                          \
 })
 
-void paging_remap_kernel(void);
+_init void paging_remap_kernel(void);
 
 void paging_creat_pd(const vaddr_t pd);
 paddr_t paging_get_paddr(const vaddr_t vaddr);

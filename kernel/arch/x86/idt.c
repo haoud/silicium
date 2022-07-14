@@ -22,21 +22,6 @@
 static struct idt_entry idt[IDT_MAX_ENTRY];
 static struct idt_register idtr;
 
-void idt_install(void)
-{
-    extern void default_int(void);
-    for (uint32_t i = 0; i < IDT_MAX_ENTRY; i++)
-        set_interrupt_gate(i, &default_int);
-    idt_flush();
-}
-
-void idt_flush(void)
-{
-    idtr.base = (uint32_t)&idt;
-    idtr.size = IDT_MAX_ENTRY * sizeof(idt_entry_t);
-    asm volatile("lidt %0" ::"m"(idtr));
-}
-
 void idt_install_handler(
     const uint32_t offset,
     const uint32_t handler,
@@ -51,4 +36,19 @@ void idt_install_handler(
     idt[offset].offset0_15 = (handler & 0xFFFF);
     idt[offset].offset16_31 = ((handler >> 16) & 0xFFFF);
     idt[offset].flags = (dlp << 5) | (type) | ((present) ? 0x80 : 0x00);
+}
+
+void _init idt_flush(void)
+{
+    idtr.base = (uint32_t)&idt;
+    idtr.size = IDT_MAX_ENTRY * sizeof(idt_entry_t);
+    asm volatile("lidt %0" ::"m"(idtr));
+}
+
+void _init idt_install(void)
+{
+    extern void default_int(void);
+    for (uint32_t i = 0; i < IDT_MAX_ENTRY; i++)
+        set_interrupt_gate(i, &default_int);
+    idt_flush();
 }

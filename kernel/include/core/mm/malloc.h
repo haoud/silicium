@@ -33,7 +33,6 @@ typedef struct malloc_slub {
     unsigned int initial_slub_count;
 } malloc_slub_t;
 
-void kmalloc_setup(void);
-
+_init void kmalloc_setup(void);
 _malloc void *kmalloc(size_t size, int flags);
 void kfree(void *obj);

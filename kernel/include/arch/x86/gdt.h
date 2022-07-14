@@ -63,8 +63,7 @@ typedef struct gdt_entry {
     uint8_t base24_31;
 } _packed gdt_entry_t;
 
-void gdt_flush(void);
-void gdt_install(void);
+_init void gdt_install(void);
 void gdt_install_desc(
     const uint32_t index,
     const uint32_t base,

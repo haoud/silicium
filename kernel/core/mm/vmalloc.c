@@ -21,7 +21,7 @@
 #include <arch/x86/paging.h>
 #include <core/mm/vmalloc.h>
 
-void vmalloc_setup(void)
+_init void vmalloc_setup(void)
 {
     // TODO
 }

@@ -55,7 +55,7 @@ static const vaddr_t end = (vaddr_t) &_end;
  * @param length  Length of the memory areas structures
  * @param function Function to execute for each memory area
  */
-static void for_each_mmap(
+static _init void for_each_mmap(
     const struct mb_mmap *start, 
     const size_t length, 
     void (*function) (const struct mb_mmap *const))
@@ -78,7 +78,7 @@ static void for_each_mmap(
  * @brief Calculate the number of entries needed in the table array
  * @param entry Memory area
  */
-static void page_nb_page(const struct mb_mmap *const entry) 
+static _init void page_nb_page(const struct mb_mmap *const entry) 
 {
     static paddr_t last_page = 0;
     if (entry->addr + entry->len > last_page) {
@@ -91,7 +91,7 @@ static void page_nb_page(const struct mb_mmap *const entry)
  * @brief Calculate the location of the array in order to no collide with kernel
  * @param entry Memory area to check
  */
-static void page_array_location(const struct mb_mmap *const entry) 
+static _init void page_array_location(const struct mb_mmap *const entry) 
 {
     // The array are already allocated 
     if (table.pages)
@@ -105,7 +105,7 @@ static void page_array_location(const struct mb_mmap *const entry)
  * @brief Mark avaible memory areas as free for the page allocator.
  * @param entry Memory area to check
  */
-static void page_mark_free_area(const struct mb_mmap *const entry)
+static _init void page_mark_free_area(const struct mb_mmap *const entry)
 {
     if (entry->type != MB_MEMORY_AVAILABLE)
         return;
@@ -117,7 +117,7 @@ static void page_mark_free_area(const struct mb_mmap *const entry)
     }
 }
 
-static void page_construct_lists(void)
+static _init void page_construct_lists(void)
 {
     for (size_t i = 0; i < table.nb_pages; i++) {
         list_entry_init(&table.pages[i].entry);
@@ -132,7 +132,7 @@ static void page_construct_lists(void)
     }
 }
 
-void page_map_table(void)
+_init void page_map_table(void)
 {
     const vaddr_t length = table.nb_pages * sizeof(page_info_t);
     const paddr_t array = (const paddr_t) table.pages;
@@ -161,7 +161,7 @@ void page_map_table(void)
  * (or by the hardware)
  * @return The number of physical pages of the memory 
  */
-void page_setup(struct mb_info *info)
+_init void page_setup(struct mb_info *info)
 {
     for_each_mmap(info->mmap_addr, info->mmap_length, page_nb_page);
     for_each_mmap(info->mmap_addr, info->mmap_length, page_array_location);
@@ -239,9 +239,37 @@ _export paddr_t page_reserve(const paddr_t page)
 _export int page_get_counter(const paddr_t addr)
 {
     const page_info_t *const page = page_get(PAGE_ALIGN(addr));
-    if (!page || page->reserved)
+    if (page == NULL || page->reserved)
         return -1;
     return page->count;
+}
+
+/**
+ * @brief Allows to free a page marked as reserved.I hope you know what
+ * you are doing or the whole system will explode horribly !
+ * However, this function cannot free a page that is higher than the last
+ * page of free real RAM, because it is not included in the page information
+ * table.
+ * @param addr Address of the page to unreserve
+ * @return int 0 on success, -1 on failure
+ */
+_export int page_unreserve(const paddr_t addr)
+{
+    page_info_t *const page = page_get(PAGE_ALIGN(addr));
+    if (page == NULL || !page->reserved)
+        return -1;
+
+    spin_lock(&lock);
+    page->reserved = 0;
+    list_entry_init(&page->entry);
+    if (page->bios)
+        list_add_head(&page->entry, &bios_free_list);
+    else if (page->isa)
+        list_add_head(&page->entry, &isa_free_list);
+    else
+        list_add_head(&page->entry, &free_list);
+    spin_unlock(&lock);
+    return 0;
 }
 
 /**
@@ -253,7 +281,7 @@ _export paddr_t page_reference(const paddr_t addr)
 {
     const paddr_t paddr = PAGE_ALIGN(addr);
     page_info_t *const page = page_get(paddr);
-    if (!page->count)
+    if (page->count == 0)
         panic("Trying to reference a free page");
     page->count++;
     return paddr;
@@ -298,12 +326,12 @@ _export paddr_t page_alloc(const int flags)
 _export void page_free(const paddr_t addr)
 {
     page_info_t *const page = page_get(PAGE_ALIGN(addr));
-    if (!page->count) 
+    if (page->count == 0) 
         panic("Trying to free a page that is already free");
     if (page->reserved)
         panic("Trying to free a reserved page");
 
-    if (--page->count) {
+    if (--page->count == 0) {
         list_remove(&page->entry);
         if (page->bios)
             list_add_head(&page->entry, &bios_free_list);

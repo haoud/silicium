@@ -36,7 +36,7 @@ static malloc_slub_t slub[] = {
     {0, NULL, 0, 0}
 };
 
-void kmalloc_setup(void)
+_init void kmalloc_setup(void)
 {
     for (int i = 0; slub[i].length != 0; i++) {
         slub[i].allocator = creat_slub_allocator(

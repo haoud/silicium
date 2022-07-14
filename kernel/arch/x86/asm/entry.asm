@@ -24,11 +24,11 @@
 .long 0
 .long 0
 
-.section .text
+.section .init.text
 .global _start
 .extern start
-.align 4
 
+.align 4
 identity_map:
     mov [edx], eax
     add edx, 4                          # Next directory entry
@@ -79,7 +79,7 @@ _start:
     push ebx                            # Multiboot structure (physical address !)
     call eax                            # Let's go !
 
-.section .bss
+.section .init.bss, "aw", @nobits
 .align 4096
 boot_pd: .skip 4096
 stack_bottom: .skip 4096

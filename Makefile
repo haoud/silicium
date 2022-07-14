@@ -12,7 +12,7 @@ export AS = ${TARGET}-as
 export NM = ${TARGET}-nm
 
 # GCC flags
-export CFLAGS += -Os -flto -march=i686 -std=gnu2x -masm=intel -D CONFIG_DEBUG 
+export CFLAGS += -O2 -flto -march=i686 -std=gnu2x -masm=intel -D CONFIG_DEBUG 
 
 # LD flags
 export LDFLAGS = -march=i686 -flto -nostdlib

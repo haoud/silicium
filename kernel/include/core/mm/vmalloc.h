@@ -22,7 +22,7 @@
 #define VMALLOC_NONE    0x00
 #define VMALLOC_MAP     0x01
 
-void vmalloc_setup(void);
+_init void vmalloc_setup(void);
 
 void *vmalloc(size_t size, int flags);
 void vmfree(void *ptr);

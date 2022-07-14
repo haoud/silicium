@@ -28,7 +28,7 @@
 
 extern void startup(void);
 
-void start(struct mb_info *info)
+_init void start(struct mb_info *info)
 {
     gdt_install();
     idt_install();
