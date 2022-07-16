@@ -16,32 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <multiboot.h>
-#include <core/mm/page.h>
-#include <core/mm/slub.h>
-#include <core/mm/malloc.h>
-#include <core/mm/vmalloc.h>
-#include <arch/x86/gdt.h>
-#include <arch/x86/idt.h>
-#include <arch/x86/pic.h>
-#include <arch/x86/pit.h>
+#pragma once
+#include <kernel.h>
 #include <arch/x86/paging.h>
-#include <arch/x86/exception.h>
 
-extern void startup(void);
+_export int paging_change_rights_interval(
+    const vaddr_t start,
+    const vaddr_t end,
+    const int access);
 
-_init void start(struct mb_info *info)
-{
-    pic_remap();
-    gdt_install();
-    idt_install();
-    exception_install();
-    pit_configure();
-    page_setup(info);
-    paging_remap_kernel();
-    page_map_table();
-    slub_setup();
-    vmalloc_setup();
-    kmalloc_setup();
-    startup();
-}
+_export int paging_map_interval(
+    const vaddr_t start,
+    const vaddr_t end,
+    const int access);
+
+_export void paging_unmap_interval(
+    const vaddr_t start,
+    const vaddr_t end);

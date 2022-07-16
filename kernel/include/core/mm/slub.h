@@ -67,7 +67,11 @@ typedef struct slub_allocator {
 } slub_allocator_t;
 
 _init void slub_setup(void);
-
+_init int slub_add_memory(
+    slub_allocator_t *allocator,
+    const vaddr_t start,
+    const vaddr_t end);
+    
 _export void *slub_allocate(slub_allocator_t *allocator);
 _export int slub_free(slub_allocator_t *allocator, void *object);
 _export slub_allocator_t *creat_slub_allocator(

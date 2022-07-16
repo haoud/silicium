@@ -89,6 +89,55 @@ static void slub_init_free_list(slub_t *const slub)
 }
 
 /**
+ * @brief Add a slub to an allocator
+ * 
+ * @param allocator Allocator to add the slub to
+ * @param slub The slub to add
+ */
+static void slub_add_slub(slub_allocator_t *allocator, slub_t *slub)
+{
+    list_add(&allocator->free_slubs, &slub->slub_list);
+    allocator->total_count += slub->objects_max;
+    allocator->free_count += slub->objects_max;
+}
+
+/**
+ * @brief Allocate a new slub allocator and initialize it: only linked list
+ * nodes and spinlock are initialized, other fields are undefined
+ * 
+ * @return slub_t* The newly allocated slub allocator or NULL if the allocation
+ * failed
+ */
+static slub_allocator_t *slub_allocate_allocator(void)
+{
+    slub_allocator_t *allocator = slub_allocate(&slub_allocator_allocator);
+    if (allocator == NULL)
+        return allocator;
+    list_init(&allocator->free_slubs);
+    list_init(&allocator->used_slubs);
+    list_init(&allocator->full_slubs);
+    spin_init(&allocator->lock);
+    return allocator;
+}
+
+/**
+ * @brief Allocate a new slub and initialize it: only linked list nodes and
+ * spinlock are initialized, other fields are undefined
+ * 
+ * @return slub_t* The newly allocated slub or NULL if the allocation failed
+ */
+static slub_t *slub_allocate_slub(void)
+{
+    slub_t *slub = slub_allocate(slub_allocator);
+    if (slub == NULL)
+        return slub;
+    list_entry_init(&slub->slub_list);
+    list_init(&slub->free_objects);
+    spin_init(&slub->lock);
+    return slub;
+}
+
+/**
  * @brief Create a new slub
  * 
  * @param allocator The slub allocator of the slub to create
@@ -100,27 +149,23 @@ static slub_t *slub_creat(slub_allocator_t *allocator, size_t length)
     assert(PAGE_ALIGNED(length));
     assert(!null(allocator));
 
-    slub_t *slub = slub_allocate(slub_allocator);
-    if (slub == NULL)
+    const vaddr_t start = (vaddr_t) vmalloc(length, VMALLOC_MAP);
+    if (start == 0)
         return NULL;
+
+    slub_t *slub = slub_allocate_slub();
+    if (slub == NULL) {
+        vmfree((void *) start);
+        return slub;
+    }
 
     slub->object_align = allocator->object_align;
     slub->object_size = allocator->object_size;
     slub->objects_max = length / align(slub->object_size, slub->object_align);
     slub->objects_used = 0;
 
-    slub->start = (vaddr_t) vmalloc(length, VMALLOC_MAP);
-    slub->end = slub->start + length;
-
-    // Check if the memory allocation failed
-    if (slub->start == 0) {
-        slub_free(slub_allocator, slub);
-        return NULL;
-    }
-
-    list_entry_init(&slub->slub_list);
-    list_init(&slub->free_objects);
-    spin_init(&slub->lock);
+    slub->start = start;
+    slub->end = start + length;
     slub_init_free_list(slub);
     return slub;
 }
@@ -135,17 +180,13 @@ static int slub_creat_and_add(slub_allocator_t *allocator)
 {
     assert(!null(allocator));
     const size_t length = align(
-        allocator->object_per_slub *
-        allocator->object_size,
+        allocator->object_per_slub * allocator->object_size,
         PAGE_SIZE);
-    
+
     slub_t *slub = slub_creat(allocator, length);
     if (slub == NULL)
         return -1;
-
-    list_add(&allocator->free_slubs, &slub->slub_list);
-    allocator->total_count += slub->objects_max;
-    allocator->free_count += slub->objects_max;
+    slub_add_slub(allocator, slub);
     return 0;
 }
 
@@ -199,21 +240,39 @@ _init void slub_setup(void)
     list_init(&second_slub.free_objects);
     spin_init(&second_slub.lock);
 
-   /* Setup slub allocator for slub_t */
-    slub_allocator = slub_allocate(&slub_allocator_allocator);
+    /* Setup slub allocator for slub_t */
+    slub_allocator = slub_allocate_allocator();
     slub_allocator->object_per_slub = SLUB_MIN_OBJECT_PER_SLUB * 8;
     slub_allocator->object_align = second_slub.object_align;
     slub_allocator->object_size = second_slub.object_size;
     slub_allocator->total_count = second_slub.objects_max;
     slub_allocator->free_count = second_slub.objects_max;
     slub_allocator->min_free = 2;       // Safety margin
-    list_init(&slub_allocator->free_slubs);
-    list_init(&slub_allocator->used_slubs);
-    list_init(&slub_allocator->full_slubs);
-    spin_init(&slub_allocator->lock);
 
     list_add(&slub_allocator->free_slubs, &second_slub.slub_list);
     slub_init_free_list(&second_slub);
+}
+
+_init int slub_add_memory(
+    slub_allocator_t *allocator,
+    const vaddr_t start,
+    const vaddr_t end)
+{
+    slub_t *slub = slub_allocate_slub();
+    if (slub == NULL)
+        return -1;
+
+    const size_t length = end - start;
+    slub->object_align = allocator->object_align;
+    slub->object_size = allocator->object_size;
+    slub->objects_max = length / align(slub->object_size, slub->object_align);
+    slub->objects_used = 0;
+    slub->start = start;
+    slub->end = end;
+
+    slub_init_free_list(slub);
+    slub_add_slub(allocator, slub);
+    return 0;
 }
 
 /**
@@ -261,18 +320,11 @@ _export int slub_free(slub_allocator_t *allocator, void *object)
  */
 _export void *slub_allocate(slub_allocator_t *allocator)
 {
+    assert(!null(allocator));
+    
     slub_t *slub = NULL;
     do {
         spin_lock(&allocator->lock);
-
-        // If we need to allocate a slub to respect the min_free count, do it
-        if (allocator->free_count <= allocator->min_free) {
-            if (slub_creat_and_add(allocator) < 0) {
-                spin_unlock(&allocator->lock);
-                return NULL;
-            }
-        }
-
         struct list_head *slub_pool = &allocator->used_slubs;
         if (list_empty(slub_pool)) {
             slub_pool = &allocator->free_slubs;
@@ -283,6 +335,14 @@ _export void *slub_allocate(slub_allocator_t *allocator)
                 return NULL;
             }
             slub_pool = &allocator->free_slubs;
+        }
+
+        // If we need to allocate a slub to respect the min_free count, do it
+        if (allocator->free_count <= allocator->min_free) {
+            if (slub_creat_and_add(allocator) < 0) {
+                spin_unlock(&allocator->lock);
+                return NULL;
+            }
         }
 
         assert(!list_empty(slub_pool));
@@ -342,9 +402,9 @@ _export slub_allocator_t *creat_slub_allocator(
     uint_t slub_count,
     uint_t flags)
 {
-    slub_allocator_t *allocator = slub_allocate(&slub_allocator_allocator);
+    slub_allocator_t *allocator = slub_allocate_allocator();
     if(allocator == NULL)
-        return NULL;
+        return allocator;
 
 #ifndef CONFIG_DISABLE_CHECKS
     obj_per_slub = max(obj_per_slub, (uint_t) SLUB_MIN_OBJECT_PER_SLUB);
@@ -361,11 +421,6 @@ _export slub_allocator_t *creat_slub_allocator(
     allocator->min_free = min_free;
     allocator->total_count = 0;
     allocator->free_count = 0;
-
-    list_init(&allocator->free_slubs);
-    list_init(&allocator->used_slubs);
-    list_init(&allocator->full_slubs);
-    spin_init(&allocator->lock);
 
     for (uint_t i = 0; i < slub_count; i++)
         slub_creat_and_add(allocator);
