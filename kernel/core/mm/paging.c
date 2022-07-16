@@ -19,6 +19,11 @@
 #include <core/mm/page.h>
 #include <core/mm/paging.h>
 
+_export void paging_set_directory(const paddr_t directory)
+{
+    set_cr3(directory);
+}
+
 /**
  * @brief Change the rights of a range of virtual pages.
  * @param start The start of the range.

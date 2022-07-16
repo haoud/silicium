@@ -50,14 +50,14 @@
 
 // Page directory macros
 #define pde_set_address(pde, paddr) ((pde)->address = ((paddr) >> 12))
-#define pde_get_address(pte) ((pde)->address << 12)
+#define pde_get_address(pde) ((pde)->address << 12)
 #define pde_set(pde, value) ((pde)->value = value)
 #define pde_clear(pde) ((pde)->value = 0)
 
 // Page table macros
 #define pte_set_address(pte, addr) ((pte)->address = ((addr) >> 12))
 #define pte_get_address(pte) ((pte)->address << 12)
-#define pte_set(pte, value) ((pde)->value = value)
+#define pte_set(pte, value) ((pte)->value = value)
 #define pte_clear(pte) ((pte)->value = 0)
 
 typedef uint32_t vaddr_t;
@@ -116,7 +116,6 @@ typedef struct pte {
 
 _init void paging_remap_kernel(void);
 
-void paging_creat_pd(const vaddr_t pd);
 paddr_t paging_get_paddr(const vaddr_t vaddr);
 
 /* Paging interface */
@@ -130,3 +129,9 @@ _export int paging_map_page(
     const paddr_t paddr,
     const int access,
     const int flags);
+
+_export void paging_clone_pd(const vaddr_t src, const vaddr_t dst);
+_export void paging_creat_kernelspace(const vaddr_t src);
+_export void paging_creat_userspace(const vaddr_t src);
+_export void paging_creat_pd(const vaddr_t pd);
+_export void paging_destroy_userspace(void);

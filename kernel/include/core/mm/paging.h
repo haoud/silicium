@@ -20,16 +20,15 @@
 #include <kernel.h>
 #include <arch/x86/paging.h>
 
+_export void paging_set_directory(const paddr_t directory);
 _export int paging_change_rights_interval(
     const vaddr_t start,
     const vaddr_t end,
     const int access);
-
 _export int paging_map_interval(
     const vaddr_t start,
     const vaddr_t end,
     const int access);
-
 _export void paging_unmap_interval(
     const vaddr_t start,
     const vaddr_t end);

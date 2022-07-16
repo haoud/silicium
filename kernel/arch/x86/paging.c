@@ -138,6 +138,17 @@ _init void paging_remap_kernel(void)
         PAGING_READ | PAGING_WRITE,
         PAGING_PRESENT);
 
+    // Preallocate all kernel page directory entries
+    for (unsigned int i = pd_offset(KERNEL_BASE); i < 1023; i++) {
+        if(kernel_pd[i].present)
+            continue;
+        
+        const paddr_t page = page_alloc(PAGE_CLEAR);
+        pde_set_address(&kernel_pd[i], page);
+        kernel_pd[i].present = 1;
+        kernel_pd[i].write = 1;
+    }
+
     // Mirroring
     const paddr_t kernel_pd_paddr = (paddr_t) kernel_pd - KERNEL_BASE;
     pde_set_address(&kernel_pd[1023], kernel_pd_paddr);
@@ -146,18 +157,6 @@ _init void paging_remap_kernel(void)
 
     // Set CR3 to the new page directory
     set_cr3(kernel_pd_paddr);
-}
-
-/**
- * @brief Create a new page directory and copy the kernel space into it.
- * The user space is cleared and initialized to zero.
- *
- * @param pd Location of the new page directory to creat : it must be aligned 
- * on a page boundary and already being allocated
- */
-void paging_creat_pd(const vaddr_t pd)
-{
-    todo();
 }
 
 /**
@@ -358,4 +357,52 @@ _export int paging_unmap_page(const vaddr_t vaddr)
     pte_clear(pte);
     invlpg(vaddr);
     return page_addr;
+}
+
+_export void paging_clone_pd(const vaddr_t src, const vaddr_t dst)
+{
+    memcpy(dst, src, PAGE_SIZE);
+    paging_creat_kernelspace(dst);
+}
+
+_export void paging_creat_kernelspace(const vaddr_t src)
+{
+    pde_t *pd = (pde_t *) src;
+    memset(pd, 0, pd_offset(KERNEL_BASE) * sizeof(pde_t));
+    memcpy(
+        &pd[pd_offset(KERNEL_BASE)],
+        &kernel_pd[pd_offset(KERNEL_BASE)],
+        255 * sizeof(pde_t));
+
+    // Mirroring
+    pde_set_address(&pd[1023], paging_get_paddr(pd));
+    pd[1023].present = 1;
+    pd[1023].write = 1;
+}
+
+_export void paging_creat_userspace(const vaddr_t src)
+{
+    pde_t *pd = (pde_t *) src;
+    memset(pd, 0, pd_offset(KERNEL_BASE) * sizeof(pde_t));
+}
+
+_export void paging_destroy_userspace(void)
+{
+    for (int i = 0; i < pd_offset(KERNEL_BASE); i++) {
+        const pte_t *pde = paging_get_pde(i << 22);
+        if (!pde->present)
+            continue;
+        for (int j = 0; j < 1024; j++) {
+            const pte_t *pte = paging_get_pte(i << 22 | j << 12);
+            if (pte->present)
+                continue;
+            page_free(pte_get_address(pte));
+        }
+    }
+}
+
+_export void paging_creat_pd(const vaddr_t pd)
+{
+    paging_creat_userspace(pd);
+    paging_creat_kernelspace(pd);
 }

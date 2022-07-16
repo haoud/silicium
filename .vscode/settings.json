@@ -11,6 +11,18 @@
         "kernel.h": "c",
         "internet": "c",
         "regex": "c",
-        "page.h": "c"
+        "page.h": "c",
+        "*.inc": "c",
+        "*.in": "c",
+        "optional": "c",
+        "expected": "c",
+        "ratio": "c",
+        "system_error": "c",
+        "type_traits": "c",
+        "variant": "c",
+        "array": "c",
+        "functional": "c",
+        "tuple": "c",
+        "utility": "c"
     },
 }
