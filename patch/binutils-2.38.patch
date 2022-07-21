@@ -1,0 +1,51 @@
+diff -ruN binutils-2.38/bfd/config.bfd _binutils-2.38/bfd/config.bfd
+--- binutils-2.38/bfd/config.bfd	2022-01-22 13:14:07.000000000 +0100
++++ _binutils-2.38/bfd/config.bfd	2022-07-17 16:28:34.094439236 +0200
+@@ -656,6 +656,11 @@
+     targ_selvecs=
+     targ64_selvecs=x86_64_elf64_vec
+     ;;
++  i[3-7]86-*-silicium*)
++    targ_defvec=i386_elf32_vec
++    targ_selvecs=
++    targ64_selvecs=x86_64_elf64_vec
++    ;;
+ #ifdef BFD64
+   x86_64-*-cloudabi*)
+     targ_defvec=x86_64_elf64_cloudabi_vec
+diff -ruN binutils-2.38/config.sub _binutils-2.38/config.sub
+--- binutils-2.38/config.sub	2022-01-22 13:14:07.000000000 +0100
++++ _binutils-2.38/config.sub	2022-07-17 16:26:22.794440192 +0200
+@@ -1724,7 +1724,7 @@
+ 	# The portable systems comes first.
+ 	# Each alternative MUST end in a * to match a version number.
+ 	gnu* | android* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
+-	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]* \
++	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]* | silicium* \
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+ 	     | sym* |  plan9* | psp* | sim* | xray* | os68k* | v88r* \
+ 	     | hiux* | abug | nacl* | netware* | windows* \
+diff -ruN binutils-2.38/gas/configure.tgt _binutils-2.38/gas/configure.tgt
+--- binutils-2.38/gas/configure.tgt	2022-01-22 13:14:08.000000000 +0100
++++ _binutils-2.38/gas/configure.tgt	2022-07-17 16:30:23.724438438 +0200
+@@ -239,6 +239,7 @@
+     esac ;;
+   i386-*-lynxos*)			fmt=elf em=lynx ;;
+   i386-*-redox*)			fmt=elf ;;
++  i386-*-silicium*)			fmt=elf em=linux ;;
+   i386-*-solaris*)			fmt=elf em=solaris ;;
+   i386-*-freebsd* \
+   | i386-*-kfreebsd*-gnu)		fmt=elf em=freebsd ;;
+diff -ruN binutils-2.38/ld/configure.tgt _binutils-2.38/ld/configure.tgt
+--- binutils-2.38/ld/configure.tgt	2022-01-22 15:19:36.000000000 +0100
++++ _binutils-2.38/ld/configure.tgt	2022-07-17 16:32:35.314437480 +0200
+@@ -332,6 +332,9 @@
+ i[3-7]86-*-redox*)	targ_emul=elf_i386
+ 			targ_extra_emuls=elf_x86_64
+ 			;;
++i[3-7]86-*-silicium*)	targ_emul=elf_i386
++			targ_extra_emuls=elf_x86_64
++			;;
+ i[3-7]86-*-sysv[45]*)	targ_emul=elf_i386
+ 			targ_extra_emuls=elf_iamcu
+ 			;;

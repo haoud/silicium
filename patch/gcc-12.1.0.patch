@@ -1,0 +1,113 @@
+diff -ruN gcc-12.1.0/config.sub _gcc-12.1.0/config.sub
+--- gcc-12.1.0/config.sub	2022-05-06 09:30:56.000000000 +0200
++++ _gcc-12.1.0/config.sub	2022-07-17 16:35:59.394435994 +0200
+@@ -1719,7 +1719,7 @@
+ 	# The portable systems comes first.
+ 	# Each alternative MUST end in a * to match a version number.
+ 	gnu* | android* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
+-	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]* \
++	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]* | silicium* \
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+ 	     | sym* |  plan9* | psp* | sim* | xray* | os68k* | v88r* \
+ 	     | hiux* | abug | nacl* | netware* | windows* \
+diff -ruN gcc-12.1.0/fixincludes/mkfixinc.sh _gcc-12.1.0/fixincludes/mkfixinc.sh
+--- gcc-12.1.0/fixincludes/mkfixinc.sh	2022-05-06 09:30:56.000000000 +0200
++++ _gcc-12.1.0/fixincludes/mkfixinc.sh	2022-07-17 16:48:59.244430315 +0200
+@@ -11,6 +11,8 @@
+ 
+ # Check for special fix rules for particular targets
+ case $machine in
++    *-silicium* | \
++    *-*-silicium* | \
+     i?86-*-cygwin* | \
+     i?86-*-mingw32* | \
+     x86_64-*-mingw32* | \
+diff -ruN gcc-12.1.0/gcc/config/silicium.h _gcc-12.1.0/gcc/config/silicium.h
+--- gcc-12.1.0/gcc/config/silicium.h	1970-01-01 01:00:00.000000000 +0100
++++ _gcc-12.1.0/gcc/config/silicium.h	2022-07-17 16:43:16.714432809 +0200
+@@ -0,0 +1,21 @@
++#undef TARGET_SILICIUM
++#define TARGET_SILICIUM 1
++ 
++#undef LIB_SPEC
++#define LIB_SPEC "-lc"
++ 
++#undef STARTFILE_SPEC
++#define STARTFILE_SPEC "crt1.o%s crti.o%s crtbegin.o%s"
++ 
++#undef ENDFILE_SPEC
++#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
++ 
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS()        \
++  do {                                  \
++    builtin_define ("__unix__");        \
++    builtin_define ("__silicum__");     \
++    builtin_assert ("system=unix");     \
++    builtin_assert ("system=posix");    \
++    builtin_assert ("system=silicum");  \
++  } while (0);
+diff -ruN gcc-12.1.0/gcc/config.gcc _gcc-12.1.0/gcc/config.gcc
+--- gcc-12.1.0/gcc/config.gcc	2022-05-06 09:30:56.000000000 +0200
++++ _gcc-12.1.0/gcc/config.gcc	2022-07-17 16:39:27.844434476 +0200
+@@ -950,6 +950,12 @@
+   default_use_cxa_atexit=yes
+   use_gcc_stdint=wrap
+   ;;
++*-*-silicium*)
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  use_gcc_stdint=provide
++  ;;
+ *-*-uclinux*)
+   extra_options="$extra_options gnu-user.opt"
+   use_gcc_stdint=wrap
+@@ -2071,6 +2077,9 @@
+ 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h i386/rtemself.h rtems.h newlib-stdint.h"
+ 	tmake_file="${tmake_file} i386/t-rtems"
+ 	;;
++i[34567]86-*-silicium*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h silicium.h"
++    ;;
+ i[34567]86-*-solaris2* | x86_64-*-solaris2*)
+ 	# Set default arch_32 to pentium4, tune_32 to generic like the other
+ 	# i386 targets, although config.guess defaults to i386-pc-solaris2*.
+diff -ruN gcc-12.1.0/libgcc/config.host _gcc-12.1.0/libgcc/config.host
+--- gcc-12.1.0/libgcc/config.host	2022-05-06 09:30:59.000000000 +0200
++++ _gcc-12.1.0/libgcc/config.host	2022-07-17 16:47:34.814430930 +0200
+@@ -783,6 +783,10 @@
+ 	;;
+ i[34567]86-*-lynxos*)
+ 	;;
++i[34567]86-*-silicium*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
+ i[34567]86-*-nto-qnx*)
+ 	tmake_file="$tmake_file i386/t-nto t-libgcc-pic"
+ 	extra_parts=crtbegin.o
+diff -ruN gcc-12.1.0/libstdc++-v3/crossconfig.m4 _gcc-12.1.0/libstdc++-v3/crossconfig.m4
+--- gcc-12.1.0/libstdc++-v3/crossconfig.m4	2022-05-06 09:31:00.000000000 +0200
++++ _gcc-12.1.0/libstdc++-v3/crossconfig.m4	2022-07-17 16:45:56.334431647 +0200
+@@ -8,7 +8,6 @@
+   arm*-*-symbianelf*)
+     # This is a freestanding configuration; there is nothing to do here.
+     ;;
+-
+   avr*-*-*)
+     AC_DEFINE(HAVE_ACOSF)
+     AC_DEFINE(HAVE_ASINF)
+@@ -248,6 +247,12 @@
+     GLIBCXX_CHECK_COMPILER_FEATURES
+     GLIBCXX_CHECK_LINKER_FEATURES
+     GLIBCXX_CHECK_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++    ;;
++  *-silicum*)
++    GLIBCXX_CHECK_COMPILER_FEATURES
++    GLIBCXX_CHECK_LINKER_FEATURES
++    GLIBCXX_CHECK_MATH_SUPPORT
+     GLIBCXX_CHECK_STDLIB_SUPPORT
+     ;;
+   *-tpf)
