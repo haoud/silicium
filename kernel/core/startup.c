@@ -32,10 +32,10 @@ _init void free_init_sections(void)
     // precautions: the other processors must not allocate pages before
     // this function is completely finished.
     // On a uniprocessor computer this should not be a problem
-    for (paddr_t addr = (paddr_t) &_init_start;
-        addr < (paddr_t) &_init_end;
+    for (vaddr_t addr = (vaddr_t) &_init_start;
+        addr < (vaddr_t) &_init_end;
         addr += PAGE_SIZE) {
-        page_unreserve(addr);
+        page_free(addr - KERNEL_BASE);
     }
     cpu_stop();
 }

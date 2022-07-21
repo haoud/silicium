@@ -20,6 +20,13 @@
 #include <core/mm/slub.h>
 #include <core/mm/malloc.h>
 
+typedef struct malloc_slub {
+    unsigned int length;
+    slub_allocator_t *allocator;
+    unsigned int obj_per_slub;
+    unsigned int initial_slub_count;
+} malloc_slub_t;
+
 static malloc_slub_t slub[] = {
     {32, NULL, 256, 8},
     {64, NULL, 128, 4},
@@ -49,9 +56,9 @@ _init void kmalloc_setup(void)
     }
 }
 
-_malloc void *kmalloc(size_t size, int flags)
+_malloc void *kmalloc(const size_t size, const int flags)
 {
-    for (int i = 0; slub[i].length != 0; i++) {
+    for (unsigned int i = 0; slub[i].length != 0; i++) {
         if (size <= slub[i].length)
             return slub_allocate(slub[i].allocator);
     }
@@ -61,7 +68,7 @@ _malloc void *kmalloc(size_t size, int flags)
 
 void kfree(void *obj)
 {
-    for (int i = 0; slub[i].length != 0; i++) {
+    for (unsigned int i = 0; slub[i].length != 0; i++) {
         if (slub_free(slub[i].allocator, obj))
             return;
     }

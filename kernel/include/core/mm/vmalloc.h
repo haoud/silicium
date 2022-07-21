@@ -23,7 +23,7 @@
 
 // TODO: use a wider and more precise range of addresses
 #define VMALLOC_START 0xD0000000
-#define VMALLOC_END 0xE0000000
+#define VMALLOC_END 0xF0000000
 
 #define VMALLOC_NONE    0x00
 #define VMALLOC_MAP     0x01

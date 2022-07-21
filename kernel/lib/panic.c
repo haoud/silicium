@@ -23,19 +23,18 @@
 #include <lib/spinlock.h>
 #include <arch/x86/cpu.h>
 
-static char buffer[128];
-
-_noreturn void panic(const char *fmt, ...)
+_noreturn _cold void panic(const char *fmt, ...)
 {
     cli();
 #ifdef CONFIG_DEBUG_PANIC
+    char buffer[128];
+
     va_list args;
     va_start(args, fmt);
     vsnprintf(buffer, sizeof(buffer), fmt, args);
     va_end(args);
 
-    log(LOG_LEVEL_FATAL, "FATAL: %s", buffer);
-    log(LOG_LEVEL_FATAL, "Kernel halted...");
+    fatal("%s\nKernel halted", buffer);
     cpu_stop();
 #else
     // Just hang forever...

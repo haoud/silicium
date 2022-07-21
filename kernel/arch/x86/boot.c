@@ -43,5 +43,6 @@ _init void start(struct mb_info *info)
     slub_setup();
     vmalloc_setup();
     kmalloc_setup();
+    paging_clear_userspace();
     startup();
 }

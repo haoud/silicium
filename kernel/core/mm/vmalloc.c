@@ -135,7 +135,7 @@ _export void *vmalloc(size_t size, int flags)
 
 /**
  * @brief Free a memory area allocated by vmalloc.
- * @todo Merge adjacent free memory areas
+ * TOOD Merge adjacent free memory areas
  * 
  * @param ptr Base address of the memory area to free.
  */

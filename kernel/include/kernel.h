@@ -22,7 +22,9 @@
 #include <stdbool.h>
 #include <stdatomic.h>
 
+#include <config.h>
 #include <assert.h>
+#include <barrier.h>
 #include <lib/log.h>
 
 typedef atomic_uint uatomic_t;
@@ -35,40 +37,43 @@ typedef unsigned int uint_t;
 #define _always_inline inline __attribute__((__always_inline__))
 #define _no_optimizations __attribute__((optimize("-O0")))
 #define _deprecated __attribute__((deprecated))
-#define _no_inline __attribute__((noinline))
-#define _noreturn __attribute__((noreturn))
-#define _malloc __attribute__((malloc))
-#define _packed __attribute__((packed))
-#define _unused __attribute__((unused))
-#define _naked __attribute__((naked))
-#define _pure __attribute__((pure))
-#define _used __attribute__((used))
-#define _cdecl __attribute__((cdecl))
-#define _weak __attribute__((weak, visibility("default")))
+#define _no_inline  __attribute__((noinline))
+#define _noreturn   __attribute__((noreturn))
+#define _malloc     __attribute__((malloc))
+#define _packed     __attribute__((packed))
+#define _unused     __attribute__((unused))
+#define _naked      __attribute__((naked))
+#define _pure       __attribute__((pure))
+#define _used       __attribute__((used))
+#define _cdecl      __attribute__((cdecl))
+#define _weak       __attribute__((weak, visibility("default")))
 #define _asmlinkage __attribute__((regparm(0)))
 
-#define _align(al) __attribute__((aligned(al)))
-#define _section(name) __attribute__((section(name)))
-#define _unreachable() __builtin_unreachable()
+#define _cold   __attribute__((cold))
+#define _hot    __attribute__((hot))
+
+#define _align(al)      __attribute__((aligned(al)))
+#define _section(name)  __attribute__((section(name)))
+#define _unreachable()  __builtin_unreachable()
 
 #define _export _used _cdecl _asmlinkage
 
-#define _init __attribute__((section(".init.text")))
-#define _initdata __attribute__((section(".init.data")))
+#define _init       __attribute__((section(".init.text")))
+#define _initdata   __attribute__((section(".init.data")))
 #define _initrodata __attribute__((section(".init.rotdata")))
 
-#define _interrupt _cdecl _asmlinkage
-#define _syscall _cdecl _asmlinkage
-#define _irq _interrupt
+#define _interrupt  _cdecl _asmlinkage
+#define _syscall    _cdecl _asmlinkage
+#define _irq        _interrupt
 
-#define likely(expr) __builtin_expect(!!(expr), 1)
-#define unlikely(expr) __builtin_expect(!!(expr), 0)
 #define assume_aligned(ptr, al) __builtin_assume_aligned(ptr, al)
+#define unlikely(expr)          __builtin_expect(!!(expr), 0)
+#define likely(expr)            __builtin_expect(!!(expr), 1)
 
 #define container_of(ptr, type, member) \
-    ((type *)((char *)ptr - offsetof(type, member)))
+    ((type *) ((char *) ptr - offsetof(type, member)))
 
 #define BUG(x) _unreachable()
 
 // Some useful function definitions
-_noreturn void panic(const char *fmt, ...);
+_noreturn _cold void panic(const char *fmt, ...);

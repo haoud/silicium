@@ -47,6 +47,23 @@ static DECLARE_SPINLOCK(lock);
 extern const char _end;
 static const vaddr_t end = (vaddr_t) &_end;
 
+static struct page_info *page_get(paddr_t paddr)
+{
+    if (paddr >= table.nb_pages * PAGE_SIZE)
+        return NULL;
+    return &table.pages[page_address_to_index(paddr)];
+}
+
+static void page_insert_free_list(struct page_info * info)
+{
+    if(info->bios) 
+        list_add_tail(&bios_free_list, &info->entry);
+    else if (info->isa)
+        list_add_tail(&isa_free_list, &info->entry);
+    else 
+        list_add_tail(&free_list, &info->entry);
+}
+
 /**
  * @brief Execute a function for each memory area passed by GRUB. This function
  * discard any entry that is above 4GB.
@@ -123,12 +140,7 @@ static _init void page_construct_lists(void)
         list_entry_init(&table.pages[i].entry);
         if (table.pages[i].reserved || table.pages[i].count)
             continue;
-        else if (table.pages[i].bios) 
-            list_add_tail(&bios_free_list, &table.pages[i].entry);
-        else if (table.pages[i].isa)
-            list_add_tail(&isa_free_list, &table.pages[i].entry);
-        else 
-            list_add_tail(&free_list, &table.pages[i].entry);
+        page_insert_free_list(&table.pages[i]);
     }
 }
 
@@ -153,6 +165,19 @@ _init void page_map_table(void)
     page_construct_lists();
 }
 
+_init void page_use(const paddr_t addr)
+{
+    page_info_t *page = page_get(addr);
+    if (page == NULL)
+        panic("Page %p is out of range and cannot be used", page);
+    if (page->reserved)
+        panic("Page %p is reserved and cannot be used", page);
+    if (page->count != 0)
+        panic("Page %p is already used", page);
+    list_remove(&page->entry);
+    page->count = 1;
+}
+
 /**
  * @brief Initialise the page allocator.
  * 
@@ -172,6 +197,7 @@ _init void page_setup(struct mb_info *info)
 
     // Initialize page info array
     for (size_t i = 0; i < table.nb_pages; i++) {
+        spin_init(&table.pages[i].lock);
         table.pages[i].reserved = 1;
         table.pages[i].count = 0;
         table.pages[i].flags = 0;
@@ -187,16 +213,26 @@ _init void page_setup(struct mb_info *info)
 
     // Yeeep ! We can allocate pages now
     // TODO: reserve memory used by modules
-    page_reserve_interval(0, PAGE_SIZE);
-    page_reserve_interval(0x100000, end - KERNEL_BASE);
-    page_reserve_area(table.pages, table.nb_pages * sizeof(page_info_t));
+    page_reserve(0);
+    page_use_interval(0x100000, (paddr_t) end - KERNEL_BASE);
+    page_use_area(table.pages, table.nb_pages * sizeof(page_info_t));
 }
 
-static struct page_info *page_get(paddr_t paddr)
+/**
+ * @brief Mark a page as reserved (cannot be allocated)
+ * TODO: Only use this function at startup
+ * @param page Address of the page
+ */
+_init void page_reserve(const paddr_t addr)
 {
-    if (paddr >= table.nb_pages * PAGE_SIZE)
-        return NULL;
-    return &table.pages[page_address_to_index(paddr)];
+    page_info_t *const page = page_get(addr);
+    if (page == NULL)
+        panic("Page %p is out of range and cannot be reserved", page);
+    if (page->count)
+        panic("Page %p is used and cannot be reserved", page);
+
+    list_remove(&page->entry);
+    page->reserved = 1;
 }
 
 /**
@@ -210,33 +246,18 @@ static void page_clear(paddr_t paddr)
 
     paging_unmap_page((vaddr_t) buffer);
     paging_map_page((vaddr_t) buffer, paddr, PAGING_WRITE, PAGING_PRESENT);
-    memset(buffer, 0, PAGE_SIZE);
+    memzero(buffer, PAGE_SIZE);
 }
 
 /**
- * @brief Mark a page as reserved (cannot be allocated)
- * @param page Address of the page
- */
-_export paddr_t page_reserve(const paddr_t page)
-{
-    const size_t index = page_address_to_index(page);
-    if (index >= table.nb_pages)
-        panic("Page %p is out of range and cannot be reserved", page);
-    if (table.pages[index].count)
-        panic("Page %p is used and cannot be reserved", page);
-
-    list_remove(&table.pages[index].entry);
-    table.pages[index].reserved = 1;
-    return page;
-}
-
-/**
- * @brief Get the value of the reference counter of a page
+ * @brief Get the value of the reference counter of a page. To use this
+ * function correctly, you must first lock the page with page_lock
+ * 
  * @param addr Address of the page
  * @return The value of the reference counter, or -1 if the page doesn't have 
  * a reference counter (i.e. doesn't exist or are reserved)
  */
-_export int page_get_counter(const paddr_t addr)
+_export int page_counter(const paddr_t addr)
 {
     const page_info_t *const page = page_get(PAGE_ALIGN(addr));
     if (page == NULL || page->reserved)
@@ -244,47 +265,17 @@ _export int page_get_counter(const paddr_t addr)
     return page->count;
 }
 
-/**
- * @brief Allows to free a page marked as reserved.I hope you know what
- * you are doing or the whole system will explode horribly !
- * However, this function cannot free a page that is higher than the last
- * page of free real RAM, because it is not included in the page information
- * table.
- * @param addr Address of the page to unreserve
- * @return int 0 on success, -1 on failure
- */
-_export int page_unreserve(const paddr_t addr)
-{
-    page_info_t *const page = page_get(PAGE_ALIGN(addr));
-    if (page == NULL || !page->reserved)
-        return -1;
-
-    spin_lock(&lock);
-    page->reserved = 0;
-    list_entry_init(&page->entry);
-    if (page->bios)
-        list_add_head(&page->entry, &bios_free_list);
-    else if (page->isa)
-        list_add_head(&page->entry, &isa_free_list);
-    else
-        list_add_head(&page->entry, &free_list);
-    spin_unlock(&lock);
-    return 0;
-}
 
 /**
  * Incremente the reference counter of a page.
  * @param page The physical address of the page.
  * @return The physical address of the page, aligned to PAGE_SIZE.
  */
-_export paddr_t page_reference(const paddr_t addr)
+_export void page_reference(const paddr_t addr)
 {
-    const paddr_t paddr = PAGE_ALIGN(addr);
-    page_info_t *const page = page_get(paddr);
-    if (page->count == 0)
+    page_info_t *const page = page_get(addr);
+    if (page->count++ == 0)
         panic("Trying to reference a free page");
-    page->count++;
-    return paddr;
 }
 
 /**
@@ -331,13 +322,32 @@ _export void page_free(const paddr_t addr)
     if (page->reserved)
         panic("Trying to free a reserved page");
 
+    spin_lock(&page->lock);
     if (--page->count == 0) {
         list_remove(&page->entry);
-        if (page->bios)
-            list_add_head(&page->entry, &bios_free_list);
-        else if (page->isa)
-            list_add_head(&page->entry, &isa_free_list);
-        else
-            list_add_head(&page->entry, &free_list);
+        page_insert_free_list(page);
     }
+    spin_unlock(&page->lock);
+}
+
+_export int page_unlock(const paddr_t addr)
+{
+    page_info_t *const page = page_get(PAGE_ALIGN(addr));
+    if (page->count == 0) 
+        panic("Trying to unlock a free page");
+    if (page->reserved)
+        panic("Trying to unlock a reserved page");
+    spin_unlock(&page->lock);
+    return 0;
+}
+
+_export int page_lock(const paddr_t addr)
+{
+    page_info_t *const page = page_get(PAGE_ALIGN(addr));
+    if (page->count == 0) 
+        panic("Trying to lock a free page");
+    if (page->reserved)
+        panic("Trying to lock a reserved page");
+    spin_lock(&page->lock);
+    return 0;
 }

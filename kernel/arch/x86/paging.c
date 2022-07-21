@@ -43,7 +43,7 @@ static _init void paging_map_page_helper(
         pde->present = 1;
         pde->write = 1;
         pde->user = 0;
-        memset(pt, 0, PAGE_SIZE);
+        memzero(pt, PAGE_SIZE);
     }
 
     pte_t *const pte = (pte_t *const) (
@@ -76,7 +76,7 @@ static _init void paging_map_interval_helper(
 
 _init void paging_remap_kernel(void)
 {
-    memset(kernel_pd, 0, PAGE_SIZE);
+    memzero(kernel_pd, PAGE_SIZE);
 
     const vaddr_t bss_start = align((vaddr_t) &_bss_start, PAGE_SIZE);
     const vaddr_t data_start = align((vaddr_t) &_data_start, PAGE_SIZE);
@@ -138,25 +138,32 @@ _init void paging_remap_kernel(void)
         PAGING_READ | PAGING_WRITE,
         PAGING_PRESENT);
 
+    // Mirroring
+    const paddr_t kernel_pd_paddr = (paddr_t) kernel_pd - KERNEL_BASE;
+    pde_set_address(&kernel_pd[PAGING_MIRRORING_INDEX], kernel_pd_paddr);
+    kernel_pd[PAGING_MIRRORING_INDEX].present = 1;
+    kernel_pd[PAGING_MIRRORING_INDEX].write = 1;
+
+    // Set CR3 to the new page directory
+    set_cr3(kernel_pd_paddr);
+
     // Preallocate all kernel page directory entries
-    for (unsigned int i = pd_offset(KERNEL_BASE); i < 1023; i++) {
+    for (uint_t i = pd_offset(KERNEL_BASE); i < 1023; i++) {
         if(kernel_pd[i].present)
             continue;
-        
+
         const paddr_t page = page_alloc(PAGE_CLEAR);
         pde_set_address(&kernel_pd[i], page);
         kernel_pd[i].present = 1;
         kernel_pd[i].write = 1;
     }
+    flush_tlb();
+}
 
-    // Mirroring
-    const paddr_t kernel_pd_paddr = (paddr_t) kernel_pd - KERNEL_BASE;
-    pde_set_address(&kernel_pd[1023], kernel_pd_paddr);
-    kernel_pd[1023].present = 1;
-    kernel_pd[1023].write = 1;
-
-    // Set CR3 to the new page directory
-    set_cr3(kernel_pd_paddr);
+_init void paging_clear_userspace(void)
+{
+    for (uint_t i = 0; i < pd_offset(KERNEL_BASE); i++)
+        pde_clear(&kernel_pd[i]);
 }
 
 /**
@@ -196,7 +203,7 @@ pte_t *paging_get_pte(const vaddr_t addr)
  * @brief Get the physique address of a virtual address in the current
  * address space
  * 
- * @param vaddr Address to get the physical address for, must be aligned
+ * @param vaddr Address to get the physical address for, should be aligned
  * on a page boundary
  * @return paddr_t Physical address mapped to the given virtual address,
  * or 0 if address is not mapped
@@ -210,8 +217,66 @@ paddr_t paging_get_paddr(const vaddr_t vaddr)
 }
 
 /**
+ * @brief Create a copy of a page directory. The page directory entries are
+ * copied, but the page tables are not: There are marked as not present and
+ * as not writable: this allow to do Copy-on-Write
+ * 
+ * @param src The virtual address of the source page directory. Must be aligned
+ * on a page boundary
+ * @param dst The virtual address of the destination page directory. Must be
+ * aligned on a page boundary
+ */
+void paging_clone_pd(const vaddr_t src, const vaddr_t dst)
+{
+    paging_creat_pd(dst);
+    pde_t *const s = (pde_t *) src;
+    pde_t *const d = (pde_t *) dst;
+    for (uint_t i = 0; i < pd_offset(KERNEL_BASE); i++) {
+        page_reference(pde_get_address(&s[i]));
+        s[i].present = s[i].write = 0;
+        pde_copy(&d[i], &s[i]);
+    }
+}
+
+void paging_destroy_userspace(void)
+{
+    for (uint_t i = 0; i < pd_offset(KERNEL_BASE); i++) {
+        const pde_t *pde = paging_get_pde(i << 22);
+        const paddr_t pt_paddr = pde_get_address(pde);
+        if (!pde->present)
+            continue;
+
+        // If the page table is referenced several times, we do
+        // not release the pages it contains because it is still 
+        // used by other processes
+        page_lock(pt_paddr);
+        if(page_counter(pt_paddr) == 1) {
+            for (int j = 0; j < 1024; j++) {
+                const pte_t *pte = paging_get_pte(i << 22 | j << 12);
+                if (pte->present)
+                    continue;
+                page_free(pte_get_address(pte));
+            }
+        }
+        page_unlock(pt_paddr);
+        page_free(pt_paddr);
+    }
+}
+
+void paging_creat_pd(const vaddr_t dst)
+{
+    pde_t *pd = (pde_t *) dst;
+    memzero(pd, PAGE_SIZE);
+    pd_set_mirroring(pd);
+}
+
+/**
  * @brief Map a physical address to a virtual address in the current address
  * space
+ * 
+ * TODO: Reduce invlpg count (invlpg is expensive and called multiple times
+ * when calling paging_set_rights() and paging_set_acess()) and verify if we
+ * use invlpg correctly
  * 
  * @param vaddr Where to map the physical address
  * @param paddr Physical address to map
@@ -357,52 +422,4 @@ _export int paging_unmap_page(const vaddr_t vaddr)
     pte_clear(pte);
     invlpg(vaddr);
     return page_addr;
-}
-
-_export void paging_clone_pd(const vaddr_t src, const vaddr_t dst)
-{
-    memcpy(dst, src, PAGE_SIZE);
-    paging_creat_kernelspace(dst);
-}
-
-_export void paging_creat_kernelspace(const vaddr_t src)
-{
-    pde_t *pd = (pde_t *) src;
-    memset(pd, 0, pd_offset(KERNEL_BASE) * sizeof(pde_t));
-    memcpy(
-        &pd[pd_offset(KERNEL_BASE)],
-        &kernel_pd[pd_offset(KERNEL_BASE)],
-        255 * sizeof(pde_t));
-
-    // Mirroring
-    pde_set_address(&pd[1023], paging_get_paddr(pd));
-    pd[1023].present = 1;
-    pd[1023].write = 1;
-}
-
-_export void paging_creat_userspace(const vaddr_t src)
-{
-    pde_t *pd = (pde_t *) src;
-    memset(pd, 0, pd_offset(KERNEL_BASE) * sizeof(pde_t));
-}
-
-_export void paging_destroy_userspace(void)
-{
-    for (int i = 0; i < pd_offset(KERNEL_BASE); i++) {
-        const pte_t *pde = paging_get_pde(i << 22);
-        if (!pde->present)
-            continue;
-        for (int j = 0; j < 1024; j++) {
-            const pte_t *pte = paging_get_pte(i << 22 | j << 12);
-            if (pte->present)
-                continue;
-            page_free(pte_get_address(pte));
-        }
-    }
-}
-
-_export void paging_creat_pd(const vaddr_t pd)
-{
-    paging_creat_userspace(pd);
-    paging_creat_kernelspace(pd);
 }

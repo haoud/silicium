@@ -20,28 +20,35 @@
 #include <kernel.h>
 #include <arch/x86/memory.h>
 
-#define KERNEL_BASE_PAGE (KERNEL_BASE >> PAGE_SHIFT)
-#define KERNEL_BASE_PAGE_INDEX (KERNEL_BASE_PAGE >> 10)
+#define KERNEL_BASE_PAGE        (KERNEL_BASE >> PAGE_SHIFT)
+#define KERNEL_BASE_PAGE_INDEX  (KERNEL_BASE_PAGE >> 10)
 
 // Mirroring
-#define PAGING_MIRRORING_INDEX 1023
-#define PAGING_MIRRORING_BASE 0xFFC00000
-#define PAGING_MIRRORING_PD_MASK 0xFFC00000
-#define PAGING_MIRRORING_PT_MASK 0X003FF000
+#define PAGING_MIRRORING_INDEX      1023
+#define PAGING_MIRRORING_BASE       0xFFC00000
+#define PAGING_MIRRORING_PD_MASK    0xFFC00000
+#define PAGING_MIRRORING_PT_MASK    0X003FF000
 
 #define mirroring(addr) (((uintptr_t)(addr) > PAGING_MIRRORING_BASE))
+#define pd_set_mirroring(pd) ({             \
+    pde_set_address(                        \
+        &pd[PAGING_MIRRORING_INDEX],        \
+        paging_get_paddr((vaddr_t)pd));     \
+    pd[PAGING_MIRRORING_INDEX].present = 1; \
+    pd[PAGING_MIRRORING_INDEX].write = 1;   \
+})
 
-#define PAGING_NONE 0x00
+#define PAGING_NONE     0x00
 
 // Maping access flags
-#define PAGING_READ 0x01
-#define PAGING_WRITE 0x02
-#define PAGING_EXECUTE 0x04
-#define PAGING_USER 0x08
+#define PAGING_READ     0x01
+#define PAGING_WRITE    0x02
+#define PAGING_EXECUTE  0x04
+#define PAGING_USER     0x08
 
 // Mapping flags
-#define PAGING_PRESENT 0x01
-#define PAGING_GLOBAL 0x02
+#define PAGING_PRESENT  0x01
+#define PAGING_GLOBAL   0x02
 
 #define pd_offset(vaddr) (((vaddr) & 0xFFC00000) >> 22)
 #define pt_offset(vaddr) (((vaddr) & 0x003FF000) >> 12)
@@ -50,15 +57,17 @@
 
 // Page directory macros
 #define pde_set_address(pde, paddr) ((pde)->address = ((paddr) >> 12))
-#define pde_get_address(pde) ((pde)->address << 12)
-#define pde_set(pde, value) ((pde)->value = value)
-#define pde_clear(pde) ((pde)->value = 0)
+#define pde_get_address(pde)        ((pde)->address << 12)
+#define pde_set(pde, value)         ((pde)->value = value)
+#define pde_copy(dst, src)          ((dst)->value = (src)->value)
+#define pde_clear(pde)              ((pde)->value = 0)
 
 // Page table macros
-#define pte_set_address(pte, addr) ((pte)->address = ((addr) >> 12))
-#define pte_get_address(pte) ((pte)->address << 12)
-#define pte_set(pte, value) ((pte)->value = value)
-#define pte_clear(pte) ((pte)->value = 0)
+#define pte_set_address(pte, addr)  ((pte)->address = ((addr) >> 12))
+#define pte_get_address(pte)        ((pte)->address << 12)
+#define pte_set(pte, value)         ((pte)->value = value)
+#define pte_copy(dst, src)          ((dst)->value = (src)->value)
+#define pte_clear(pte)              ((pte)->value = 0)
 
 typedef uint32_t vaddr_t;
 typedef uint32_t paddr_t;
@@ -100,13 +109,11 @@ typedef struct pte {
     };
 } _packed pte_t;
 
-#define set_cr3(cr3) asm volatile("mov cr3, %0" :: "r"(cr3))
-#define invlpg(vaddr) asm volatile("invlpg [%0]" :: "r"(vaddr) \
-                                   : "memory")
+#define set_cr3(cr3)    asm volatile("mov cr3, %0" :: "r"(cr3) : "memory")
+#define invlpg(vaddr)   asm volatile("invlpg [%0]" :: "r"(vaddr) : "memory")
 #define flush_tlb(void)               \
     asm volatile("mov eax, cr3 \n"    \
-                 "mov cr3, eax \n" :: \
-                     : "eax")
+                 "mov cr3, eax \n" ::: "eax")
 #define get_cr2() ({           \
     vaddr_t x;                 \
     asm volatile("mov %0, cr2" \
@@ -115,8 +122,12 @@ typedef struct pte {
 })
 
 _init void paging_remap_kernel(void);
+_init void paging_clear_userspace(void);
 
 paddr_t paging_get_paddr(const vaddr_t vaddr);
+void paging_clone_pd(const vaddr_t src, const vaddr_t dst);
+void paging_creat_pd(const vaddr_t dst);
+void paging_destroy_userspace(void);
 
 /* Paging interface */
 _export int paging_set_rights(const vaddr_t vaddr, const int access);
@@ -129,9 +140,3 @@ _export int paging_map_page(
     const paddr_t paddr,
     const int access,
     const int flags);
-
-_export void paging_clone_pd(const vaddr_t src, const vaddr_t dst);
-_export void paging_creat_kernelspace(const vaddr_t src);
-_export void paging_creat_userspace(const vaddr_t src);
-_export void paging_creat_pd(const vaddr_t pd);
-_export void paging_destroy_userspace(void);

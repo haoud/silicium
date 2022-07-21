@@ -46,7 +46,7 @@ static const char *level_icon_colored[] = {
 	"\033[1m\033[31m[!!!]\033[0m",
 };
 
-static int log_level = LOG_LEVEL;
+static const int log_level = LOG_LEVEL;
 static DECLARE_SPINLOCK(lock);
 
 static void putb(const char c)
@@ -62,7 +62,7 @@ static void print(const char *s)
 
 static void printf(const char *const fmt, ...)
 {
-	static char str[LOG_MAX_LEN];
+	char str[LOG_MAX_LEN];
 
 	va_list arg;
 	va_start(arg, fmt);
@@ -71,17 +71,12 @@ static void printf(const char *const fmt, ...)
 	print(str);
 }
 
-void log_set_level(const int level)
-{
-	log_level = level;
-}
-
 void log(const int gravity, const char *const fmt, ...)
 {
+	char str[LOG_MAX_LEN];
 	if (gravity < log_level)
 		return;
 	spin_lock(&lock);
-	static char str[LOG_MAX_LEN];
 
 	va_list arg;
 	va_start(arg, fmt);

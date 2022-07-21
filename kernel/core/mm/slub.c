@@ -338,7 +338,7 @@ _export void *slub_allocate(slub_allocator_t *allocator)
         }
 
         // If we need to allocate a slub to respect the min_free count, do it
-        if (allocator->free_count <= allocator->min_free) {
+        if (allocator->free_count == allocator->min_free) {
             if (slub_creat_and_add(allocator) < 0) {
                 spin_unlock(&allocator->lock);
                 return NULL;

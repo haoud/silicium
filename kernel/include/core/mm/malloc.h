@@ -26,13 +26,6 @@
 #define malloc(size) kmalloc(size, GFP_KERNEL)
 #define free(obj) kfree(obj)
 
-typedef struct malloc_slub {
-    unsigned int length;
-    slub_allocator_t *allocator;
-    unsigned int obj_per_slub;
-    unsigned int initial_slub_count;
-} malloc_slub_t;
-
 _init void kmalloc_setup(void);
-_malloc void *kmalloc(size_t size, int flags);
+_malloc void *kmalloc(const size_t size, const int flags);
 void kfree(void *obj);

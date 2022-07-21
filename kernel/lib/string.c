@@ -53,7 +53,7 @@ char *strncpy(char *dst, const char *src, size_t len)
 {
 	size_t size = strlen(src);
 	if (size < len)
-		memset(dst + size, '\0', len - size);
+		memzero(dst + size, len - size);
 	return memcpy(dst, src, min(len, size));
 }
 
