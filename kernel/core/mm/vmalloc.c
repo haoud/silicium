@@ -74,9 +74,9 @@ _init void vmalloc_setup(void)
  * 
  * @param size Size of the area to allocate, must be a multiple of PAGE_SIZE
  * @param flags Flags to control the allocation
- * @return _export* 
+ * @return The memory allocated, or 0 if the request cannot be done
  */
-_export void *vmalloc(size_t size, int flags)
+_export vaddr_t vmalloc(size_t size, int flags)
 {
 #ifndef CONFIG_DISABLE_CHECKS
     size = align(size, PAGE_SIZE);
@@ -130,7 +130,7 @@ _export void *vmalloc(size_t size, int flags)
     }
 
     spin_unlock(&lock);
-    return (void *) vma->base;
+    return vma->base;
 }
 
 /**
@@ -139,10 +139,9 @@ _export void *vmalloc(size_t size, int flags)
  * 
  * @param ptr Base address of the memory area to free.
  */
-_export void vmfree(void *ptr)
+_export void vmfree(vaddr_t addr)
 {
     spin_lock(&lock);
-    const vaddr_t addr = (vaddr_t) ptr;
     list_foreach(&used_list, entry) {
         vmarea_t *const vma = list_entry(entry, vmarea_t, node);
         if (vma->base == addr) {

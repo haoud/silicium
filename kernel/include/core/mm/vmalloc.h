@@ -22,15 +22,18 @@
 #include <lib/spinlock.h>
 
 // TODO: use a wider and more precise range of addresses
-#define VMALLOC_START 0xD0000000
-#define VMALLOC_END 0xF0000000
+#define VMALLOC_START   0xD0000000
+#define VMALLOC_END     0xF0000000
 
 #define VMALLOC_NONE    0x00
 #define VMALLOC_MAP     0x01
 
 #define VMALLOC_VMAREA_MIN_FREE 0
 #define VMALLOC_VMAREA_PER_SLUB 64
-#define VMALLOC_VMAREA_ALIGN 16
+#define VMALLOC_VMAREA_ALIGN    16
+
+#define vmallocp(size, flags)   ((void *) vmalloc(size, flags))
+#define vmfreep(ptr)            vmfree((void *) ptr)
 
 typedef struct vmarea {
     vaddr_t base;
@@ -41,5 +44,5 @@ typedef struct vmarea {
 
 _init void vmalloc_setup(void);
 
-_export void *vmalloc(size_t size, int flags);
-_export void vmfree(void *ptr);
+_export vaddr_t vmalloc(size_t size, int flags);
+_export void vmfree(vaddr_t addr);

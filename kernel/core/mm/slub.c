@@ -149,7 +149,7 @@ static slub_t *slub_creat(slub_allocator_t *allocator, size_t length)
     assert(PAGE_ALIGNED(length));
     assert(!null(allocator));
 
-    const vaddr_t start = (vaddr_t) vmalloc(length, VMALLOC_MAP);
+    const vaddr_t start = vmalloc(length, VMALLOC_MAP);
     if (start == 0)
         return NULL;
 
