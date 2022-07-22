@@ -31,6 +31,7 @@ typedef atomic_uint uatomic_t;
 typedef atomic_int atomic_t;
 typedef uint32_t vaddr_t;
 typedef uint32_t paddr_t;
+typedef uint32_t addr_t;
 
 typedef unsigned int uint_t;
 

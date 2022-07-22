@@ -1,4 +1,5 @@
 export INSTALL_DIR = $(shell pwd)/iso/boot
+export INITRD_DIR = $(shell pwd)/initrd
 export TOOLCHAIN = $(shell pwd)/toolchain
 export PATH := $(TOOLCHAIN)/bin:$(PATH)
 
@@ -20,14 +21,19 @@ export LDFLAGS = -march=i686 -flto -nostdlib
 # AS flags
 export ASFLAGS = -march=i686
 
-.PHONY: all kernel install-kernel make-iso lauch clean
+.PHONY: all kernel initrd install-kernel make-iso lauch clean
 
-all: kernel install-kernel make-iso
+all: kernel initrd install-kernel make-iso
 
 run: all lauch
 
 kernel:
 	make -C kernel all
+
+initrd:
+	cd initrd && \
+	tar -cvf $(INSTALL_DIR)/initrd * && \
+	cd ..
 
 install-kernel:
 	make -C kernel install

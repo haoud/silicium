@@ -17,6 +17,7 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <kernel.h>
+#include <core/ustar.h>
 #include <arch/x86/cpu.h>
 #include <core/mm/page.h>
 
@@ -40,8 +41,18 @@ _init void free_init_sections(void)
     cpu_stop();
 }
 
-_init void startup()
+_init void startup(const char *initrd)
 {
+    // TODO: Use a config file to load modules and to configure the kernel
+    // Load modules from the initrd
+    if (initrd != NULL) {
+        ustar_entry_t *test = ustar_lookup(initrd, "test.txt");
+        if (test == NULL)
+            panic("Failed to find msg in initrd");
+        else
+            info("'%s'", test->data);
+    }
+    
     info("Boot completed !");
     free_init_sections();
 }

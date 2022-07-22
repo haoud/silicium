@@ -9,6 +9,7 @@ silicium
 bin
 sysroot
 toolchain
+initrd
 
 # Ignore log file
 *.log

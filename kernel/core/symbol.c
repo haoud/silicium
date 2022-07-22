@@ -127,4 +127,5 @@ int symbol_add(const char *name, const vaddr_t value)
     spin_lock(&lock);
     hashmap_insert(&symbol_table, (unsigned int) symbol->name, &symbol->node);
     spin_unlock(&lock);
+    return 0;
 }

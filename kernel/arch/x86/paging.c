@@ -84,11 +84,11 @@ _init void paging_remap_kernel(void)
     const vaddr_t text_start = align((vaddr_t) &_text_start, PAGE_SIZE);
     const vaddr_t rodata_start = align((vaddr_t) &_rodata_start, PAGE_SIZE);
 
-    const int bss_length = (int) &_bss_end - bss_start;
-    const int data_length = (int) &_data_end - data_start;
-    const int init_length = (int) &_init_end - init_start;
-    const int text_length = (int) &_text_end - text_start;
-    const int rodata_length = (int) &_rodata_end - rodata_start;
+    const int bss_length = (vaddr_t) &_bss_end - bss_start;
+    const int data_length = (vaddr_t) &_data_end - data_start;
+    const int init_length = (vaddr_t) &_init_end - init_start;
+    const int text_length = (vaddr_t) &_text_end - text_start;
+    const int rodata_length = (vaddr_t) &_rodata_end - rodata_start;
 
     // Identity map the first 3 GO
     for (unsigned int i = 0; i < pd_offset(KERNEL_BASE); i++) {

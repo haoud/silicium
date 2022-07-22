@@ -17,6 +17,8 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <multiboot.h>
+#include <lib/string.h>
+#include <lib/memory.h>
 #include <core/symbol.h>
 #include <core/mm/page.h>
 #include <core/mm/slub.h>
@@ -29,7 +31,7 @@
 #include <arch/x86/paging.h>
 #include <arch/x86/exception.h>
 
-extern void startup(void);
+extern void startup(const char *initrd);
 
 _init void start(struct mb_info *info)
 {
@@ -45,6 +47,22 @@ _init void start(struct mb_info *info)
     vmalloc_setup();
     kmalloc_setup();
     symbol_init(info);
+
+    // Find the initrd inside the multiboot info structure module
+    struct mb_module *module = mb_get_module(info, "initrd");
+
+    // Allocate the initrd memory and copy it to the kernel memory
+    const char *initrd = NULL;
+    if (module != NULL) {
+        const size_t length = module->mod_end - module->mod_start;
+        initrd = malloc(length);
+        if (initrd == NULL)
+            panic("Failed to allocate memory for initrd");
+        memcpy(initrd, module->mod_start, length);
+    } else {
+        warn("No initrd found");
+    }
+
     paging_clear_userspace();
-    startup();
+    startup(initrd);
 }

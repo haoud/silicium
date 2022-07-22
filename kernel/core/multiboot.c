@@ -19,6 +19,18 @@
 #include <multiboot.h>
 #include <lib/string.h>
 
+_init struct mb_module *mb_get_module(struct mb_info *mbi, char *name)
+{
+    struct mb_module *module = (struct mb_module *) mbi->mods_addr;
+    for (unsigned int i = 0; i < mbi->mods_count; i++) {
+        if (strcmp((char *) module[i].string, name) == 0) {
+            return &module[i];
+        }
+    }
+
+    return NULL;
+}
+
 _init elf_shdr_t *mb_get_section(struct mb_info *mbi, char *name)
 {
     elf_shdr_t *shdr_table = (elf_shdr_t *) mbi->elf_sec.addr;

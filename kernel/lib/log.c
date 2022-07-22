@@ -73,6 +73,7 @@ static void printf(const char *const fmt, ...)
 
 void log(const int gravity, const char *const fmt, ...)
 {
+#ifdef CONFIG_LOG
 	char str[LOG_MAX_LEN];
 	if (gravity < log_level)
 		return;
@@ -89,6 +90,6 @@ void log(const int gravity, const char *const fmt, ...)
 #else
 	printf("%s %s\n", level_icon_colored[gravity], str);
 #endif
-
 	spin_unlock(&lock);
+#endif
 }

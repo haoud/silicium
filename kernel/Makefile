@@ -22,7 +22,7 @@ OBJFILES += $(CFILES:.c=.o)
 
 .PHONY: all clean
 
-all: $(KERNEL) 
+all: $(KERNEL)
 
 $(KERNEL): $(OBJFILES)
 	$(LD) $(LDFLAGS) $^ -o $@ -lgcc

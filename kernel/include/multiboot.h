@@ -139,4 +139,5 @@ struct mb_info
     } fb_data;
 } _packed;
 
+_init struct mb_module *mb_get_module(struct mb_info *mbi, char *name);
 _init elf_shdr_t *mb_get_section(struct mb_info *mbi, char *name);
