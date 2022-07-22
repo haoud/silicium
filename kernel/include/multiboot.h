@@ -19,6 +19,7 @@
 #pragma once
 #include <kernel.h>
 #include <lib/list.h>
+#include <core/elf.h>
 
 #define MB_HEADER_MAGIC 0x1BADB002
 #define MB_BOOTLOADER_MAGIC 0x2BADB002
@@ -137,3 +138,5 @@ struct mb_info
         } color_mask;
     } fb_data;
 } _packed;
+
+_init elf_shdr_t *mb_get_section(struct mb_info *mbi, char *name);
