@@ -114,8 +114,8 @@ static _init void page_array_location(const struct mb_mmap *const entry)
     if (table.pages)
         return;
 
-    // TODO: Find a better location
-    table.pages = (void *) (end - KERNEL_BASE);
+    // FIXME: Find a proper location and fix this hack
+    table.pages = (void *) (end - KERNEL_BASE + 0x100000);
 }
 
 /**
@@ -212,10 +212,12 @@ _init void page_setup(struct mb_info *info)
     page_construct_lists();
 
     // Yeeep ! We can allocate pages now
-    // TODO: reserve memory used by modules
     page_reserve(0);
     page_use_interval(0x100000, (paddr_t) end - KERNEL_BASE);
     page_use_area(table.pages, table.nb_pages * sizeof(page_info_t));
+
+    // TODO: reserve memory used by modules
+    // TODO: reserve memory used by elf tables
 }
 
 /**

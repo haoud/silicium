@@ -1,10 +1,9 @@
 .intel_syntax noprefix
 
 .section .text
-.global ret_from_interrupt
-.global default_int
-.align 4
 
+.align 4
+.global default_int
 default_int:
     push 0
     push 0
@@ -23,8 +22,9 @@ default_int:
 	push esp
 	# call exception_handler
 	add esp, 4
-    jmp ret_from_interrupt
 
+.global ret_from_interrupt
+.type ret_from_interrupt, @function
 ret_from_interrupt:
     popd ss
 	popd gs

@@ -29,7 +29,7 @@
 
 typedef struct hash_node {
     struct list_head node;
-} hash_head_t;
+} hash_node_t;
 
 typedef struct hashmap {
     unsigned int length;
@@ -37,6 +37,7 @@ typedef struct hashmap {
 } hashmap_t;
 
 void hashmap_destroy(hashmap_t *map);
+void hashmap_node_init(hash_node_t *node);
 void hashmap_remove(struct hash_node *head);
 int hashmap_creat(hashmap_t *map, const unsigned int length);
 void hashmap_insert(hashmap_t *map, unsigned int key, struct hash_node *head);

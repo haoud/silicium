@@ -16,35 +16,22 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
+#include <kernel.h>
 #include <multiboot.h>
-#include <core/symbol.h>
-#include <core/mm/page.h>
-#include <core/mm/slub.h>
-#include <core/mm/malloc.h>
-#include <core/mm/vmalloc.h>
-#include <arch/x86/gdt.h>
-#include <arch/x86/idt.h>
-#include <arch/x86/pic.h>
-#include <arch/x86/pit.h>
-#include <arch/x86/paging.h>
-#include <arch/x86/exception.h>
+#include <lib/hashmap.h>
 
-extern void startup(void);
+#define SYMBOLS_HASHMAP_LENGTH 128
 
-_init void start(struct mb_info *info)
-{
-    pic_remap();
-    gdt_install();
-    idt_install();
-    exception_install();
-    pit_configure();
-    page_setup(info);
-    paging_remap_kernel();
-    page_map_table();
-    slub_setup();
-    vmalloc_setup();
-    kmalloc_setup();
-    symbol_init(info);
-    paging_clear_userspace();
-    startup();
-}
+typedef struct symbol {
+    struct hash_node node;
+    const char *name;
+    vaddr_t value;
+} symbol_t;
+
+_init void symbol_init(struct mb_info *mb_info);
+
+int symbol_remove(const char *name);
+bool symbol_exists(const char *name);
+struct symbol *symbol_get(const char *name);
+int symbol_add(const char *name, const vaddr_t value);

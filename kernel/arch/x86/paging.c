@@ -36,7 +36,7 @@ static _init void paging_map_page_helper(
 {
     pde_t *const pde = &kernel_pd[pd_offset(vaddr)];   
     if (!pde->present) {
-        const paddr_t pt = page_alloc(PAGE_ISA);
+        const paddr_t pt = page_alloc(PAGE_NONE);
         if (null(pt))
             panic("Failed to allocate a page");
         pde_set_address(pde, pt);
@@ -250,7 +250,7 @@ void paging_destroy_userspace(void)
         // not release the pages it contains because it is still 
         // used by other processes
         page_lock(pt_paddr);
-        if(page_counter(pt_paddr) == 1) {
+        if (page_counter(pt_paddr) == 1) {
             for (int j = 0; j < 1024; j++) {
                 const pte_t *pte = paging_get_pte(i << 22 | j << 12);
                 if (pte->present)
