@@ -20,6 +20,7 @@
 #include <lib/maths.h>
 #include <lib/string.h>
 #include <lib/memory.h>
+#include <core/mm/malloc.h>
 
 #ifdef CONFIG_VSNPRINTF_64BITS
 #define NUMBER_INT_MAX INT64_MAX
@@ -31,6 +32,16 @@ typedef uint64_t number_t;
 typedef uint32_t number_t;
 
 #endif
+
+char *strdup(const char *str)
+{
+	const size_t len = strlen(str);
+	char *copy = malloc(len + 1);
+	if (copy == NULL)
+		return NULL;
+	memcpy(copy, str, len + 1);
+	return copy;
+}
 
 size_t strlen(const char *str)
 {

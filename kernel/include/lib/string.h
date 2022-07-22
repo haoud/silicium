@@ -20,6 +20,7 @@
 #include <kernel.h>
 #include <stdarg.h>
 
+char *strdup(const char *str);
 size_t strlen(const char *str);
 char *strchr(const char *str, char c);
 char *strncpy(char *dst, const char *src, size_t len);
