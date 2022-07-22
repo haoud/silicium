@@ -28,9 +28,9 @@
  * @brief This file contains the code that manages the kernel space allocations.
  * The code here is very simple, not very powerful and incomplete but sufficient
  * for now.
- * @todo Use a red-black tree to limit the number of iterations to find an area
- * @todo Merge adjacent free memory areas
- * @todo Make the algorithm lock free or more scalable
+ * TODO: Use a red-black tree to limit the number of iterations to find an area
+ * TODO: Merge adjacent free memory areas
+ * TODO: Make the algorithm lock free or more scalable
  */
 
 static slub_allocator_t *allocator;

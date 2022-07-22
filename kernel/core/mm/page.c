@@ -222,7 +222,6 @@ _init void page_setup(struct mb_info *info)
 
 /**
  * @brief Mark a page as reserved (cannot be allocated)
- * TODO: Only use this function at startup
  * @param page Address of the page
  */
 _init void page_reserve(const paddr_t addr)

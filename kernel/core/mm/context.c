@@ -107,8 +107,9 @@ void mm_context_set(struct mm_context *context)
  * @brief Destroy a context. The context is destroyed only if it is not
  * used anymore, otherwise the usage counter is simply decremented.
  * 
- * WARNING: This function must be called when the context
- * is currently used  (ie loaded in cr3) 
+ * This function MUST be called when the context is currently loaded
+ * into the CPU : otherwise the contexte destroyed will be the current
+ * context !
  * 
  * @param context The context to destroy
  */
