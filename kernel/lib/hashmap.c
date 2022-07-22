@@ -33,6 +33,11 @@ void hashmap_destroy(hashmap_t *map)
     map->length = 0;
 }
 
+void hashmap_node_init(hash_node_t *node)
+{
+    list_entry_init(&node->node);
+}
+
 /**
  * @brief Create a hashmap with a given length.
  * 

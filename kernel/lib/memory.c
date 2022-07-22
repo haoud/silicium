@@ -48,8 +48,7 @@ void *_memmove(void *dst, const void *src, size_t len)
 						 : "cc");
 		dst8 += len;
 		src8 += len;
-	}
-	else {
+	} else {
 		asm volatile("cld" ::
 						 : "cc");
 	}
