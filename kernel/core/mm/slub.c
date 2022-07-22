@@ -40,7 +40,7 @@ static void slub_add_object_to_free_list(
     slub_t *const slub,
     const vaddr_t object)
 {
-    struct list_head *node = (struct list_head *)object;
+    struct list_head *node = (struct list_head *) object;
     list_entry_init(node);
     list_add_tail(&slub->free_objects, node);
 }
@@ -83,7 +83,7 @@ static void slub_init_free_list(slub_t *const slub)
     // Use free memory to store the linked list node
     const size_t obj_size = align(slub->object_size, slub->object_align);
     for (vaddr_t addr = slub->start;
-        addr + obj_size < slub->end;
+        addr + obj_size <= slub->end;
         addr += obj_size)
         slub_add_object_to_free_list(slub, addr);
 }
