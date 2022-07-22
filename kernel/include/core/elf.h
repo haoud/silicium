@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 #include <kernel.h>
 
 #define ELF_NIDENT	        16
