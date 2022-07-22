@@ -41,22 +41,27 @@ cd binutils-2.38
     --disable-werror \
     --with-sysroot=$SYSROOT > /dev/null
 make -j $(nproc) > /dev/null
-make install > /dev/null
+make install-strip > /dev/null
 
-# Compile gcc
-echo "Compiling gcc..."
+# Compile gcc and libstdc++
+echo "Compiling gcc and libstdc++..."
 cd ..
 mkdir -p gcc-12.1.0
 cd gcc-12.1.0
 ../../../src/gcc-12.1.0/configure \
     --target=$TARGET \
     --prefix=$PREFIX \
-    --with-sysroot=$SYSROOT
+    --with-sysroot=$SYSROOT \
     --enable-languages=c,c++ > /dev/null
-make all-gcc all-target-libgcc -j $(nproc) > /dev/null
-make install-gcc install-target-libgcc > /dev/null
-
-# Compile libstdc++
-echo "Compiling libstdc++..."
+make all-gcc -j $(nproc) > /dev/null
+make all-target-libgcc -j $(nproc) > /dev/null
 make all-target-libstdc++-v3 -j $(nproc) > /dev/null
-make install-target-libstdc++-v3 > /dev/null
+make install-strip-gcc > /dev/null
+make install-target-libgcc > /dev/null
+make install-strip-target-libstdc++-v3 > /dev/null
+
+# Cleaning build directory
+cd ..
+rm -rf gcc-12.1.0
+rm -rf binutils-2.38
+rm -rf musl-1.2.3

@@ -1,0 +1,12 @@
+diff '--color=auto' -ruN _musl-1.2.3/include/alltypes.h.in musl-1.2.3/include/alltypes.h.in
+--- _musl-1.2.3/include/alltypes.h.in	2022-04-07 19:12:40.000000000 +0200
++++ musl-1.2.3/include/alltypes.h.in	2022-07-21 17:43:36.914307843 +0200
+@@ -2,7 +2,7 @@
+ #define __BIG_ENDIAN 4321
+ #define __USE_TIME_BITS64 1
+ 
+-TYPEDEF unsigned _Addr size_t;
++TYPEDEF long unsigned _Addr size_t;
+ TYPEDEF unsigned _Addr uintptr_t;
+ TYPEDEF _Addr ptrdiff_t;
+ TYPEDEF _Addr ssize_t;

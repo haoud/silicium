@@ -92,7 +92,7 @@ _export vaddr_t vmalloc(size_t size, int flags)
     }
     if(vma == NULL) {
         spin_unlock(&lock);
-        return NULL;
+        return 0;
     }
 
     list_remove(&vma->node);
@@ -106,7 +106,7 @@ _export vaddr_t vmalloc(size_t size, int flags)
             list_remove(&vma->node);
             list_add_tail(&free_list, &vma->node);
             spin_unlock(&lock);
-            return NULL;
+            return 0;
         }
         new_vma->length = vma->length - size;
         new_vma->base = vma->base + size;
@@ -124,7 +124,7 @@ _export vaddr_t vmalloc(size_t size, int flags)
             list_remove(&vma->node);
             list_add_tail(&free_list, &vma->node);
             spin_unlock(&lock);
-            return NULL;
+            return 0;
         }
         vma->mapped = 1;
     }

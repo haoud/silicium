@@ -21,7 +21,7 @@ cd toolchain/build/binutils-2.38
     --disable-werror                \
     > /dev/null
 make -j $(nproc) > /dev/null
-make install > /dev/null
+make install-strip > /dev/null
 
 cd ../../..
 
@@ -35,4 +35,9 @@ cd toolchain/build/gcc-12.1.0
     --without-headers           \
     > /dev/null
 make all-gcc all-target-libgcc -j $(nproc) > /dev/null
-make install-gcc install-target-libgcc > /dev/null
+make install-strip-gcc install-strip-target-libgcc > /dev/null
+
+# Cleaning build directory
+cd ..
+rm -rf gcc-12.1.0
+rm -rf binutils-2.38

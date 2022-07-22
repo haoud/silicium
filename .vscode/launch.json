@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Kernel Debug",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceRoot}/iso/boot/silicium",
+        "miDebuggerServerAddress": "localhost:1234",
+        "args": [],
+        "stopAtEntry": false,
+        "targetArchitecture": "x86",
+        "cwd": "${workspaceRoot}",
+        "environment": [],
+        "externalConsole": true,
+        "MIMode": "gdb"
+      }
+    ]
+  }

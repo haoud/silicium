@@ -157,6 +157,11 @@ void simd_exception(struct cpu_state *cpu)
     panic("SIMD exception");
 }
 
+void default_exception(struct cpu_state *cpu)
+{
+    panic("Unknown exception %u", cpu->data);
+}
+
 void exception_handler(struct cpu_state *cpu)
 {
     assert(cpu->data < EXCEPTION_COUNT);
@@ -222,7 +227,7 @@ void exception_handler(struct cpu_state *cpu)
             simd_exception(cpu);
             break;
         default:
-            panic("Unknown exception %u", cpu->data);
+            default_exception(cpu);
             break;
     }
 }

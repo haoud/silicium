@@ -104,7 +104,7 @@ diff -ruN gcc-12.1.0/libstdc++-v3/crossconfig.m4 _gcc-12.1.0/libstdc++-v3/crossc
      GLIBCXX_CHECK_MATH_SUPPORT
 +    GLIBCXX_CHECK_STDLIB_SUPPORT
 +    ;;
-+  *-silicum*)
++  *-silicium*)
 +    GLIBCXX_CHECK_COMPILER_FEATURES
 +    GLIBCXX_CHECK_LINKER_FEATURES
 +    GLIBCXX_CHECK_MATH_SUPPORT

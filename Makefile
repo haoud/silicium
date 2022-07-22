@@ -36,8 +36,13 @@ make-iso:
 	mkdir -p bin
 	grub-mkrescue -o bin/silicium.iso iso
 
-lauch:
+lauch: lauch-bochs
+
+lauch-bochs:
 	bochs -f bochs.bxrc -q
+
+lauch-bochs-debug:
+	bin/bochs -f bochsd.bxrc -q
 
 clean:
 	make -C kernel clean

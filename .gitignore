@@ -7,4 +7,8 @@ silicium
 
 # Ignore some directories
 bin
+sysroot
 toolchain
+
+# Ignore log file
+*.log

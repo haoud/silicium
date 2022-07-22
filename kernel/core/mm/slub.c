@@ -155,7 +155,7 @@ static slub_t *slub_creat(slub_allocator_t *allocator, size_t length)
 
     slub_t *slub = slub_allocate_slub();
     if (slub == NULL) {
-        vmfree((void *) start);
+        vmfree(start);
         return slub;
     }
 

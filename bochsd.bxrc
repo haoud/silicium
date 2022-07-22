@@ -1,5 +1,6 @@
 # Bochs settings
-plugin_ctrl: unmapped=true, biosdev=true, speaker=true, extfpuirq=true, parallel=true, serial=true, iodebug=true
+plugin_ctrl: unmapped=true, biosdev=true, speaker=true, extfpuirq=true, parallel=true, serial=true
+gdbstub: enabled=1, port=1234
 config_interface: textconfig
 display_library: x
 memory: host=32, guest=32
