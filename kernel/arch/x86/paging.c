@@ -270,6 +270,23 @@ void paging_creat_pd(const vaddr_t dst)
     pd_set_mirroring(pd);
 }
 
+void paging_set_pd(const vaddr_t pd)
+{
+    set_cr3(paging_get_paddr(pd));
+}
+
+
+/**
+ * @brief Load the kernel page directory into the current address space
+ * This function is useful when a thread is destroyed and its page directory
+ * must be freed: This function can be called to load the kernel page 
+ * directory and free the thread's page directory without problems.
+ */
+void paging_use_kernel_pd(void)
+{
+    paging_set_pd((vaddr_t) kernel_pd);
+}
+
 /**
  * @brief Map a physical address to a virtual address in the current address
  * space

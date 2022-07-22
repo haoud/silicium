@@ -127,7 +127,9 @@ _init void paging_clear_userspace(void);
 paddr_t paging_get_paddr(const vaddr_t vaddr);
 void paging_clone_pd(const vaddr_t src, const vaddr_t dst);
 void paging_creat_pd(const vaddr_t dst);
+void paging_set_pd(const vaddr_t pd);
 void paging_destroy_userspace(void);
+void paging_use_kernel_pd(void);
 
 /* Paging interface */
 _export int paging_set_rights(const vaddr_t vaddr, const int access);

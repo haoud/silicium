@@ -17,21 +17,16 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <config.h>
 #include <kernel.h>
 
-#define PAGE_SIZE 4096
-#define PAGE_SHIFT 12
-#define PAGE_MASK ~(PAGE_SIZE - 1)
-#define PAGE_ALIGN(x) ((x) & PAGE_MASK)
-#define PAGE_ALIGNED(x) (((x) & ~PAGE_MASK) == 0)
+typedef struct mm_context {
+    atomic_t usage;
+    vaddr_t pd;
+} mm_context_t;
 
-#define KERNEL_BASE 0xC0000000
+struct mm_context *mm_context_clone(struct mm_context *context);
+struct mm_context *mm_context_create(void);
 
-#ifdef CONFIG_EXTRA_CHECKS
-#define null(addr) ((uintptr_t) (addr) < PAGE_SIZE)
-#else
-#define null(addr) (!(uintptr_t) (addr))
-#endif
-
-#define kernel_space(addr) ((uintptr_t) (addr) > KERNEL_BASE)
+void mm_context_use(struct mm_context *context);
+void mm_context_set(struct mm_context *context);
+void mm_context_destroy(struct mm_context *context);
