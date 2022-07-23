@@ -16,28 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <config.h>
-#include <stdarg.h>
-#include <lib/log.h>
-#include <lib/string.h>
-#include <lib/spinlock.h>
-#include <arch/x86/cpu.h>
+#pragma once
+#include <kernel.h>
 
-_noreturn _cold void panic(const char *fmt, ...)
-{
-    cli();
-#ifdef CONFIG_DEBUG_PANIC
-    char buffer[128];
+#define MALLOC_ALIGNMENT 16
 
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(buffer, sizeof(buffer), fmt, args);
-    va_end(args);
+#define GFP_NONE 0x00
+#define GFP_ATOMIC 0x01
+#define GFP_KERNEL 0x02
 
-    fatal("%s\nKernel halted", buffer);
-    cpu_stop();
-#else
-    // Just hang forever...
-    cpu_stop();
-#endif
-}
+#define malloc(size) kmalloc(size, GFP_KERNEL)
+#define free(obj) kfree(obj)
+
+_init void kmalloc_setup(void);
+
+_assume_aligned(MALLOC_ALIGNMENT)
+_malloc void *kmalloc(const size_t size, const int flags);
+void kfree(void *obj);

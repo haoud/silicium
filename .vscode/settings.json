@@ -36,6 +36,9 @@
         "multiboot.h": "c",
         "context.h": "c",
         "slub.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "memory_resource": "c",
+        "scoped_allocator": "c",
+        "compare": "c"
     }
 }

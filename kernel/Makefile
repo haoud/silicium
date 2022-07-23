@@ -1,41 +1,33 @@
+export TARGET_DIR = $(shell pwd)
+
+TARGETS = hal.a
+SUBDIRS = $(basename $(TARGETS))
 KERNEL = silicium
 
-# GCC flags
-CFLAGS += -c -W -Wall -Wextra -Wshadow
-CFLAGS += -Wredundant-decls -Wstrict-prototypes
-CFLAGS += -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable
-CFLAGS += -ffreestanding -I include -fdata-sections -ffunction-sections
-
-# AS flags
-ASFLAGS += -c
+export CFLAGS += -I include
 
 # LD flags
 LDFLAGS += -flto -nostdlib -T link.ld -Wl,--gc-sections
 
-# Source files
-CFILES = $(shell find . -type f -name "*.c")
-ASFILES = $(shell find . -type f -name "*.asm")
-
-# Objects files
-OBJFILES = $(ASFILES:.asm=.o)
-OBJFILES += $(CFILES:.c=.o)
-
-.PHONY: all clean
+.PHONY: $(SUBDIRS) all clean install
 
 all: $(KERNEL)
 
-$(KERNEL): $(OBJFILES)
+$(KERNEL): $(TARGETS)
 	$(LD) $(LDFLAGS) $^ -o $@ -lgcc
-	# $(STRIP) --strip-all $@		# Remove all symbols
 
-%.o: %.c
-	$(CC) $(CFLAGS) $^ -o $@
-
-%.o: %.asm
-	$(AS) $(ASFLAGS) $^ -o $@
+%.a:
+	make -C $(basename $@) all
+	make -C $(basename $@) install
 
 clean:
-	rm -f $(OBJFILES) $(OUTPUT)
+	for dir in $(SUBDIRS); do 	\
+        make -C $$dir clean; 	\
+    done
+	rm -f $(KERNEL) $(TARGETS) 
+
+$(SUBDIRS):
+	make -C $@ clean
 
 install:
 	cp $(KERNEL) $(INSTALL_DIR)/$(KERNEL)

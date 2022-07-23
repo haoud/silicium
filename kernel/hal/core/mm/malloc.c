@@ -48,7 +48,7 @@ _init void kmalloc_setup(void)
     for (int i = 0; slub[i].length != 0; i++) {
         slub[i].allocator = creat_slub_allocator(
             slub[i].length,
-            slub[i].length,
+            MALLOC_ALIGNMENT,
             0, // No minimum free object count
             slub[i].obj_per_slub,
             slub[i].initial_slub_count,
@@ -56,7 +56,9 @@ _init void kmalloc_setup(void)
     }
 }
 
-_malloc void *kmalloc(const size_t size, const int flags)
+_malloc
+_assume_aligned(MALLOC_ALIGNMENT)
+void *kmalloc(const size_t size, const int flags)
 {
     for (unsigned int i = 0; slub[i].length != 0; i++) {
         if (size <= slub[i].length)

@@ -21,12 +21,12 @@
 #include <lib/list.h>
 #include <lib/spinlock.h>
 
-#define SLUB_MIN_OBJECT_PER_SLUB 4
-#define SLUB_MIN_OBJECT_LENGTH 32
-#define SLUB_MIN_OBJECT_ALIGN 32
-#define SLUB_DEFAULT_ALIGN 32
-#define SLUB_DEFAULT_LENGTH PAGE_SIZE
-#define SLUB_DEFAULT_SLUB_COUNT 4
+#define SLUB_MIN_OBJECT_PER_SLUB    4
+#define SLUB_MIN_OBJECT_LENGTH      16
+#define SLUB_MIN_OBJECT_ALIGN       16
+#define SLUB_DEFAULT_ALIGN          16
+#define SLUB_DEFAULT_LENGTH         PAGE_SIZE
+#define SLUB_DEFAULT_SLUB_COUNT     4
 
 #define SLUB_NONE 0x00
 #define SLUB_LAZY 0x01
