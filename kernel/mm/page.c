@@ -21,7 +21,7 @@
 #include <lib/maths.h>
 #include <lib/memory.h>
 #include <lib/spinlock.h>
-#include <core/mm/page.h>
+#include <mm/page.h>
 #include <arch/x86/paging.h>
 
 /**

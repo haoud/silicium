@@ -1,10 +1,10 @@
 export TARGET_DIR = $(shell pwd)
 
-TARGETS = hal.a
+TARGETS = arch.a core.a mm.a lib.a
 SUBDIRS = $(basename $(TARGETS))
 KERNEL = silicium
 
-export CFLAGS += -I include
+export CFLAGS += -I $(shell pwd)/include
 
 # LD flags
 LDFLAGS += -flto -nostdlib -T link.ld -Wl,--gc-sections

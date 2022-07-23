@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <core/mm/paging.h>
-#include <core/mm/malloc.h>
-#include <core/mm/vmalloc.h>
-#include <core/mm/context.h>
+#include <mm/paging.h>
+#include <mm/malloc.h>
+#include <mm/vmalloc.h>
+#include <mm/context.h>
 
 #define assert_context_is_valid(context) \
     assert(!null(context));              \

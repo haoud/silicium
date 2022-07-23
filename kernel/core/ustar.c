@@ -20,7 +20,7 @@
 #include <lib/memory.h>
 #include <lib/string.h>
 #include <core/ustar.h>
-#include <core/mm/malloc.h>
+#include <mm/malloc.h>
 
 /**
  * @brief This is a simple implementation of the Ustar format. It

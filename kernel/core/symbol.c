@@ -20,7 +20,7 @@
 #include <lib/string.h>
 #include <core/symbol.h>
 #include <lib/spinlock.h>
-#include <core/mm/malloc.h>
+#include <mm/malloc.h>
 
 static DECLARE_SPINLOCK(lock);
 static hashmap_t symbol_table;

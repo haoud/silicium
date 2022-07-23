@@ -18,9 +18,9 @@
  */
 #include <config.h>
 #include <lib/maths.h>
-#include <core/mm/page.h>
-#include <core/mm/slub.h>
-#include <core/mm/vmalloc.h>
+#include <mm/page.h>
+#include <mm/slub.h>
+#include <mm/vmalloc.h>
 
 static slub_allocator_t slub_allocator_allocator;
 static slub_allocator_t *slub_allocator;

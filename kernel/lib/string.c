@@ -20,7 +20,7 @@
 #include <lib/maths.h>
 #include <lib/string.h>
 #include <lib/memory.h>
-#include <core/mm/malloc.h>
+#include <mm/malloc.h>
 
 #ifdef CONFIG_VSNPRINTF_64BITS
 #define NUMBER_INT_MAX INT64_MAX

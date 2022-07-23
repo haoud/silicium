@@ -18,7 +18,7 @@
  */
 #include <lib/maths.h>
 #include <lib/memory.h>
-#include <core/mm/page.h>
+#include <mm/page.h>
 #include <arch/x86/paging.h>
 
 static pde_t kernel_pd[1024] _align(PAGE_SIZE);

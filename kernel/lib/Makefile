@@ -1,4 +1,4 @@
-TARGET = hal.a
+TARGET = lib.a
 
 # GCC flags
 CFLAGS += -c -W -Wall -Wextra -Wshadow

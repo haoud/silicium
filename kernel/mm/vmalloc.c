@@ -20,9 +20,9 @@
 #include <lib/log.h>
 #include <lib/maths.h>
 #include <lib/memory.h>
-#include <core/mm/slub.h>
-#include <core/mm/paging.h>
-#include <core/mm/vmalloc.h>
+#include <mm/slub.h>
+#include <mm/paging.h>
+#include <mm/vmalloc.h>
 
 /**
  * @brief This file contains the code that manages the kernel space allocations.

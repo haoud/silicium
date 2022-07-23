@@ -20,10 +20,10 @@
 #include <lib/string.h>
 #include <lib/memory.h>
 #include <core/symbol.h>
-#include <core/mm/page.h>
-#include <core/mm/slub.h>
-#include <core/mm/malloc.h>
-#include <core/mm/vmalloc.h>
+#include <mm/page.h>
+#include <mm/slub.h>
+#include <mm/malloc.h>
+#include <mm/vmalloc.h>
 #include <arch/x86/gdt.h>
 #include <arch/x86/idt.h>
 #include <arch/x86/pic.h>

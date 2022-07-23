@@ -17,7 +17,7 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <lib/hashmap.h>
-#include <core/mm/malloc.h>
+#include <mm/malloc.h>
 
 /**
  * @brief Destroy a hashmap and free the memory allocated for it.

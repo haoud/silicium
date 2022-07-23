@@ -17,7 +17,6 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <lib/spinlock.h>
-#include <arch/x86/cpu.h>
 
 void spin_init(spinlock_t *const spin)
 {
@@ -29,7 +28,7 @@ void spin_lock(spinlock_t *const spin)
 #ifdef CONFIG_SMP
 	while (__sync_lock_test_and_set(&spin->lock, 1)) {
 		while (spin->lock)
-			cpu_relax();
+			__builtin_ia32_pause();
 	}
 #else
 	spin->lock = get_eflags() & EFLAGS_IF;

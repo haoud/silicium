@@ -17,8 +17,8 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <lib/log.h>
-#include <core/mm/slub.h>
-#include <core/mm/malloc.h>
+#include <mm/slub.h>
+#include <mm/malloc.h>
 
 typedef struct malloc_slub {
     unsigned int length;

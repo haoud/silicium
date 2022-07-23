@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <core/mm/page.h>
-#include <core/mm/paging.h>
+#include <mm/page.h>
+#include <mm/paging.h>
 
 _export void paging_set_directory(const paddr_t directory)
 {

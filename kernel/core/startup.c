@@ -19,7 +19,7 @@
 #include <kernel.h>
 #include <core/ustar.h>
 #include <arch/x86/cpu.h>
-#include <core/mm/page.h>
+#include <mm/page.h>
 
 extern const char _init_start;
 extern const char _init_end;
