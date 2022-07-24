@@ -46,37 +46,21 @@ static const char *level_icon_colored[] = {
 	"\033[1m\033[31m[!!!]\033[0m",
 };
 
-static const int log_level = LOG_LEVEL;
+static const unsigned int log_level = LOG_LEVEL;
 static DECLARE_SPINLOCK(lock);
 
-static void putb(const char c)
-{
-	outb(0xe9, c); // Fixme: Only on bochs
-}
-
-static void print(const char *s)
+static inline void print(const char *s)
 {
 	while (*s != '\0')
-		putb(*s++);
+		outb(0xe9, *s++);
 }
 
-static void printf(const char *const fmt, ...)
-{
-	char str[LOG_MAX_LEN];
-
-	va_list arg;
-	va_start(arg, fmt);
-	vsnprintf(str, LOG_MAX_LEN, fmt, arg);
-	va_end(arg);
-	print(str);
-}
-
-void log(const int gravity, const char *const fmt, ...)
+void log(const unsigned int gravity, const char *const fmt, ...)
 {
 #ifdef CONFIG_LOG
-	char str[LOG_MAX_LEN];
 	if (gravity < log_level)
 		return;
+	char str[LOG_MAX_LEN];
 	spin_lock(&lock);
 
 	va_list arg;
@@ -86,10 +70,14 @@ void log(const int gravity, const char *const fmt, ...)
 
 #ifndef CONFIG_DISABLE_CHECKS
 	const int g = clamp(gravity, LOG_LEVEL_UNDEFINED, LOG_LEVEL_FATAL);
-	printf("%s %s\n", level_icon_colored[g], str);
 #else
-	printf("%s %s\n", level_icon_colored[gravity], str);
+	const int g = gravity;
 #endif
+
+	print(level_icon_colored[g]);
+	print(" ");
+	print(str);
+	print("\n");
 	spin_unlock(&lock);
 #endif
 }

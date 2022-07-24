@@ -67,9 +67,7 @@ typedef struct page_table_info {
 } page_table_info_t;
 
 _init void page_map_table(void);
-_init void page_use(const paddr_t addr);
 _init void page_setup(struct mb_info *info);
-_init void page_reserve(const paddr_t page);
 
 /* Pages allocation interface */
 _export void page_reference(const paddr_t addr);

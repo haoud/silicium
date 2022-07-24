@@ -25,12 +25,22 @@
 static DECLARE_SPINLOCK(lock);
 static hashmap_t symbol_table;
 
+static symbol_t *symbol_allocate(void)
+{
+    symbol_t *symbol = malloc(sizeof(symbol_t));
+    if (symbol == NULL)
+        return NULL;
+    
+    hashmap_node_init(&symbol->node);
+    return symbol;
+}
+
 _init void symbol_init(struct mb_info *mb_info)
 {
     const elf_shdr_t *symtab = mb_get_section(mb_info, ".symtab");
+    const elf_shdr_t *strtab = mb_get_section(mb_info, ".strtab");
     if (symtab == NULL) 
         panic("No symbol table found");
-    const elf_shdr_t *strtab = mb_get_section(mb_info, ".strtab");
     if (symtab == NULL)
         panic("No string table found");
 
@@ -56,29 +66,34 @@ _init void symbol_init(struct mb_info *mb_info)
 }
 
 /**
- * @brief Remove a symbol from the symbol table, currently unimplemented
+ * @brief Remove a symbol from the symbol table
  * 
  * @param name The name of the symbol to remove
- * @return int 0 if the symbol was removed
- * @return int -1 otherwise
+ * @return int 0 if the symbol was removed or
+ *  -ENOENT if the symbol does not exist
  */
 int symbol_remove(const char *name)
 {
-    unimplemented();
-    symbol_t *symbol = symbol_get(name);
-    if (symbol == NULL)
-        return -1;
-    hashmap_remove(&symbol->node);
-    free(symbol);
-    return 0;
+    spin_lock(&lock);
+    hashmap_foreach_result(&symbol_table, (unsigned int) name, entry) {
+        symbol_t *symbol = container_of(entry, symbol_t, node);
+        if (strcmp(symbol->name, name) == 0) {
+            hashmap_remove(&symbol->node);
+            spin_unlock(&lock);
+            free(symbol);
+            return 0;
+        }
+    }
+    spin_unlock(&lock);
+    return -ENOENT;
 }
 
 /**
  * @brief Check if a symbol exists
  * 
  * @param name Name of the symbol to check
- * @return true if the symbol exists
- * @return false if the symbol does not exist
+ * @return true if the symbol exists or
+ *  false if the symbol does not exist
  */
 bool symbol_exists(const char *name)
 {
@@ -86,25 +101,20 @@ bool symbol_exists(const char *name)
 }
 
 /**
- * @brief Get the symbol associated to the given name.
+ * @brief Get the value of a symbol
  * 
- * @param name The name of the symbol to get.
- * @return struct symbol* The symbol associated to the given name, or NULL 
- * if it doesn't exist.
+ * @param name The name of the symbol
+ * @return vaddr_t The value of the symbol or
+ *  0 if the symbol does not exist.
  */
-struct symbol *symbol_get(const char *name)
+vaddr_t symbol_get_value(const char *name)
 {
-    // Find the symbol in the hashmap
-    spin_lock(&lock);
     hashmap_foreach_result(&symbol_table, (unsigned int) name, entry) {
         symbol_t *symbol = container_of(entry, symbol_t, node);
-        if (strcmp(symbol->name, name) == 0) {
-            spin_unlock(&lock);
-            return symbol;
-        }
+        if (strcmp(symbol->name, name) == 0)
+            return symbol->value;
     }
-    spin_unlock(&lock);
-    return NULL;
+    return 0;
 }
 
 /**
@@ -113,16 +123,27 @@ struct symbol *symbol_get(const char *name)
  * @param name The name of the symbol. It must be a valid C identifier and
  * must not be already in the symbol table.
  * @param value The value of the symbol.
- * @return int 0 if the symbol was added, -1 otherwise (malloc error)
+ * @return int 0 if the symbol was added or
+ *  -EINVAL if the value of the symbol is 0 or
+ *  -ENOMEM if malloc failed to allocate memory
+ *  -EEXIST if the symbol already exist
  */
 int symbol_add(const char *name, const vaddr_t value)
 {
-    symbol_t *symbol = malloc(sizeof(symbol_t));
+    if (symbol_exists(name))
+        return -EEXIST;
+    if (value == 0)
+        return -EINVAL;
+
+    symbol_t *symbol = symbol_allocate();
     if (symbol == NULL)
-        return -1;
-    symbol->name = strdup(name);
+        return -ENOMEM;
     symbol->value = value;
-    hashmap_node_init(&symbol->node);
+    symbol->name = strdup(name);
+    if (symbol->name == NULL) {
+        free(symbol);
+        return -ENOMEM;
+    }
 
     spin_lock(&lock);
     hashmap_insert(&symbol_table, (unsigned int) symbol->name, &symbol->node);

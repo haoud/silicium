@@ -33,5 +33,5 @@ _init void symbol_init(struct mb_info *mb_info);
 
 int symbol_remove(const char *name);
 bool symbol_exists(const char *name);
-struct symbol *symbol_get(const char *name);
+vaddr_t symbol_get_value(const char *name);
 int symbol_add(const char *name, const vaddr_t value);

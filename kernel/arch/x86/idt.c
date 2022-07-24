@@ -31,6 +31,8 @@ void idt_install_handler(
     const int present)
 {
     assert(offset < IDT_MAX_ENTRY);
+    assert(dlp <= 3);
+
     idt[offset].reserved = 0;
     idt[offset].selector = cs;
     idt[offset].offset0_15 = (handler & 0xFFFF);
@@ -48,7 +50,7 @@ void _init idt_flush(void)
 void _init idt_install(void)
 {
     extern void default_int(void);
-    for (uint32_t i = 0; i < IDT_MAX_ENTRY; i++)
+    for (unsigned int i = 0; i < IDT_MAX_ENTRY; i++)
         set_interrupt_gate(i, &default_int);
     idt_flush();
 }

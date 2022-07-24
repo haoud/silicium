@@ -28,7 +28,7 @@ void gdt_install_desc(
     const uint32_t limit,
     const uint32_t access,
     const uint32_t flags,
-    const int is_tss)
+    const bool is_tss)
 {
     assert(index < GDT_MAX_ENTRY);
     gdt[index].base0_15 = (base & 0xFFFF);
@@ -59,13 +59,21 @@ _init void gdt_flush(void)
 _init void gdt_install(void)
 {
     gdt_install_desc(0, 0, 0, 0, 0, 0);
-    gdt_install_desc(1, 0, 0xFFFFFFFF, GDT_IS_CODE_SEGMENT | GDT_SEGMENT_PRESENT | GDT_RING0,
-                     GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS, 0);
-    gdt_install_desc(2, 0, 0xFFFFFFFF, GDT_SEGMENT_PRESENT | GDT_DATA_CAN_WRITE | GDT_RING0,
-                     GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS, 0);
-    gdt_install_desc(3, 0, 0xFFFFFFFF, GDT_IS_CODE_SEGMENT | GDT_SEGMENT_PRESENT | GDT_RING3,
-                     GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS, 0);
-    gdt_install_desc(4, 0, 0xFFFFFFFF, GDT_SEGMENT_PRESENT | GDT_DATA_CAN_WRITE | GDT_RING3,
-                     GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS, 0);
+    gdt_install_desc(1, 0, 0xFFFFFFFF,
+        GDT_IS_CODE_SEGMENT | GDT_SEGMENT_PRESENT | GDT_RING0,
+        GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS,
+        false);
+    gdt_install_desc(2, 0, 0xFFFFFFFF,
+        GDT_SEGMENT_PRESENT | GDT_DATA_CAN_WRITE | GDT_RING0,
+        GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS,
+        false);
+    gdt_install_desc(3, 0, 0xFFFFFFFF, 
+        GDT_IS_CODE_SEGMENT | GDT_SEGMENT_PRESENT | GDT_RING3,
+        GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS,
+        false);
+    gdt_install_desc(4, 0, 0xFFFFFFFF, 
+        GDT_SEGMENT_PRESENT | GDT_DATA_CAN_WRITE | GDT_RING3,
+        GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS,
+        false);
     gdt_flush();
 }

@@ -20,11 +20,12 @@
 #include <config.h>
 #include <kernel.h>
 
-#define PAGE_SIZE 4096
-#define PAGE_SHIFT 12
-#define PAGE_MASK ~(PAGE_SIZE - 1)
-#define PAGE_ALIGN(x) ((x) & PAGE_MASK)
+#define PAGE_SIZE   4096
+#define PAGE_SHIFT  12
+#define PAGE_MASK   ~(PAGE_SIZE - 1)
+
 #define PAGE_ALIGNED(x) (((x) & ~PAGE_MASK) == 0)
+#define PAGE_ALIGN(x) ((x) & PAGE_MASK)
 
 #define KERNEL_BASE 0xC0000000
 

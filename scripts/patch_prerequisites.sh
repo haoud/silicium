@@ -19,4 +19,4 @@ patch -p0 < musl-1.2.3.patch
 
 # Run autoconf where needed
 cd gcc-12.1.0/libstdc++-v3
-autoconf2.69
+autoconf

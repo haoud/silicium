@@ -33,7 +33,7 @@
 #define pd_set_mirroring(pd) ({             \
     pde_set_address(                        \
         &pd[PAGING_MIRRORING_INDEX],        \
-        paging_get_paddr((vaddr_t)pd));     \
+        paging_get_paddr((vaddr_t) pd));    \
     pd[PAGING_MIRRORING_INDEX].present = 1; \
     pd[PAGING_MIRRORING_INDEX].write = 1;   \
 })

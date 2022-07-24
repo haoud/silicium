@@ -233,7 +233,8 @@ void paging_clone_pd(const vaddr_t src, const vaddr_t dst)
     pde_t *const d = (pde_t *) dst;
     for (uint_t i = 0; i < pd_offset(KERNEL_BASE); i++) {
         page_reference(pde_get_address(&s[i]));
-        s[i].present = s[i].write = 0;
+        s[i].present = 1;
+        s[i].write = 0;
         pde_copy(&d[i], &s[i]);
     }
 }
@@ -314,7 +315,7 @@ _export int paging_map_page(
     const bool user = (vaddr < KERNEL_BASE);
     if (!pde->present) {
         const paddr_t pt = page_alloc(PAGE_CLEAR);
-        if (null(pt))
+        if (pt == 0)
             return -1;
         pde_set_address(pde, pt);
         pde->present = 1;

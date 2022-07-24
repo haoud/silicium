@@ -24,7 +24,17 @@
 extern const char _init_start;
 extern const char _init_end;
 
-_init void free_init_sections(void)
+_init void load_modules(const char *initrd)
+{
+    // TODO: Use a config file to load modules and to configure the kernel 
+    ustar_entry_t *test = ustar_lookup(initrd, "test.kmd");
+    if (test == NULL)
+        error("Failed to find module %s", "test");
+
+    // TODO: Load modules
+}
+
+_init _noreturn void free_init_sections(void)
 {
     // Here we free the physical pages used only for the initialization
     // of the kernel. However, we do not unmap them because this will 
@@ -38,21 +48,13 @@ _init void free_init_sections(void)
         addr += PAGE_SIZE) {
         page_free(addr - KERNEL_BASE);
     }
+
+    info("Boot completed !");
     cpu_stop();
 }
 
-_init void startup(const char *initrd)
+_init _noreturn void startup(const char *initrd)
 {
-    // TODO: Use a config file to load modules and to configure the kernel
-    // Load modules from the initrd
-    if (initrd != NULL) {
-        ustar_entry_t *test = ustar_lookup(initrd, "test.txt");
-        if (test == NULL)
-            panic("Failed to find msg in initrd");
-        else
-            info("'%s'", test->data);
-    }
-    
-    info("Boot completed !");
+    load_modules(initrd);
     free_init_sections();
 }

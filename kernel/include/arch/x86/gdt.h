@@ -70,4 +70,4 @@ void gdt_install_desc(
     const uint32_t limit,
     const uint32_t access,
     const uint32_t flags,
-    const int is_tss);
+    const bool is_tss);

@@ -41,5 +41,4 @@
 #define fatal(fmt...) log(LOG_LEVEL_FATAL, fmt)
 #define critical(fmt...) log(LOG_LEVEL_CRIT, fmt)
 
-void log_set_level(const int level);
-void log(const int gravity, const char *const fmt, ...);
+void log(const unsigned int gravity, const char *const fmt, ...);

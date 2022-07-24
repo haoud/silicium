@@ -142,18 +142,14 @@ char *number(
 		number = -number;
 		sign = '-';
 	}
-	if (flags & VSNPRINTF_SPACE) {
+	if (flags & VSNPRINTF_SPACE)
 		sign = ' ';
-	}
-	if (flags & VSNPRINTF_PLUS) {
+	if (flags & VSNPRINTF_PLUS)
 		sign = '+';
-	}
-	if (flags & VSNPRINTF_ZERO) {
+	if (flags & VSNPRINTF_ZERO)
 		padding = '0';
-	}
-	if (flags & VSNPRINTF_LARGE) {
+	if (flags & VSNPRINTF_LARGE)
 		digits = "0123456789ABCDEF";
-	}
 
 	do {
 		buffer[i++] = digits[number % base];

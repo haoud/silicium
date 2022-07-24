@@ -16,43 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <lib/spinlock.h>
+#pragma once
+#include <kernel.h>
 
-void spin_init(spinlock_t *const spin)
-{
-	spin->lock = 0;
-}
+#undef _init
+#undef _exit
 
-void spin_lock(spinlock_t *const spin)
-{
-#ifdef CONFIG_SMP
-	while (__sync_lock_test_and_set(&spin->lock, 1)) {
-		while (spin->lock)
-			__builtin_ia32_pause();
-	}
-#else
-	spin->lock = get_eflags() & EFLAGS_IF;
-	cli();
-#endif
-}
-
-void spin_unlock(spinlock_t *const spin)
-{
-#ifdef CONFIG_SMP
-	__sync_lock_release(&spin->lock);
-#else
-	if (spin->lock)
-		sti();
-#endif
-}
-
-int spin_trylock(spinlock_t *const spin)
-{
-#ifdef CONFIG_SMP
-	if (__sync_lock_test_and_set(&spin->lock, 1))
-		return 0;
-#else
-	spin_lock(spin);
-#endif
-	return 1;
-}
+#define _init   _section(".init")
+#define _exit   _section(".exit")

@@ -29,13 +29,16 @@
 #define IDT_INTERRUPT_GATE_32 0x0E
 
 #define set_trap_gate(i, handler) \
-    idt_install_handler(i, (uint32_t)(handler), GDT_KCODE_SELECTOR, 0, IDT_TRAP_GATE_32, 1)
+    idt_install_handler(i, (uint32_t) (handler), \
+        GDT_KCODE_SELECTOR, 0, IDT_TRAP_GATE_32, 1)
 
 #define set_system_gate(i, handler) \
-    idt_install_handler(i, (uint32_t)(handler), GDT_KCODE_SELECTOR, 3, IDT_INTERRUPT_GATE_32, 1)
+    idt_install_handler(i, (uint32_t) (handler), \
+        GDT_KCODE_SELECTOR, 3, IDT_INTERRUPT_GATE_32, 1)
 
 #define set_interrupt_gate(i, handler) \
-    idt_install_handler(i, (uint32_t)(handler), GDT_KCODE_SELECTOR, 0, IDT_INTERRUPT_GATE_32, 1)
+    idt_install_handler(i, (uint32_t) (handler), \
+        GDT_KCODE_SELECTOR, 0, IDT_INTERRUPT_GATE_32, 1)
 
 typedef struct idt_entry {
     uint16_t offset0_15;

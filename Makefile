@@ -21,9 +21,9 @@ export LDFLAGS = -march=i686 -flto -nostdlib
 # AS flags
 export ASFLAGS = -march=i686
 
-.PHONY: all kernel initrd install-kernel make-iso lauch clean
+.PHONY: all kernel install-kernel initrd make-iso lauch clean
 
-all: kernel initrd install-kernel make-iso
+all: kernel install-kernel initrd make-iso
 
 run: all lauch
 

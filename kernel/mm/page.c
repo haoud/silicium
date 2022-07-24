@@ -144,6 +144,35 @@ static _init void page_construct_lists(void)
     }
 }
 
+/**
+ * @brief Mark a page as reserved (cannot be allocated)
+ * @param page Address of the page
+ */
+static _init void page_reserve(const paddr_t addr)
+{
+    page_info_t *const page = page_get(addr);
+    if (page == NULL)
+        panic("Page %p is out of range and cannot be reserved", page);
+    if (page->count)
+        panic("Page %p is used and cannot be reserved", page);
+
+    list_remove(&page->entry);
+    page->reserved = 1;
+}
+
+static _init void page_use(const paddr_t addr)
+{
+    page_info_t *page = page_get(addr);
+    if (page == NULL)
+        panic("Page %p is out of range and cannot be used", page);
+    if (page->reserved)
+        panic("Page %p is reserved and cannot be used", page);
+    if (page->count != 0)
+        panic("Page %p is already used", page);
+    list_remove(&page->entry);
+    page->count = 1;
+}
+
 _init void page_map_table(void)
 {
     const vaddr_t length = table.nb_pages * sizeof(page_info_t);
@@ -163,19 +192,6 @@ _init void page_map_table(void)
     list_init(&isa_free_list);
     list_init(&free_list);
     page_construct_lists();
-}
-
-_init void page_use(const paddr_t addr)
-{
-    page_info_t *page = page_get(addr);
-    if (page == NULL)
-        panic("Page %p is out of range and cannot be used", page);
-    if (page->reserved)
-        panic("Page %p is reserved and cannot be used", page);
-    if (page->count != 0)
-        panic("Page %p is already used", page);
-    list_remove(&page->entry);
-    page->count = 1;
 }
 
 /**
@@ -218,22 +234,6 @@ _init void page_setup(struct mb_info *info)
 
     // TODO: reserve memory used by modules
     // TODO: reserve memory used by elf tables
-}
-
-/**
- * @brief Mark a page as reserved (cannot be allocated)
- * @param page Address of the page
- */
-_init void page_reserve(const paddr_t addr)
-{
-    page_info_t *const page = page_get(addr);
-    if (page == NULL)
-        panic("Page %p is out of range and cannot be reserved", page);
-    if (page->count)
-        panic("Page %p is used and cannot be reserved", page);
-
-    list_remove(&page->entry);
-    page->reserved = 1;
 }
 
 /**

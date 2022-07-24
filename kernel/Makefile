@@ -10,11 +10,11 @@ export CFLAGS += -I $(shell pwd)/include
 LDFLAGS += -flto -nostdlib -T link.ld -Wl,--gc-sections
 
 .PHONY: $(SUBDIRS) all clean install
-
 all: $(KERNEL)
 
 $(KERNEL): $(TARGETS)
 	$(LD) $(LDFLAGS) $^ -o $@ -lgcc
+	make -C module all
 
 %.a:
 	make -C $(basename $@) all
@@ -24,10 +24,12 @@ clean:
 	for dir in $(SUBDIRS); do 	\
         make -C $$dir clean; 	\
     done
+	make -C module clean
 	rm -f $(KERNEL) $(TARGETS) 
 
 $(SUBDIRS):
 	make -C $@ clean
 
 install:
+	make -C module install
 	cp $(KERNEL) $(INSTALL_DIR)/$(KERNEL)

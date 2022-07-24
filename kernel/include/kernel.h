@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <stdatomic.h>
 
+#include <errno.h>
 #include <config.h>
 #include <assert.h>
 #include <barrier.h>
