@@ -35,6 +35,6 @@ typedef struct module {
     struct list_head node;
 } module_t;
 
-int module_load(char *module);
+int module_load(char *module, const size_t length);
 int module_unload(const char *name);
 int module_exist(const char *name);

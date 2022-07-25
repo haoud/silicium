@@ -18,6 +18,7 @@
  */
 #include <kernel.h>
 #include <mm/page.h>
+#include <mm/malloc.h>
 #include <core/ustar.h>
 #include <core/module.h>
 #include <arch/x86/cpu.h>
@@ -30,7 +31,7 @@ _init void load_module(const char *initrd, char *name)
     ustar_entry_t *module = ustar_lookup(initrd, name);
     if (module == NULL)
         error("Failed to find module %s", name);
-    if (module_load(module->data) < 0)
+    if (module_load(module->data, module->length) < 0)
         warn("Failed to load module %s", name);
 }
 
@@ -38,6 +39,8 @@ _init void load_modules(const char *initrd)
 {
     // TODO: Use a config file to load modules and to configure the kernel 
     load_module(initrd, "test.kmd");
+    module_unload("test");
+    free(initrd);
 }
 
 _init _noreturn void free_init_sections(void)

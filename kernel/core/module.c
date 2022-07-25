@@ -22,6 +22,7 @@
 #include <mm/malloc.h>
 #include <mm/vmalloc.h>
 #include <lib/string.h>
+#include <lib/memory.h>
 #include <lib/spinlock.h>
 
 #define MODULE_INVALID_SYMBOL 0xFFFFFFFF
@@ -312,15 +313,27 @@ static module_t *module_allocate(void)
  *  -EEXIST if the module is already loaded.
  *  -EFAULT if a problem occured while parsing the elf file.
  */
-int module_load(char *data)
+int module_load(char *data, const size_t length)
 {
     module_t *module = module_allocate();
     if (module == NULL)
         return -ENOMEM;
 
+    // TODO: The memory allocated with malloc is not executable
+    // It only works here because x86 does not have a memory execution
+    // protection mechanism.
+    // Maybe parse program headers and allocate memory for each section ?
+    module->elf = malloc(length);
+    if (module->elf == NULL) {
+        free(module);
+        return -ENOMEM;
+    }
+    memcpy(module->elf, data, length);
+
     // Parse the ELF file
-    const int ret = module_elf_parse(data);
+    const int ret = module_elf_parse(module->elf);
     if (ret < 0) {
+        free(module->elf);
         free(module);
         return ret;
     }
@@ -328,37 +341,37 @@ int module_load(char *data)
     // TODO: Export module's symbol, handle symbol collisions
 
     vaddr_t mod_exit = module_elf_find_symbol(
-        (elf_ehdr_t *) data,
+        (elf_ehdr_t *) module->elf,
         "__module_exit__",
         ELF_STT_OBJECT,
         ELF_STB_LOCAL,
         ELF_STV_DEFAULT);
     vaddr_t mod_init = module_elf_find_symbol(
-        (elf_ehdr_t *) data,
+        (elf_ehdr_t *) module->elf,
         "__module_init__",
         ELF_STT_OBJECT,
         ELF_STB_LOCAL,
         ELF_STV_DEFAULT);
     vaddr_t mod_name = module_elf_find_symbol(
-        (elf_ehdr_t *) data,
+        (elf_ehdr_t *) module->elf,
         "__module_name__",
         ELF_STT_OBJECT,
         ELF_STB_LOCAL,
         ELF_STV_DEFAULT);
     vaddr_t mod_author = module_elf_find_symbol(
-        (elf_ehdr_t *) data,
+        (elf_ehdr_t *) module->elf,
         "__module_author__",
         ELF_STT_OBJECT,
         ELF_STB_LOCAL,
         ELF_STV_DEFAULT);
     vaddr_t mod_version = module_elf_find_symbol(
-        (elf_ehdr_t *) data,
+        (elf_ehdr_t *) module->elf,
         "__module_version__",
         ELF_STT_OBJECT,
         ELF_STB_LOCAL,
         ELF_STV_DEFAULT);
     vaddr_t mod_description = module_elf_find_symbol(
-        (elf_ehdr_t *) data,
+        (elf_ehdr_t *) module->elf,
         "__module_description__",
         ELF_STT_OBJECT,
         ELF_STB_LOCAL,
@@ -384,10 +397,10 @@ int module_load(char *data)
         return -EFAULT;
     }
 
-    module->elf = data;
     module->name = *(const char **) mod_name;
     if (module_exist(module->name)) {
         error("Module %s already loaded", module->name);
+        free(module->elf);
         free(module);
         return -EEXIST;
     }
@@ -439,10 +452,9 @@ int module_unload(const char *name)
     module_t *module = module_get(name);
     if (module == NULL)
         return -ENOENT;
-
-    // Verify if we can unload the module
     if (module->usage > 1)
         return -EBUSY;
+    trace("Unloading lodule %s", module->name);
 
     spin_lock(&lock);
     list_remove(&module->node);
@@ -451,6 +463,7 @@ int module_unload(const char *name)
     // TODO: Remove module's symbols from the symbol table
     if(module->finit != NULL)
         module->finit();
+    free(module->elf);
     free(module);
     return 0;
 }
