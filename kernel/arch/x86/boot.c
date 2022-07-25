@@ -24,6 +24,7 @@
 #include <mm/slub.h>
 #include <mm/malloc.h>
 #include <mm/vmalloc.h>
+#include <arch/x86/fpu.h>
 #include <arch/x86/gdt.h>
 #include <arch/x86/idt.h>
 #include <arch/x86/pic.h>
@@ -39,6 +40,7 @@ _init void start(struct mb_info *info)
     gdt_install();
     idt_install();
     exception_install();
+    fpu_setup();
     pit_configure();
     page_setup(info);
     paging_remap_kernel();

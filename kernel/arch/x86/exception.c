@@ -94,6 +94,7 @@ void invalid_opcode_exception(struct cpu_state *cpu)
 
 void device_not_available_exception(struct cpu_state *cpu)
 {
+    // TODO: Restore the FPU state or initialize it
     panic("Device not available exception at 0x%x", cpu->eip);
 }
 

@@ -35,6 +35,8 @@
         "typeindex": "c",
         "typeinfo": "c",
         "stacktrace": "c",
-        "list.h": "c"
+        "list.h": "c",
+        "fpu.h": "c",
+        "paging.h": "c"
     },
 }
