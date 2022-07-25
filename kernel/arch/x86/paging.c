@@ -28,7 +28,7 @@ extern const char _text_start, _text_end;
 extern const char _init_start, _init_end;
 extern const char _bss_start, _bss_end;
 
-static _init void paging_map_page_helper(
+_init void paging_map_page_helper(
     const vaddr_t vaddr,
     const paddr_t paddr,
     const int access,
@@ -58,7 +58,7 @@ static _init void paging_map_page_helper(
     pte->present = 1;
 }
 
-static _init void paging_map_interval_helper(
+_init void paging_map_interval_helper(
     const vaddr_t vaddr,
     const paddr_t paddr,
     const int length,

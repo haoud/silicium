@@ -29,6 +29,12 @@
 static DECLARE_LIST(module_list);
 static DECLARE_SPINLOCK(lock);
 
+/**
+ * @brief Get a module by its name
+ * 
+ * @param name Name of the module
+ * @return module_t* Module if found, NULL otherwise
+ */
 static module_t *module_get(const char *name)
 {
     spin_lock(&lock);
@@ -44,12 +50,13 @@ static module_t *module_get(const char *name)
 }
 
 /**
- * @brief 
+ * @brief Get a symbol from a symbol table.
  * 
- * @param ehdr 
- * @param symbtab 
- * @param idx 
- * @return int 
+ * @param ehdr The ELF header of the module
+ * @param symbtab The symbol table of the module
+ * @param idx Index of the symbol in the symbol table
+ * @return int The value of the symbol or ELF_INVALID_SYMBOL if the symbol
+ * cannot be found
  */
 static int module_elf_get_symbval(
     const elf_ehdr_t *ehdr,
@@ -86,12 +93,14 @@ static int module_elf_get_symbval(
 }
 
 /**
- * @brief 
+ * @brief Perform a relocation on a module symbol
  * 
  * @param ehdr The ELF header
  * @param section The relocation section
  * @param relocation The relocation entry
- * @return int 
+ * @return int 0 on success or
+ * -ENOENT if the symbol is undefined and cannot be resolved or
+ * -EINVAL if the relocation type is invalid
  */
 static int module_elf_relocate_symbol(
     const elf_ehdr_t *ehdr,
@@ -135,6 +144,18 @@ static int module_elf_relocate_symbol(
     return 0;
 }
 
+/**
+ * @brief Find the value of a symbol in the module
+ * 
+ * @param ehdr The ELF header
+ * @param name The symbol name
+ * @param type The symbol type (ELF_STT_FUNC, ELF_STT_OBJECT, ...)
+ * @param bind The symbol binding (ELF_STB_GLOBAL, ELF_STB_LOCAL, ...)
+ * @param visibility The symbol visibility (ELF_STV_DEFAULT, 
+ *  ELF_STV_INTERNAL, ...)
+ *
+ * @return vaddr_t The symbol value, or ELF_INVALID_SYMBOL if not found
+ */
 static vaddr_t module_elf_find_symbol(
     const elf_ehdr_t *ehdr,
     const char *name,
@@ -176,10 +197,13 @@ static vaddr_t module_elf_find_symbol(
 }
 
 /**
- * @brief 
+ * @brief Parse an ELF module by relocating its symbols and allocating
+ * memory for its sections if needed.
  * 
- * @param data 
- * @return int 
+ * @param data The elf module, must be entirely loaded in memory
+ * @return int 0 if the module was loaded successfully or
+ *  -EFAULT if the parsing failed
+ *  -ENOMEM if the memory allocation failed
  */
 static int module_elf_parse(char *data)
 {
@@ -245,7 +269,7 @@ static int module_elf_parse(char *data)
 
 /**
  * @brief Allocates a module structure and initialize the list node. All
- * other fields are set to NULL
+ * other fields are set to NULL.
  * 
  * @return module_t* The allocated module structure or
  *  NULL if an error occured.
@@ -269,11 +293,24 @@ static module_t *module_allocate(void)
 }
 
 /**
- * @brief 
+ * @brief Loads a module from a file. The file must be a valid ELF file.
  * 
- * @param data 
- * @param name 
- * @return int 
+ * Safety: This function is higly unsafe and should be used with caution.
+ * This function does not perform many checks according to the doctrine "the
+ * kernel code is safe and bug-free".
+ * 
+ * For example, if the ELF file contains offsets outside the file, the kernel
+ * will not check it. This is not a problem according to the quoted doctrine,
+ * but the problem is that modules can be loaded by the root user, so a bad
+ * ELF file could corrupt the whole system.
+ * 
+ * I made the choice to consciously ignore these problems by simplicity.
+ * 
+ * @param data The elf file: the file must be entirely in memory.
+ * @return int 0 if the module was loaded successfully or
+ *  -ENOMEM if there is not enough memory to load the module.
+ *  -EEXIST if the module is already loaded.
+ *  -EFAULT if a problem occured while parsing the elf file.
  */
 int module_load(char *data)
 {
@@ -288,7 +325,8 @@ int module_load(char *data)
         return ret;
     }
 
-    // TODO: Export module symbol
+    // TODO: Export module's symbol, handle symbol collisions
+
     vaddr_t mod_exit = module_elf_find_symbol(
         (elf_ehdr_t *) data,
         "__module_exit__",
@@ -351,7 +389,7 @@ int module_load(char *data)
     if (module_exist(module->name)) {
         error("Module %s already loaded", module->name);
         free(module);
-        return -EFAULT;
+        return -EEXIST;
     }
 
     trace("Module %s loaded", module->name);
@@ -388,10 +426,13 @@ int module_load(char *data)
 }
 
 /**
- * @brief 
+ * @brief Unloads a module and calls the finit function if it exists.
+ * The module is removed from the list and freed.
  * 
- * @param name 
- * @return int 
+ * @param name The name of the module to unload.
+ * @return int 0 if the module was unloaded or
+ *  -ENOEENT if the module was not found or
+ *  -EBUSY if the module is still in use.
  */
 int module_unload(const char *name)
 {
@@ -415,10 +456,10 @@ int module_unload(const char *name)
 }
 
 /**
- * @brief 
+ * @brief Check if a module is loaded
  * 
- * @param name 
- * @return int 
+ * @param name The name of the module to check
+ * @return int 1 if the module is loaded, 0 otherwise
  */
 int module_exist(const char *name)
 {

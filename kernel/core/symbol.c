@@ -48,18 +48,17 @@ _init void symbol_init(struct mb_info *mb_info)
     const elf_sym_t *symbols = (elf_sym_t *) symtab->addr;
     const char *names = (const char *) strtab->addr;
 
-    trace("Found %u symbols from kernel", count);
     hashmap_creat(&symbol_table, SYMBOLS_HASHMAP_LENGTH);
     for (size_t i = 0; i < count; i++) {
         const elf_sym_t *sym = &symbols[i];
         const char *name = (const char *) ((paddr_t) names + sym->name);
-
-        // If the symbol is not a function or variable, skip it
+        // Only add global visible functions and variables
         if (ELF_ST_TYPE(sym->info) != ELF_STT_FUNC &&
             ELF_ST_TYPE(sym->info) != ELF_STT_OBJECT)
             continue;
-        // If the symbol is hidden, skip it
-        if (ELF_ST_BIND(sym->info) == ELF_STB_LOCAL)
+        if (ELF_ST_BIND(sym->info) != ELF_STB_GLOBAL)
+            continue;
+        if (sym->other != ELF_STV_DEFAULT)
             continue;
         symbol_add(name, sym->value);
     }

@@ -25,14 +25,19 @@
 extern const char _init_start;
 extern const char _init_end;
 
+_init void load_module(const char *initrd, char *name)
+{
+    ustar_entry_t *module = ustar_lookup(initrd, name);
+    if (module == NULL)
+        error("Failed to find module %s", name);
+    if (module_load(module->data) < 0)
+        warn("Failed to load module %s", name);
+}
+
 _init void load_modules(const char *initrd)
 {
     // TODO: Use a config file to load modules and to configure the kernel 
-    ustar_entry_t *test = ustar_lookup(initrd, "test.kmd");
-    if (test == NULL)
-        error("Failed to find module %s", "test.kmd");
-    if (module_load(test->data) < 0)
-        warn("Failed to load module %s", "test.kmd");
+    load_module(initrd, "test.kmd");
 }
 
 _init _noreturn void free_init_sections(void)

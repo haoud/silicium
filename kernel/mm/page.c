@@ -72,7 +72,7 @@ static void page_insert_free_list(struct page_info * info)
  * @param length  Length of the memory areas structures
  * @param function Function to execute for each memory area
  */
-static _init void for_each_mmap(
+_init void for_each_mmap(
     const struct mb_mmap *start, 
     const size_t length, 
     void (*function) (const struct mb_mmap *const))
@@ -95,7 +95,7 @@ static _init void for_each_mmap(
  * @brief Calculate the number of entries needed in the table array
  * @param entry Memory area
  */
-static _init void page_nb_page(const struct mb_mmap *const entry) 
+_init void page_nb_page(const struct mb_mmap *const entry) 
 {
     static paddr_t last_page = 0;
     if (entry->addr + entry->len > last_page) {
@@ -108,7 +108,7 @@ static _init void page_nb_page(const struct mb_mmap *const entry)
  * @brief Calculate the location of the array in order to no collide with kernel
  * @param entry Memory area to check
  */
-static _init void page_array_location(const struct mb_mmap *const entry) 
+_init void page_array_location(const struct mb_mmap *const entry) 
 {
     // The array are already allocated 
     if (table.pages)
@@ -122,7 +122,7 @@ static _init void page_array_location(const struct mb_mmap *const entry)
  * @brief Mark avaible memory areas as free for the page allocator.
  * @param entry Memory area to check
  */
-static _init void page_mark_free_area(const struct mb_mmap *const entry)
+_init void page_mark_free_area(const struct mb_mmap *const entry)
 {
     if (entry->type != MB_MEMORY_AVAILABLE)
         return;
@@ -134,7 +134,7 @@ static _init void page_mark_free_area(const struct mb_mmap *const entry)
     }
 }
 
-static _init void page_construct_lists(void)
+_init void page_construct_lists(void)
 {
     for (size_t i = 0; i < table.nb_pages; i++) {
         list_entry_init(&table.pages[i].entry);
@@ -148,7 +148,7 @@ static _init void page_construct_lists(void)
  * @brief Mark a page as reserved (cannot be allocated)
  * @param page Address of the page
  */
-static _init void page_reserve(const paddr_t addr)
+_init void page_reserve(const paddr_t addr)
 {
     page_info_t *const page = page_get(addr);
     if (page == NULL)
@@ -160,7 +160,7 @@ static _init void page_reserve(const paddr_t addr)
     page->reserved = 1;
 }
 
-static _init void page_use(const paddr_t addr)
+_init void page_use(const paddr_t addr)
 {
     page_info_t *page = page_get(addr);
     if (page == NULL)

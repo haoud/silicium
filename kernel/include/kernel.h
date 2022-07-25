@@ -49,8 +49,9 @@ typedef unsigned int uint_t;
 #define _pure       __attribute__((__pure__))
 #define _used       __attribute__((__used__))
 #define _cdecl      __attribute__((__cdecl__))
-#define _weak       __attribute__((__weak__,))
+#define _weak       __attribute__((__weak__))
 #define _hidden     __attribute__((__visibility__("hidden")))
+#define _internal   __attribute__((__visibility__("internal")))
 #define _visible    __attribute__((__visibility__("default")))
 #define _cold   __attribute__((__cold__))
 #define _hot    __attribute__((__hot__))
@@ -61,9 +62,9 @@ typedef unsigned int uint_t;
 
 #define _export _visible _used _cdecl _asmlinkage
 
-#define _init       __attribute__((section(".init.text")))
-#define _initdata   __attribute__((section(".init.data")))
-#define _initrodata __attribute__((section(".init.rotdata")))
+#define _init       _hidden _section(".init.text")
+#define _initdata   _hidden _section(".init.data")
+#define _initrodata _hidden _section(".init.rotdata")
 
 #define _interrupt  _cdecl _asmlinkage
 #define _syscall    _cdecl _asmlinkage
