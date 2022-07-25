@@ -19,15 +19,21 @@
 #include <module.h>
 #include <lib/log.h>
 
-static const char *hello = "Hello from module !";
-static const char *bye = "Goodbye...";
+MODULE_NAME("test")
+MODULE_VERSION("1.0")
+MODULE_LICENSE("GPLv3")
+MODULE_AUTHOR("Romain Cadilhac")
+MODULE_DESCRIPTION("A module to test the kernel module system")
 
-_init void startup(void)
+static void startup(void)
 {
-    info("%s", hello);
+    info("Hello from module !");
 }
 
-_exit void cleanup(void)
+static void cleanup(void)
 {
-    info("%s", bye);
+    info("Goodbye...");
 }
+
+MODULE_INIT(startup)
+MODULE_EXIT(cleanup)

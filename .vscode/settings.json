@@ -31,6 +31,10 @@
         "array": "c",
         "ranges": "c",
         "sstream": "c",
-        "regex": "c"
+        "regex": "c",
+        "typeindex": "c",
+        "typeinfo": "c",
+        "stacktrace": "c",
+        "list.h": "c"
     },
 }

@@ -18,20 +18,23 @@
  */
 #pragma once
 #include <kernel.h>
+#include <module.h>
 #include <lib/list.h>
-
-typedef void (*module_init_t)(void);
-typedef void (*module_finit_t)(void);
 
 typedef struct module {
     const char *elf;
+
+    const char *author;
+    const char *description;
     const char *name;
+    const char *version;
+    
     module_init_t init;
     module_finit_t finit;
     uatomic_t usage;
     struct list_head node;
 } module_t;
 
-int module_load(char *module, const char *name);
+int module_load(char *module);
 int module_unload(const char *name);
 int module_exist(const char *name);

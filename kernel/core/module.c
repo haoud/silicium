@@ -137,12 +137,13 @@ static int module_elf_relocate_symbol(
 
 static vaddr_t module_elf_find_symbol(
     const elf_ehdr_t *ehdr,
-    const char *name)
+    const char *name,
+    const uint8_t type,
+    const uint8_t bind,
+    const uint8_t visibility)
 {
     const elf_shdr_t *shdr = (elf_shdr_t *) ((const char *)ehdr + ehdr->shoff);
 
-    // Itinerate over all sections, and it is a symbol table, 
-    // then look for the symbol
     for (unsigned int i = 0; i < ehdr->shnum; i++) {
         const elf_shdr_t *section = &shdr[i];
         if (section->type != ELF_SHT_TYPE_SYMTAB)
@@ -156,6 +157,12 @@ static vaddr_t module_elf_find_symbol(
             const char *symbol_name = 
                 (const char *) ehdr + strtab->offset + symbols[j].name;
             if (strcmp(symbol_name, name) == 0) {
+                if (ELF_ST_BIND(symbols[j].info) != ELF_ST_BIND(bind))
+                    continue;
+                if (ELF_ST_TYPE(symbols[j].info) != ELF_ST_TYPE(type))
+                    continue;
+                if (symbols[j].other != visibility)
+                    continue;
                 // Return the symbol value
                 return module_elf_get_symbval(
                     ehdr,
@@ -238,7 +245,7 @@ static int module_elf_parse(char *data)
 
 /**
  * @brief Allocates a module structure and initialize the list node. All
- * other fields are undefined.
+ * other fields are set to NULL
  * 
  * @return module_t* The allocated module structure or
  *  NULL if an error occured.
@@ -250,6 +257,13 @@ static module_t *module_allocate(void)
         return NULL;
 
     list_init(&module->node);
+    module->description = NULL;
+    module->version = NULL;
+    module->author = NULL;
+    module->finit = NULL;
+    module->init = NULL;
+    module->name = NULL;
+    module->elf = NULL;
     module->usage = 1;
     return module;
 }
@@ -261,15 +275,11 @@ static module_t *module_allocate(void)
  * @param name 
  * @return int 
  */
-int module_load(char *data, const char *name)
+int module_load(char *data)
 {
-    if (module_exist(name))
-        return -EEXIST;
-
     module_t *module = module_allocate();
     if (module == NULL)
         return -ENOMEM;
-
 
     // Parse the ELF file
     const int ret = module_elf_parse(data);
@@ -278,18 +288,95 @@ int module_load(char *data, const char *name)
         return ret;
     }
 
-    // TODO: Use a structure to avoid startup & cleanup symbol name collision
-    vaddr_t init = module_elf_find_symbol((elf_ehdr_t *) data, "startup");
-    vaddr_t finit = module_elf_find_symbol((elf_ehdr_t *) data, "cleanup");
+    // TODO: Export module symbol
+    vaddr_t mod_exit = module_elf_find_symbol(
+        (elf_ehdr_t *) data,
+        "__module_exit__",
+        ELF_STT_OBJECT,
+        ELF_STB_LOCAL,
+        ELF_STV_DEFAULT);
+    vaddr_t mod_init = module_elf_find_symbol(
+        (elf_ehdr_t *) data,
+        "__module_init__",
+        ELF_STT_OBJECT,
+        ELF_STB_LOCAL,
+        ELF_STV_DEFAULT);
+    vaddr_t mod_name = module_elf_find_symbol(
+        (elf_ehdr_t *) data,
+        "__module_name__",
+        ELF_STT_OBJECT,
+        ELF_STB_LOCAL,
+        ELF_STV_DEFAULT);
+    vaddr_t mod_author = module_elf_find_symbol(
+        (elf_ehdr_t *) data,
+        "__module_author__",
+        ELF_STT_OBJECT,
+        ELF_STB_LOCAL,
+        ELF_STV_DEFAULT);
+    vaddr_t mod_version = module_elf_find_symbol(
+        (elf_ehdr_t *) data,
+        "__module_version__",
+        ELF_STT_OBJECT,
+        ELF_STB_LOCAL,
+        ELF_STV_DEFAULT);
+    vaddr_t mod_description = module_elf_find_symbol(
+        (elf_ehdr_t *) data,
+        "__module_description__",
+        ELF_STT_OBJECT,
+        ELF_STB_LOCAL,
+        ELF_STV_DEFAULT);
 
-    if (init == ELF_INVALID_SYMBOL)
-        init = 0;
-    if (finit == ELF_INVALID_SYMBOL)
-        finit = 0;
-    module->finit = (module_finit_t) finit;
-    module->init = (module_init_t) init;
-    module->name = name;
+    if (mod_exit == ELF_INVALID_SYMBOL)
+        mod_exit = 0;
+    if (mod_init == ELF_INVALID_SYMBOL)
+        mod_init = 0;
+    if (mod_name == ELF_INVALID_SYMBOL)
+        mod_name = 0;
+    if (mod_author == ELF_INVALID_SYMBOL)
+        mod_author = 0;
+    if (mod_version == ELF_INVALID_SYMBOL)
+        mod_version = 0;
+    if (mod_description == ELF_INVALID_SYMBOL)
+        mod_description = 0;
+
+    // This in the only required field
+    if (mod_name == 0) {
+        error("Trying to load a kernel module without name");
+        free(module);
+        return -EFAULT;
+    }
+
     module->elf = data;
+    module->name = *(const char **) mod_name;
+    if (module_exist(module->name)) {
+        error("Module %s already loaded", module->name);
+        free(module);
+        return -EFAULT;
+    }
+
+    trace("Module %s loaded", module->name);
+    if (mod_init != 0)  {
+        module->init = *(module_init_t *) mod_init;
+        trace("Module %s has a init function at 0x%p", 
+            module->name, module->init);
+    }
+    if (mod_exit != 0) {
+        module->finit = *(module_init_t *) mod_exit;
+        trace("Module %s has a finit function at 0x%p", 
+            module->name, module->finit);
+    }
+    if (mod_author != 0) {
+        module->author = *(const char **) mod_author;
+        trace("Module author: %s", module->author);
+    }
+    if (mod_version != 0) {
+        module->version = *(const char **) mod_version;
+        trace("Module version: %s", module->version);
+    }
+    if (mod_description != 0) {
+        module->description = *(const char **) mod_description;
+        trace("Module description: %s", module->description);
+    }
 
     spin_lock(&lock);
     list_add(&module_list, &module->node);

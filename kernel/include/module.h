@@ -19,8 +19,26 @@
 #pragma once
 #include <kernel.h>
 
-#undef _init
-#undef _exit
+typedef void (*module_init_t)(void);
+typedef void (*module_finit_t)(void);
 
-#define _init   _section(".init")
-#define _exit   _section(".exit")
+#define MODULE_NAME(name) \
+    static const _used char *__module_name__ = (name);
+
+#define MODULE_AUTHOR(author) \
+    static const _used char *__module_author__ = (author);
+
+#define MODULE_LICENSE(license) \
+    static const _used char *__module_license__ = (license);
+
+#define MODULE_VERSION(version) \
+    static const _used char *__module_version__ = (version);
+
+#define MODULE_DESCRIPTION(description) \
+    static const _used char *__module_description__ = (description);
+
+#define MODULE_INIT(init) \
+    static const _used module_init_t __module_init__ = (init);
+
+#define MODULE_EXIT(exit) \
+    static const _used module_finit_t __module_exit__ = (exit);

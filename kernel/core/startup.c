@@ -28,11 +28,11 @@ extern const char _init_end;
 _init void load_modules(const char *initrd)
 {
     // TODO: Use a config file to load modules and to configure the kernel 
-    ustar_entry_t *test = ustar_lookup(initrd, "silicium-module");
+    ustar_entry_t *test = ustar_lookup(initrd, "test.kmd");
     if (test == NULL)
-        error("Failed to find module %s", "test");
-    if (module_load(test->data, "test") < 0)
-        warn("Failed to load module %s", "test");
+        error("Failed to find module %s", "test.kmd");
+    if (module_load(test->data) < 0)
+        warn("Failed to load module %s", "test.kmd");
 }
 
 _init _noreturn void free_init_sections(void)

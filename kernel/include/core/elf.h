@@ -19,8 +19,8 @@
 #pragma once
 #include <kernel.h>
 
-#define ELF_NIDENT	        16
-#define ELF_INVALID_SYMBOL	0xFFFFFFFF
+#define ELF_NIDENT          16
+#define ELF_INVALID_SYMBOL  0xFFFFFFFF
 
 #define ELF_IDENT_MAGIC0        0
 #define ELF_IDENT_MAGIC1        1
@@ -32,12 +32,12 @@
 #define ELF_IDENT_OS_ABI        7
 #define ELF_IDENT_ABI_VERSION   8
 #define ELF_IDENT_PAD           9
- 
-#define ELF_MAGIC0	0x7F
-#define ELF_MAGIC1	'E'
-#define ELF_MAGIC2	'L'
-#define ELF_MAGIC3	'F'
- 
+
+#define ELF_MAGIC0  0x7F
+#define ELF_MAGIC1  'E'
+#define ELF_MAGIC2  'L'
+#define ELF_MAGIC3  'F'
+
 #define ELF_DATA_LSB    1  // Little endian
 #define ELF_CLASS32     1   // 32-bit architecture
 
@@ -47,7 +47,7 @@
 #define ELF_TYPE_DYN    3
 #define ELF_TYPE_CORE   4
 
-#define EM_386          3       // x86 machine
+#define EM_386          3   // x86 machine
 #define EV_CURRENT      1   // ELF Current Version
 
 #define ELF_SHN_UNDEF   0
@@ -87,11 +87,11 @@
 #define ELF_SHT_ATTRIB_ALLOC    0x02
 #define ELF_SHT_ATTRIB_EXECUTE  0x04
 
-#define ELF_ST_BIND(info)	((info) >> 4)
-#define ELF_ST_TYPE(info)	((info) & 0x0F)
+#define ELF_ST_BIND(info)   ((info) >> 4)
+#define ELF_ST_TYPE(info)   ((info) & 0x0F)
 
-#define ELF32_R_SYM(info)	((info) >> 8)
-#define ELF32_R_TYPE(info)	((info) & 0xFF)
+#define ELF32_R_SYM(info)   ((info) >> 8)
+#define ELF32_R_TYPE(info)  ((info) & 0xFF)
 
 #define ELF_STB_LOCAL   0
 #define ELF_STB_GLOBAL  1
@@ -103,12 +103,17 @@
 #define ELF_STT_SECTION 3
 #define ELF_STT_FILE    4
 
+#define ELF_STV_DEFAULT     0
+#define ELF_STV_INTERNAL    1
+#define ELF_STV_HIDDEN      2
+#define ELF_STV_PROTECTED   3
+
 #define ELF_RTT_NONE    0
 #define ELF_RTT_32      1
 #define ELF_RTT_PC32    2
 
-#define elf_section_entry_count(section)	\
-	((section)->size / (section)->entsize)
+#define elf_section_entry_count(section)  \
+    ((section)->size / (section)->entsize)
 
 typedef uint16_t elf_half_t;
 typedef uint32_t elf_addr_t;
@@ -117,64 +122,64 @@ typedef int32_t elf_sword_t;
 typedef uint32_t elf_off_t;
 
 typedef struct elf_ehdr {
-	uint8_t ident[ELF_NIDENT];
-	elf_half_t type;
-	elf_half_t machine;
-	elf_word_t version;
-	elf_addr_t entry;
-	elf_off_t phoff;
-	elf_off_t shoff;
-	elf_word_t flags;
-	elf_half_t ehsize;
-	elf_half_t phentsize;
-	elf_half_t phnum;
-	elf_half_t shentsize;
-	elf_half_t shnum;
-	elf_half_t shstrndx;
+    uint8_t ident[ELF_NIDENT];
+    elf_half_t type;
+    elf_half_t machine;
+    elf_word_t version;
+    elf_addr_t entry;
+    elf_off_t phoff;
+    elf_off_t shoff;
+    elf_word_t flags;
+    elf_half_t ehsize;
+    elf_half_t phentsize;
+    elf_half_t phnum;
+    elf_half_t shentsize;
+    elf_half_t shnum;
+    elf_half_t shstrndx;
 }_packed elf_ehdr_t;
 
 typedef struct elf_phdr {
-	elf_word_t type;
-	elf_off_t offset;
-	elf_addr_t vaddr;
-	elf_addr_t paddr;
-	elf_word_t filesz;
-	elf_word_t memsz;
-	elf_word_t flags;
-	elf_word_t align;
+    elf_word_t type;
+    elf_off_t offset;
+    elf_addr_t vaddr;
+    elf_addr_t paddr;
+    elf_word_t filesz;
+    elf_word_t memsz;
+    elf_word_t flags;
+    elf_word_t align;
 }_packed elf_phdr_t;
 
 typedef struct elf_shdr {
-	elf_word_t name;
-	elf_word_t type;
-	elf_word_t flags;
-	elf_addr_t addr;
-	elf_off_t offset;
-	elf_word_t size;
-	elf_word_t link;
-	elf_word_t info;
-	elf_word_t addralign;
-	elf_word_t entsize;
+    elf_word_t name;
+    elf_word_t type;
+    elf_word_t flags;
+    elf_addr_t addr;
+    elf_off_t offset;
+    elf_word_t size;
+    elf_word_t link;
+    elf_word_t info;
+    elf_word_t addralign;
+    elf_word_t entsize;
 }_packed elf_shdr_t;
 
 typedef struct elf_sym {
-	elf_word_t name;
-	elf_addr_t value;
-	elf_word_t size;
-	uint8_t info;
-	uint8_t other;
-	elf_half_t shndx;
+    elf_word_t name;
+    elf_addr_t value;
+    elf_word_t size;
+    uint8_t info;
+    uint8_t other;
+    elf_half_t shndx;
 }_packed elf_sym_t;
 
 typedef struct elf_rel {
-	elf_addr_t offset;
-	elf_word_t info;
+    elf_addr_t offset;
+    elf_word_t info;
 }_packed elf_rel_t;
- 
+
 typedef struct elf_rela {
-	elf_addr_t offset;
-	elf_word_t info;
-	elf_sword_t addend;
+    elf_addr_t offset;
+    elf_word_t info;
+    elf_sword_t addend;
 }_packed elf_rela_t;
 
 elf_shdr_t *elf_get_section(const elf_ehdr_t *ehdr, const unsigned int idx);
