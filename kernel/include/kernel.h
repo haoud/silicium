@@ -26,7 +26,6 @@
 #include <config.h>
 #include <assert.h>
 #include <barrier.h>
-#include <lib/log.h>
 
 typedef atomic_uint uatomic_t;
 typedef atomic_int atomic_t;
@@ -77,6 +76,8 @@ typedef unsigned int uint_t;
     ((type *) ((char *) ptr - offsetof(type, member)))
 
 #define BUG(x) _unreachable()
+
+#include <lib/log.h>
 
 // Some useful function definitions
 _noreturn _cold void panic(const char *fmt, ...);

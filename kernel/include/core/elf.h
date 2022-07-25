@@ -90,6 +90,9 @@
 #define ELF_ST_BIND(info)	((info) >> 4)
 #define ELF_ST_TYPE(info)	((info) & 0x0F)
 
+#define ELF32_R_SYM(info)	((info) >> 8)
+#define ELF32_R_TYPE(info)	((info) & 0xFF)
+
 #define ELF_STB_LOCAL   0
 #define ELF_STB_GLOBAL  1
 #define ELF_STB_WEAK    2
@@ -103,6 +106,9 @@
 #define ELF_RTT_NONE    0
 #define ELF_RTT_32      1
 #define ELF_RTT_PC32    2
+
+#define elf_section_entry_count(section)	\
+	((section)->size / (section)->entsize)
 
 typedef uint16_t elf_half_t;
 typedef uint32_t elf_addr_t;
@@ -170,3 +176,5 @@ typedef struct elf_rela {
 	elf_word_t info;
 	elf_sword_t addend;
 }_packed elf_rela_t;
+
+elf_shdr_t *elf_get_section(const elf_ehdr_t *ehdr, const unsigned int idx);

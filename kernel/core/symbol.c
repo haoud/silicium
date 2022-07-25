@@ -97,7 +97,7 @@ int symbol_remove(const char *name)
  */
 bool symbol_exists(const char *name)
 {
-    return !!symbol_get(name);
+    return !!symbol_get_value(name);
 }
 
 /**
@@ -109,7 +109,7 @@ bool symbol_exists(const char *name)
  */
 vaddr_t symbol_get_value(const char *name)
 {
-    hashmap_foreach_result(&symbol_table, (unsigned int) name, entry) {
+    hashmap_foreach_result(&symbol_table, strhash(name), entry) {
         symbol_t *symbol = container_of(entry, symbol_t, node);
         if (strcmp(symbol->name, name) == 0)
             return symbol->value;
@@ -146,7 +146,7 @@ int symbol_add(const char *name, const vaddr_t value)
     }
 
     spin_lock(&lock);
-    hashmap_insert(&symbol_table, (unsigned int) symbol->name, &symbol->node);
+    hashmap_insert(&symbol_table, strhash(symbol->name), &symbol->node);
     spin_unlock(&lock);
     return 0;
 }

@@ -51,6 +51,15 @@ size_t strlen(const char *str)
 	return len;
 }
 
+uint32_t strhash(const char *str)
+{
+	uint32_t hash = 0;
+	do {
+		hash += *str;
+	} while(*str++ != '\0');
+	return hash;
+}
+
 char *strchr(const char *str, char c)
 {
 	do {

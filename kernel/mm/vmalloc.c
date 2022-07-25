@@ -126,6 +126,8 @@ _export vaddr_t vmalloc(size_t size, int flags)
             spin_unlock(&lock);
             return 0;
         }
+        if (flags & VMALLOC_ZERO)
+            memzero(vma->base, vma->length);
         vma->mapped = 1;
     }
 

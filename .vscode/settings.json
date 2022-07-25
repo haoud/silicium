@@ -18,6 +18,19 @@
         "cvt4.C": "cpp",
         "log.h": "c",
         "module.h": "c",
-        "kernel.h": "c"
+        "kernel.h": "c",
+        "symbol.h": "c",
+        "vmalloc.h": "c",
+        "elf.h": "c",
+        "*.in": "c",
+        "string": "c",
+        "buffer": "c",
+        "internet": "c",
+        "socket": "c",
+        "string_view": "c",
+        "array": "c",
+        "ranges": "c",
+        "sstream": "c",
+        "regex": "c"
     },
 }

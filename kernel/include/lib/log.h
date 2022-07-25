@@ -17,6 +17,7 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <kernel.h>
 
 #ifndef LOG_LEVEL
 #define LOG_LEVEL LOG_LEVEL_TRACE
@@ -41,4 +42,4 @@
 #define fatal(fmt...) log(LOG_LEVEL_FATAL, fmt)
 #define critical(fmt...) log(LOG_LEVEL_CRIT, fmt)
 
-void log(const unsigned int gravity, const char *const fmt, ...);
+_export void log(const unsigned int gravity, const char *const fmt, ...);

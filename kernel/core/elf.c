@@ -16,22 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
-#include <kernel.h>
-#include <lib/list.h>
+#include <core/elf.h>
 
-typedef void (*module_init_t)(void);
-typedef void (*module_finit_t)(void);
+elf_shdr_t *elf_get_section(const elf_ehdr_t *ehdr, const unsigned int idx)
+{
+    if (idx >= ehdr->shnum)
+        return NULL;
 
-typedef struct module {
-    const char *elf;
-    const char *name;
-    module_init_t init;
-    module_finit_t finit;
-    uatomic_t usage;
-    struct list_head node;
-} module_t;
-
-int module_load(char *module, const char *name);
-int module_unload(const char *name);
-int module_exist(const char *name);
+    elf_shdr_t *shdr = (elf_shdr_t *) ((char *) ehdr + ehdr->shoff);
+    return &shdr[idx];
+}

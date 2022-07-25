@@ -59,102 +59,102 @@ _init void exception_install(void)
 
 void divide_error_exception(struct cpu_state *cpu)
 {
-    panic("Divide error exception");
+    panic("Divide error exception at 0x%x", cpu->eip);
 }
 
 void debug_exception(struct cpu_state *cpu)
 {
-    panic("Debug exception");
+    panic("Debug exception at 0x%x", cpu->eip);
 }
 
 void nmi_exception(struct cpu_state *cpu)
 {
-    panic("NMI exception");
+    panic("NMI exception at 0x%x", cpu->eip);
 }
 
 void breakpoint_exception(struct cpu_state *cpu)
 {
-    panic("Breakpoint exception");
+    panic("Breakpoint exception at 0x%x", cpu->eip);
 }
 
 void overflow_exception(struct cpu_state *cpu)
 {
-    panic("Overflow exception");
+    panic("Overflow exception at 0x%x", cpu->eip);
 }
 
 void bound_exception(struct cpu_state *cpu)
 {
-    panic("Bound exception");
+    panic("Bound exception at 0x%x", cpu->eip);
 }
 
 void invalid_opcode_exception(struct cpu_state *cpu)
 {
-    panic("Invalid opcode exception");
+    panic("Invalid opcode exception at 0x%x", cpu->eip);
 }
 
 void device_not_available_exception(struct cpu_state *cpu)
 {
-    panic("Device not available exception");
+    panic("Device not available exception at 0x%x", cpu->eip);
 }
 
 void double_fault_exception(struct cpu_state *cpu)
 {
-    panic("Double fault exception");
+    panic("Double fault exception at 0x%x", cpu->eip);
 }
 
 void coprocessor_segment_overrun_exception(struct cpu_state *cpu)
 {
-    panic("Coprocessor segment overrun exception");
+    panic("Coprocessor segment overrun exception at 0x%x", cpu->eip);
 }
 
 void invalid_tss_exception(struct cpu_state *cpu)
 {
-    panic("Invalid TSS exception");
+    panic("Invalid TSS exception at 0x%x", cpu->eip);
 }
 
 void segment_not_present_exception(struct cpu_state *cpu)
 {
-    panic("Segment not present exception");
+    panic("Segment not present exception at 0x%x", cpu->eip);
 }
 
 void stack_segment_fault_exception(struct cpu_state *cpu)
 {
-    panic("Stack segment fault exception");
+    panic("Stack segment fault exception at 0x%x", cpu->eip);
 }
 
 void general_protection_exception(struct cpu_state *cpu)
 {
-    panic("General protection exception");
+    panic("General protection exception at 0x%x", cpu->eip);
 }
 
 void page_fault_exception(struct cpu_state *cpu)
 {
-    panic("Page fault exception");
+    panic("Page fault exception at 0x%x", cpu->eip);
 }
 
 void reserved_exception(struct cpu_state *cpu)
 {
-    panic("Reserved exception");
+    panic("Reserved exception at 0x%x", cpu->eip);
 }
 
 void floating_point_exception(struct cpu_state *cpu)
 {
-    panic("Floating point exception");
+    panic("Floating point exception at 0x%x", cpu->eip);
 }
 
 void alignment_check_exception(struct cpu_state *cpu)
 {
-    panic("Alignment check exception");
+    panic("Alignment check exception at 0x%x", cpu->eip);
 }
 
 void machine_check_exception(struct cpu_state *cpu)
 {
-    panic("Machine check exception");
+    panic("Machine check exception at 0x%x", cpu->eip);
 }
 
 void simd_exception(struct cpu_state *cpu)
 {
-    panic("SIMD exception");
+    panic("SIMD exception at 0x%x", cpu->eip);
 }
 
 void default_exception(struct cpu_state *cpu)

@@ -55,7 +55,7 @@ static inline void print(const char *s)
 		outb(0xe9, *s++);
 }
 
-void log(const unsigned int gravity, const char *const fmt, ...)
+_export void log(const unsigned int gravity, const char *const fmt, ...)
 {
 #ifdef CONFIG_LOG
 	if (gravity < log_level)
@@ -68,13 +68,7 @@ void log(const unsigned int gravity, const char *const fmt, ...)
 	vsnprintf(str, LOG_MAX_LEN, fmt, arg);
 	va_end(arg);
 
-#ifndef CONFIG_DISABLE_CHECKS
-	const int g = clamp(gravity, LOG_LEVEL_UNDEFINED, LOG_LEVEL_FATAL);
-#else
-	const int g = gravity;
-#endif
-
-	print(level_icon_colored[g]);
+	print(level_icon_colored[gravity]);
 	print(" ");
 	print(str);
 	print("\n");

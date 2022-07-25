@@ -27,6 +27,7 @@
 
 #define VMALLOC_NONE    0x00
 #define VMALLOC_MAP     0x01
+#define VMALLOC_ZERO    0x02    // Zero the mapped memory
 
 #define VMALLOC_VMAREA_MIN_FREE 0
 #define VMALLOC_VMAREA_PER_SLUB 64

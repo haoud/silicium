@@ -17,9 +17,10 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <kernel.h>
-#include <core/ustar.h>
-#include <arch/x86/cpu.h>
 #include <mm/page.h>
+#include <core/ustar.h>
+#include <core/module.h>
+#include <arch/x86/cpu.h>
 
 extern const char _init_start;
 extern const char _init_end;
@@ -27,11 +28,11 @@ extern const char _init_end;
 _init void load_modules(const char *initrd)
 {
     // TODO: Use a config file to load modules and to configure the kernel 
-    ustar_entry_t *test = ustar_lookup(initrd, "test.kmd");
+    ustar_entry_t *test = ustar_lookup(initrd, "silicium-module");
     if (test == NULL)
         error("Failed to find module %s", "test");
-
-    // TODO: Load modules
+    if (module_load(test->data, "test") < 0)
+        warn("Failed to load module %s", "test");
 }
 
 _init _noreturn void free_init_sections(void)
