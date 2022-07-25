@@ -32,7 +32,7 @@
 #define SLUB_LAZY 0x01
 
 #define slub_is_aligned(slub, obj) \
-    (((uintptr_t) (obj) & ~((slub)->object_align - 1)) == 0)
+    (((uintptr_t) (obj) & ((slub)->object_align - 1)) == 0)
 
 // Very basic, but enough for now, use slub_is_aligned() for extra checks
 #define slub_is_in(slub, obj)             \
