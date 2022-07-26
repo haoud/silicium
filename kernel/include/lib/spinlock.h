@@ -18,6 +18,7 @@
  */
 #pragma once
 #include <kernel.h>
+#include <arch/x86/cpu.h>
 
 #define DECLARE_SPINLOCK(name) \
     spinlock_t name = {0}
