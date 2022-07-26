@@ -22,8 +22,7 @@
 #include <lib/list.h>
 
 typedef struct module {
-    const char *elf;
-
+    char *elf;
     const char *author;
     const char *description;
     const char *name;

@@ -26,7 +26,7 @@
 extern const char _init_start;
 extern const char _init_end;
 
-_init void load_module(const char *initrd, char *name)
+_init void load_module(char *initrd, char *name)
 {
     ustar_entry_t *module = ustar_lookup(initrd, name);
     if (module == NULL)
@@ -35,7 +35,7 @@ _init void load_module(const char *initrd, char *name)
         warn("Failed to load module %s", name);
 }
 
-_init void load_modules(const char *initrd)
+_init void load_modules(char *initrd)
 {
     // TODO: Use a config file to load modules and to configure the kernel 
     load_module(initrd, "test.kmd");
@@ -62,7 +62,7 @@ _init _noreturn void free_init_sections(void)
     cpu_stop();
 }
 
-_init _noreturn void startup(const char *initrd)
+_init _noreturn void startup(char *initrd)
 {
     load_modules(initrd);
     free_init_sections();

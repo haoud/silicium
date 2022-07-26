@@ -32,7 +32,7 @@
 #include <arch/x86/paging.h>
 #include <arch/x86/exception.h>
 
-extern void startup(const char *initrd);
+extern void startup(char *initrd);
 
 _init void start(struct mb_info *info)
 {
@@ -54,7 +54,7 @@ _init void start(struct mb_info *info)
     struct mb_module *module = mb_get_module(info, "initrd");
 
     // Allocate the initrd memory and copy it to the kernel memory
-    const char *initrd = NULL;
+    char *initrd = NULL;
     if (module != NULL) {
         const size_t length = module->mod_end - module->mod_start;
         initrd = malloc(length);
