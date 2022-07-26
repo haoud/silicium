@@ -17,14 +17,8 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <config.h>
 
-#define ARCH_X86
-
-// Disable some checks in kernel: assume kernel & modules are bug-free
-// TODO: Make sure the kernel can handle this flags without breaking
-//#define CONFIG_DISABLE_CHECKS
-#define CONFIG_EXTRA_CHECKS         // Enable extra checks to improve security
-#define CONFIG_VSNPRINTF_64BITS     // Enable parsing 64 bits numbers
-#define CONFIG_LOG                  // Enable logging (bochs only)
-#define CONFIG_SMP                  // Enable SMP (unsupported now)
-#define CONFIG_DEBUG_PANIC          // Enable panic with debug information
+#ifdef ARCH_X86
+#include <arch/x86/types.h>
+#endif
