@@ -20,13 +20,29 @@
 #include <kernel.h>
 
 #define DECLARE_SPINLOCK(name) \
-	spinlock_t name = {0}
+    spinlock_t name = {0}
+
+#define __spin_lock(spin) ({ \
+    spin_lock(spin);         \
+    0;                       \
+})
+
+// Please use bracket when using this macro to better readability
+#define spin_acquire(spin)                                                    \
+    for (spinlock_t * __spin _cleanup(__spin_unlock) = (spin), *__i = (spin); \
+         __i == (spin);                                                    \
+         __i++)
 
 typedef struct spinlock {
-	atomic_t lock;
+    atomic_t lock;
 } spinlock_t;
 
 void spin_init(spinlock_t *const spin);
 void spin_lock(spinlock_t *const spin);
 void spin_unlock(spinlock_t *const spin);
 int spin_trylock(spinlock_t *const spin);
+
+static inline void __spin_unlock(spinlock_t *const *const spin)
+{
+    spin_unlock(*spin);
+}
