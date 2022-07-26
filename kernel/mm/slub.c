@@ -324,37 +324,32 @@ _export void *slub_allocate(slub_allocator_t *allocator)
     
     slub_t *slub = NULL;
     do {
-        spin_lock(&allocator->lock);
-        struct list_head *slub_pool = &allocator->used_slubs;
-        if (list_empty(slub_pool)) {
-            slub_pool = &allocator->free_slubs;
-        }
-        if (list_empty(slub_pool)) {
-            if (slub_creat_and_add(allocator) < 0) {
-                spin_unlock(&allocator->lock);
-                return NULL;
+        // Lock the allocator
+        spin_acquire(&allocator->lock) {
+            struct list_head *slub_pool = &allocator->used_slubs;
+            if (list_empty(slub_pool))
+                slub_pool = &allocator->free_slubs;
+            if (list_empty(slub_pool)) {
+                if (slub_creat_and_add(allocator) < 0)
+                    return NULL;
+                slub_pool = &allocator->free_slubs;
             }
-            slub_pool = &allocator->free_slubs;
-        }
 
-        // If we need to allocate a slub to respect the min_free count, do it
-        if (allocator->free_count == allocator->min_free) {
-            if (slub_creat_and_add(allocator) < 0) {
-                spin_unlock(&allocator->lock);
-                return NULL;
+            // If we need to allocate a slub to respect the min_free count
+            if (allocator->free_count == allocator->min_free) {
+                if (slub_creat_and_add(allocator) < 0)
+                    return NULL;
             }
-        }
 
-        assert(!list_empty(slub_pool));
-        
-        slub = list_entry(slub_pool->next, slub_t, slub_list);
-        spin_unlock(&allocator->lock);
+            assert(!list_empty(slub_pool));
+            
+            slub = list_entry(slub_pool->next, slub_t, slub_list);
+        }
+        // Lock the slub
         spin_lock(&slub->lock);
-
         // Verify if the slub is still avaible after the locking
         if (!list_empty(&slub->free_objects))
             break;
-
         spin_unlock(&slub->lock);
     } while (1);
 

@@ -83,56 +83,53 @@ _export vaddr_t vmalloc(size_t size, int flags)
 #endif
 
     // Find the first free area that is big enough
-    spin_lock(&lock);
-    vmarea_t *vma = NULL;
-    list_foreach(&free_list, entry) {
-        vma = list_entry(entry, vmarea_t, node);
-        if (vma->length >= size) 
-            break;
-    }
-    if(vma == NULL) {
-        spin_unlock(&lock);
-        return 0;
-    }
-
-    list_remove(&vma->node);
-    list_add_tail(&used_list, &vma->node);
-
-    // Split the area if necessary
-    if (vma->length > size) {
-        vmarea_t *const new_vma = vmarea_allocate();
-        if (new_vma == NULL) {
-            // We can't split the area, so we put it back in the free list
-            list_remove(&vma->node);
-            list_add_tail(&free_list, &vma->node);
-            spin_unlock(&lock);
-            return 0;
+    // TODO: The spinlock is used too long...
+    spin_acquire(&lock) {
+        vmarea_t *vma = NULL;
+        list_foreach(&free_list, entry) {
+            vma = list_entry(entry, vmarea_t, node);
+            if (vma->length >= size) 
+                break;
         }
-        new_vma->length = vma->length - size;
-        new_vma->base = vma->base + size;
-        vma->length = size;
-        list_add_tail(&free_list, &new_vma->node);
-    }
 
-    if (flags & VMALLOC_MAP) {
-        const int ret = paging_map_interval(
-                            vma->base,
-                            vma->base + vma->length,
-                            PAGING_READ | PAGING_WRITE);
-        if (ret < 0) {
-            // We can't map the area, so we put it back in the free list
-            list_remove(&vma->node);
-            list_add_tail(&free_list, &vma->node);
-            spin_unlock(&lock);
+        if(vma == NULL)
             return 0;
-        }
-        if (flags & VMALLOC_ZERO)
-            memzero(vma->base, vma->length);
-        vma->mapped = 1;
-    }
 
-    spin_unlock(&lock);
-    return vma->base;
+        list_remove(&vma->node);
+        list_add_tail(&used_list, &vma->node);
+
+        // Split the area if necessary
+        if (vma->length > size) {
+            vmarea_t *const new_vma = vmarea_allocate();
+            if (new_vma == NULL) {
+                // We can't split the area, so we put it back in the free list
+                list_remove(&vma->node);
+                list_add_tail(&free_list, &vma->node);
+                return 0;
+            }
+            new_vma->length = vma->length - size;
+            new_vma->base = vma->base + size;
+            vma->length = size;
+            list_add_tail(&free_list, &new_vma->node);
+        }
+
+        if (flags & VMALLOC_MAP) {
+            const int ret = paging_map_interval(
+                                vma->base,
+                                vma->base + vma->length,
+                                PAGING_READ | PAGING_WRITE);
+            if (ret < 0) {
+                // We can't map the area, so we put it back in the free list
+                list_remove(&vma->node);
+                list_add_tail(&free_list, &vma->node);
+                return 0;
+            }
+            if (flags & VMALLOC_ZERO)
+                memzero(vma->base, vma->length);
+            vma->mapped = 1;
+        }
+        return vma->base;
+    }
 }
 
 /**
@@ -143,21 +140,21 @@ _export vaddr_t vmalloc(size_t size, int flags)
  */
 _export void vmfree(vaddr_t addr)
 {
-    spin_lock(&lock);
-    list_foreach(&used_list, entry) {
-        vmarea_t *const vma = list_entry(entry, vmarea_t, node);
-        if (vma->base == addr) {
-            list_remove(&vma->node);
-            if (vma->mapped) {
-                paging_unmap_interval(vma->base, vma->base + vma->length);
-                vma->mapped = 0;
+    spin_acquire(&lock) {
+        list_foreach(&used_list, entry) {
+            vmarea_t *const vma = list_entry(entry, vmarea_t, node);
+            if (vma->base == addr) {
+                list_remove(&vma->node);
+                if (vma->mapped) {
+                    paging_unmap_interval(vma->base, vma->base + vma->length);
+                    vma->mapped = 0;
+                }
+                list_add_head(&free_list, &vma->node);
+                return;
             }
-            list_add_head(&free_list, &vma->node);
-            spin_unlock(&lock);
-            return;
         }
     }
-    spin_unlock(&lock);
+
     warn("vmfree(): impossible to free the memory"
         " because the area doesn't exist");
 }

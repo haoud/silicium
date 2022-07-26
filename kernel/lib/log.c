@@ -61,17 +61,17 @@ _export void log(const unsigned int gravity, const char *const fmt, ...)
 	if (gravity < log_level)
 		return;
 	char str[LOG_MAX_LEN];
-	spin_lock(&lock);
 
-	va_list arg;
-	va_start(arg, fmt);
-	vsnprintf(str, LOG_MAX_LEN, fmt, arg);
-	va_end(arg);
+	spin_acquire(&lock) {
+		va_list arg;
+		va_start(arg, fmt);
+		vsnprintf(str, LOG_MAX_LEN, fmt, arg);
+		va_end(arg);
 
-	print(level_icon_colored[gravity]);
-	print(" ");
-	print(str);
-	print("\n");
-	spin_unlock(&lock);
+		print(level_icon_colored[gravity]);
+		print(" ");
+		print(str);
+		print("\n");
+	}
 #endif
 }

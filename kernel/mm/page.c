@@ -286,23 +286,25 @@ _export void page_reference(const paddr_t addr)
  */
 _export paddr_t page_alloc(const int flags)
 {
-    spin_lock(&lock);
-    struct list_head *list = &free_list;
-    if (flags & PAGE_ISA || list_empty(list))
-        list = &isa_free_list;
-    if (flags & PAGE_BIOS || list_empty(list))
-        list = &bios_free_list;
-    if (list_empty(list)) {
-        error("No free pages");
-        spin_unlock(&lock);
-        return 0;
+    page_info_t *page = NULL;
+    paddr_t paddr = 0;
+
+    spin_acquire(&lock) {
+        struct list_head *list = &free_list;
+        if (flags & PAGE_ISA || list_empty(list))
+            list = &isa_free_list;
+        if (flags & PAGE_BIOS || list_empty(list))
+            list = &bios_free_list;
+        if (list_empty(list)) {
+            error("No free pages");
+            return 0;
+        }
+
+        page = container_of(list->next, page_info_t, entry);
+        paddr = page_index_to_address(page->index);
+        list_remove(&page->entry);
     }
-
-    page_info_t *const page = container_of(list->next, page_info_t, entry);
-    const paddr_t paddr = page_index_to_address(page->index);
-    list_remove(&page->entry);
-    spin_unlock(&lock);
-
+    
     if (flags & PAGE_CLEAR && !page->cleared)
         page_clear(paddr);
     page->cleared = 0;
@@ -323,12 +325,12 @@ _export void page_free(const paddr_t addr)
     if (page->reserved)
         panic("Trying to free a reserved page");
 
-    spin_lock(&page->lock);
-    if (--page->count == 0) {
-        list_remove(&page->entry);
-        page_insert_free_list(page);
+    spin_acquire(&page->lock) {
+        if (--page->count == 0) {
+            list_remove(&page->entry);
+            page_insert_free_list(page);
+        }
     }
-    spin_unlock(&page->lock);
 }
 
 _export int page_unlock(const paddr_t addr)

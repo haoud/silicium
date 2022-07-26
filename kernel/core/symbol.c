@@ -73,17 +73,16 @@ _init void symbol_init(struct mb_info *mb_info)
  */
 int symbol_remove(const char *name)
 {
-    spin_lock(&lock);
-    hashmap_foreach_result(&symbol_table, (unsigned int) name, entry) {
-        symbol_t *symbol = container_of(entry, symbol_t, node);
-        if (strcmp(symbol->name, name) == 0) {
-            hashmap_remove(&symbol->node);
-            spin_unlock(&lock);
-            free(symbol);
-            return 0;
+    spin_acquire(&lock) {
+        hashmap_foreach_result(&symbol_table, (unsigned int) name, entry) {
+            symbol_t *symbol = container_of(entry, symbol_t, node);
+            if (strcmp(symbol->name, name) == 0) {
+                hashmap_remove(&symbol->node);
+                free(symbol);
+                return 0;
+            }
         }
     }
-    spin_unlock(&lock);
     return -ENOENT;
 }
 
@@ -144,8 +143,8 @@ int symbol_add(const char *name, const vaddr_t value)
         return -ENOMEM;
     }
 
-    spin_lock(&lock);
-    hashmap_insert(&symbol_table, strhash(symbol->name), &symbol->node);
-    spin_unlock(&lock);
+    spin_acquire(&lock) {
+        hashmap_insert(&symbol_table, strhash(symbol->name), &symbol->node);
+    }
     return 0;
 }

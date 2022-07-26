@@ -27,10 +27,10 @@
     0;                       \
 })
 
-// Please use bracket when using this macro to better readability
+// Please use bracket when using this macro for better readability
 #define spin_acquire(spin)                                                    \
     for (spinlock_t * __spin _cleanup(__spin_unlock) = (spin), *__i = (spin); \
-         __i == (spin);                                                    \
+         __i == (spin);                                                       \
          __i++)
 
 typedef struct spinlock {

@@ -38,15 +38,14 @@ static DECLARE_SPINLOCK(lock);
  */
 static module_t *module_get(const char *name)
 {
-    spin_lock(&lock);
-    list_foreach (&module_list, entry) {
-        module_t *module = list_entry(entry, module_t, node);
-        if (strcmp(module->name, name) == 0) {
-            spin_unlock(&lock);
-            return module;
+    spin_acquire(&lock) {
+        list_foreach (&module_list, entry) {
+            module_t *module = list_entry(entry, module_t, node);
+            if (strcmp(module->name, name) == 0) {
+                return module;
+            }
         }
     }
-    spin_unlock(&lock);
     return NULL;
 }
 
@@ -429,12 +428,12 @@ int module_load(char *data, const size_t length)
         trace("Module description: %s", module->description);
     }
 
-    spin_lock(&lock);
-    list_add(&module_list, &module->node);
-    spin_unlock(&lock);
-
     if(module->init != NULL)
         module->init();
+
+    spin_acquire(&lock) {
+        list_add(&module_list, &module->node);
+    }
     return 0;
 }
 
@@ -454,11 +453,11 @@ int module_unload(const char *name)
         return -ENOENT;
     if (module->usage > 1)
         return -EBUSY;
-    trace("Unloading lodule %s", module->name);
 
-    spin_lock(&lock);
-    list_remove(&module->node);
-    spin_unlock(&lock);
+    trace("Unloading lodule %s", module->name);
+    spin_acquire(&lock) {
+        list_remove(&module->node);
+    }
 
     // TODO: Remove module's symbols from the symbol table
     if(module->finit != NULL)
