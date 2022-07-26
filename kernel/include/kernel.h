@@ -29,15 +29,14 @@
 
 typedef atomic_uint uatomic_t;
 typedef atomic_int atomic_t;
-typedef uint32_t vaddr_t;
-typedef uint32_t paddr_t;
-typedef uint32_t addr_t;
+
+typedef int pid_t;
 
 typedef unsigned int uint_t;
 
 #define _assume_aligned(al) __attribute__((__assume_aligned__(al)))
-#define _no_optimizations   __attribute__((optimize("-O0")))
-#define _asmlinkage         __attribute__((regparm(0)))
+#define _no_optimizations   __attribute__((__optimize__("-O0")))
+#define _asmlinkage         __attribute__((__regparm__(0)))
 #define _deprecated __attribute__((__deprecated__))
 #define _inline     __attribute__((__always_inline__))
 #define _no_inline  __attribute__((__noinline__))
@@ -53,11 +52,12 @@ typedef unsigned int uint_t;
 #define _hidden     __attribute__((__visibility__("hidden")))
 #define _internal   __attribute__((__visibility__("internal")))
 #define _visible    __attribute__((__visibility__("default")))
-#define _cold   __attribute__((__cold__))
-#define _hot    __attribute__((__hot__))
+#define _cold       __attribute__((__cold__))
+#define _hot        __attribute__((__hot__))
 
-#define _align(al)      __attribute__((aligned(al)))
-#define _section(name)  __attribute__((section(name)))
+#define _align(al)      __attribute__((__aligned__(al)))
+#define _section(name)  __attribute__((__section__(name)))
+#define _cleanup(fn)    __attribute__((__cleanup__(fn)))
 #define _unreachable()  __builtin_unreachable()
 
 #define _export _visible _used _cdecl _asmlinkage
@@ -79,6 +79,7 @@ typedef unsigned int uint_t;
 
 #define BUG(x) _unreachable()
 
+#include <arch.h>
 #include <lib/log.h>
 
 // Some useful function definitions

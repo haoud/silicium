@@ -23,11 +23,11 @@
 
 #define GDT_KCODE_SELECTOR 0x08
 #define GDT_KDATA_SELECTOR 0x10
-#define GDT_KSTACK_SELECTOR 0x18
+#define GDT_KSTACK_SELECTOR 0x10
 
 #define GDT_UCODE_SELECTOR 0x20
-#define GDT_UDATA_SELECTOR 0x28
-#define GDT_USTACK_SELECTOR 0x30
+#define GDT_UDATA_SELECTOR 0x18
+#define GDT_USTACK_SELECTOR 0x18
 
 #define GDT_UCODE_SELECTOR_R3 (GDT_UCODE_SELECTOR + 3)
 #define GDT_UDATA_SELECTOR_R3 (GDT_UDATA_SELECTOR + 3)
@@ -48,12 +48,14 @@
 #define GDT_SEGMENT_32BITS 0x04
 #define GDT_BLOCK_SIZE_4_KO 0x08
 
-typedef struct gdt_register {
+typedef struct gdt_register
+{
     uint16_t size;
     uint32_t base;
 } _packed gdt_register_t;
 
-typedef struct gdt_entry {
+typedef struct gdt_entry
+{
     uint16_t limit0_15;
     uint16_t base0_15;
     uint8_t base16_23;

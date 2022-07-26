@@ -59,20 +59,24 @@ _init void gdt_flush(void)
 _init void gdt_install(void)
 {
     gdt_install_desc(0, 0, 0, 0, 0, 0);
+    // Kernel code
     gdt_install_desc(1, 0, 0xFFFFFFFF,
         GDT_IS_CODE_SEGMENT | GDT_SEGMENT_PRESENT | GDT_RING0,
         GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS,
         false);
+    // Kernel data
     gdt_install_desc(2, 0, 0xFFFFFFFF,
         GDT_SEGMENT_PRESENT | GDT_DATA_CAN_WRITE | GDT_RING0,
         GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS,
         false);
+    // User data
     gdt_install_desc(3, 0, 0xFFFFFFFF, 
-        GDT_IS_CODE_SEGMENT | GDT_SEGMENT_PRESENT | GDT_RING3,
+        GDT_SEGMENT_PRESENT | GDT_DATA_CAN_WRITE | GDT_RING3,
         GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS,
         false);
+    // User code
     gdt_install_desc(4, 0, 0xFFFFFFFF, 
-        GDT_SEGMENT_PRESENT | GDT_DATA_CAN_WRITE | GDT_RING3,
+        GDT_IS_CODE_SEGMENT | GDT_SEGMENT_PRESENT | GDT_RING3,
         GDT_BLOCK_SIZE_4_KO | GDT_SEGMENT_32BITS,
         false);
     gdt_flush();
