@@ -21,6 +21,14 @@
 #include <mm/page.h>
 #include <arch/x86/paging.h>
 
+/**
+ * @brief This file contains the implementation of the paging system. The
+ * code is fine, but the management of the BLT is catastrophic and probably
+ * incorrect. In case of weird kernel bug, don't hesitate to replace the 
+ * invlpg() macro by flush_tlb().
+ * TODO: Make the TLB management correct and valid
+ */
+
 static pde_t kernel_pd[1024] _align(PAGE_SIZE);
 extern const char _rodata_start, _rodata_end;
 extern const char _data_start, _data_end;
@@ -236,6 +244,7 @@ void paging_clone_pd(const vaddr_t src, const vaddr_t dst)
         s[i].present = 1;
         s[i].write = 0;
         pde_copy(&d[i], &s[i]);
+        flush_tlb((paddr_t) s[i]); 
     }
 }
 
