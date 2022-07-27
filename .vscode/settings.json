@@ -37,6 +37,18 @@
         "stacktrace": "c",
         "list.h": "c",
         "fpu.h": "c",
-        "paging.h": "c"
+        "paging.h": "c",
+        "cpu.h": "c",
+        "hash_map": "c",
+        "hash_set": "c",
+        "rope": "c",
+        "slist": "c",
+        "span": "c",
+        "dynamic_bitset": "c",
+        "initializer_list": "c",
+        "executor": "c",
+        "mutex": "c",
+        "shared_mutex": "c",
+        "syncstream": "c"
     },
 }

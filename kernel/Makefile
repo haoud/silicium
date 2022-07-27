@@ -1,6 +1,6 @@
 export TARGET_DIR = $(shell pwd)
 
-TARGETS = arch.a core.a mm.a lib.a
+TARGETS = arch.a core.a mm.a process.a lib.a
 SUBDIRS = $(basename $(TARGETS))
 KERNEL = silicium
 
