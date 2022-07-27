@@ -41,7 +41,7 @@ static struct mm_context *mm_context_allocate(void)
     if (context == NULL)
         return NULL;
     context->pd = vmalloc(PAGE_SIZE, VMALLOC_MAP);
-    if (context->pd != 0) {
+    if (context->pd == 0) {
         free(context);
         return NULL;
     }
