@@ -276,7 +276,7 @@ void paging_destroy_userspace(void)
 void paging_creat_pd(const vaddr_t dst)
 {
     pde_t *pd = (pde_t *) dst;
-    memzero(pd, PAGE_SIZE);
+    memcpy(pd, kernel_pd, PAGE_SIZE);
     pd_set_mirroring(pd);
 }
 
