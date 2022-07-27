@@ -13,7 +13,7 @@ LDFLAGS += -flto -nostdlib -T link.ld -Wl,--gc-sections
 all: $(KERNEL)
 
 $(KERNEL): $(TARGETS)
-	$(LD) $(LDFLAGS) $^ -o $@ -lgcc
+	$(LD) $(LDFLAGS) -Wl,--start-group $^ -Wl,--end-group -o $@ -lgcc
 	make -C module all
 
 %.a:
