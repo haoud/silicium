@@ -29,6 +29,7 @@
 #include <arch/x86/idt.h>
 #include <arch/x86/pic.h>
 #include <arch/x86/pit.h>
+#include <arch/x86/tss.h>
 #include <arch/x86/paging.h>
 #include <arch/x86/exception.h>
 
@@ -38,6 +39,7 @@ _init void start(struct mb_info *info)
 {
     pic_remap();
     gdt_install();
+    tss_install();
     idt_install();
     exception_install();
     fpu_setup();

@@ -213,3 +213,5 @@ static inline uint64_t rdtsc(void)
 				 : "=A"(ret));
 	return ret;
 }
+
+_asmlinkage void switch_to(cpu_state_t *state);

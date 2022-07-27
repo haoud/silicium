@@ -49,6 +49,8 @@
         "executor": "c",
         "mutex": "c",
         "shared_mutex": "c",
-        "syncstream": "c"
+        "syncstream": "c",
+        "schedule.h": "c",
+        "tss.h": "c"
     },
 }

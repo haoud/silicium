@@ -104,7 +104,7 @@ void mm_context_set(struct mm_context *context)
 }
 
 /**
- * @brief Destroy a context. The context is destroyed only if it is not
+ * @brief Drop a context. The context is destroyed only if it is not
  * used anymore, otherwise the usage counter is simply decremented.
  * 
  * This function MUST be called when the context is currently loaded
@@ -113,7 +113,7 @@ void mm_context_set(struct mm_context *context)
  * 
  * @param context The context to destroy
  */
-void mm_context_destroy(struct mm_context *context)
+void mm_context_drop(struct mm_context *context)
 {
     assert_context_is_valid(context);
     if (--context->usage != 0)

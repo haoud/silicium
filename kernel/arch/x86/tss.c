@@ -32,6 +32,8 @@ void tss_install(void)
         true);
 
     tss.ss0 = GDT_KDATA_SELECTOR;
+    tss.iomap = sizeof(tss);
+    
     asm volatile("ltr ax" :: "a"(TSS_GDT_SELECTOR) : "memory");
 }
 

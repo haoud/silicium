@@ -18,40 +18,12 @@
  */
 #pragma once
 #include <kernel.h>
+#include <process/thread.h>
 
-#define TSS_GDT_ENTRY       5
-#define TSS_GDT_SELECTOR    (TSS_GDT_ENTRY * 8)
+#define SCHEDULER_DEFAULT_QUANTUM   25
 
-typedef struct tss {
-    uint16_t __link, link;
-    uint32_t esp0;
-    uint16_t ss0, __ss0;
-    uint32_t esp1;
-    uint16_t ss1, __ss1;
-    uint32_t esp2;
-    uint16_t ss2, __ss2;
+void schedule(cpu_state_t *state);
 
-    uint32_t cr3;
-    uint32_t eip;
-    uint32_t eflags;
-    uint32_t eax;
-    uint32_t ecx;
-    uint32_t edx;
-    uint32_t ebx;
-    uint32_t esp;
-    uint32_t ebp;
-    uint32_t esi;
-    uint32_t edi;
-
-    uint16_t es, __es;
-    uint16_t cs, __cs;
-    uint16_t ss, __ss;
-    uint16_t ds, __ds;
-    uint16_t fs, __fs;
-    uint16_t gs, __gs;
-    uint16_t ldt, __ldt;
-    uint32_t debug, iomap;
-} tss_t;
-
-_init void tss_install(void);
-tss_t *tss_get_current(void);
+int schedule_tick(void);
+int scheduler_add_thread(thread_t *thread);
+int scheduler_remove_thread(thread_t *thread);

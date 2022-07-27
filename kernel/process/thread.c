@@ -95,7 +95,7 @@ static int thread_creat(thread_t *thread)
     cpu_state -= sizeof(struct cpu_state);
     thread->cpu_state = (struct cpu_state *) (cpu_state & 0x0F);
 
-    list_init(&thread->schduler_node);
+    list_init(&thread->scheduler_node);
     list_init(&thread->thread_node);
     thread->state = THREAD_CREATED;
     thread->reschedule = false;
@@ -131,7 +131,7 @@ thread_t *thread_allocate(void)
         free(thread);
         return NULL;
     }
-
+    thread->kstack.top = thread->kstack.base + thread->kstack.size;
     return thread;
 }
 
@@ -154,6 +154,7 @@ int thread_kernel_creat(thread_t *thread)
 
     thread->type = THREAD_KERNEL;
     thread->mm_context = NULL;
+    thread->mm_context_borrowed = NULL;
     thread->cpu_state->cs = GDT_KCODE_SELECTOR;
     thread->cpu_state->ds = GDT_KDATA_SELECTOR;
     thread->cpu_state->es = GDT_KDATA_SELECTOR;
@@ -183,7 +184,8 @@ int thread_user_creat(thread_t *thread)
 
     thread->type = THREAD_KERNEL;
     thread->mm_context = mm_context_create();
-    if (thread->mm_context == NULL) {
+    thread->mm_context_borrowed = NULL;
+        if (thread->mm_context == NULL) {
         thread_destroy(thread);
         return -ENOMEM;
     }
@@ -276,9 +278,9 @@ void thread_set_entry(thread_t *thread, const vaddr_t entry)
  */
 void thread_zombify(thread_t *thread, const int code)
 {
-    assert(list_empty(&thread->schduler_node));
+    assert(list_empty(&thread->scheduler_node));
     if (thread->mm_context)
-        mm_context_destroy(thread->mm_context);
+        mm_context_drop(thread->mm_context);
     thread->state = THREAD_ZOMBIE;
     thread->exit_code = code;
 }
@@ -294,7 +296,7 @@ void thread_destroy(thread_t *thread)
 {
     // Remove the thread from the thread list
     spin_acquire(&lock) {
-        list_remove(&thread->schduler_node);
+        list_remove(&thread->scheduler_node);
     }
 
     // Free the thread structure
@@ -307,16 +309,16 @@ void thread_destroy(thread_t *thread)
 /**
  * @brief Get the thread associated with the given TID.
  * 
- * @param tid The TID of the thread to get.
+ * @param id The TID of the thread to get.
  * @return thread_t* The thread with the given TID, or NULL if no thread
  * with the given TID exists.
  */
-thread_t *thread_get_by_tid(const pid_t tid)
+thread_t *thread_get_by_tid(const pid_t id)
 {
     spin_acquire(&lock) {
         list_foreach(&threads, entry) {
             thread_t *thread = list_entry(entry, thread_t, thread_node);
-            if (thread->tid == tid)
+            if (thread->tid == id)
                 return thread;
         }
     }

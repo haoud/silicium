@@ -36,7 +36,7 @@ typedef unsigned int uint_t;
 
 #define _assume_aligned(al) __attribute__((__assume_aligned__(al)))
 #define _no_optimizations   __attribute__((__optimize__("-O0")))
-#define _asmlinkage         __attribute__((__regparm__(0)))
+#define _asmlinkage         _cdecl __attribute__((__regparm__(0)))
 #define _deprecated __attribute__((__deprecated__))
 #define _inline     __attribute__((__always_inline__))
 #define _no_inline  __attribute__((__noinline__))
@@ -60,15 +60,15 @@ typedef unsigned int uint_t;
 #define _cleanup(fn)    __attribute__((__cleanup__(fn)))
 #define _unreachable()  __builtin_unreachable()
 
-#define _export _visible _used _cdecl _asmlinkage
+#define _export _visible _used _asmlinkage
 
 #define _init       _hidden _section(".init.text")
 #define _initdata   _hidden _section(".init.data")
 #define _initrodata _hidden _section(".init.rotdata")
 
-#define _interrupt  _cdecl _asmlinkage
-#define _syscall    _cdecl _asmlinkage
-#define _irq        _interrupt
+#define _interrupt  _asmlinkage
+#define _syscall    _asmlinkage
+#define _irq        _asmlinkage
 
 #define assume_aligned(ptr, al) __builtin_assume_aligned(ptr, al)
 #define unlikely(expr)          __builtin_expect(!!(expr), 0)

@@ -29,4 +29,4 @@ struct mm_context *mm_context_create(void);
 
 void mm_context_use(struct mm_context *context);
 void mm_context_set(struct mm_context *context);
-void mm_context_destroy(struct mm_context *context);
+void mm_context_drop(struct mm_context *context);

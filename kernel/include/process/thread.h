@@ -22,6 +22,8 @@
 #include <arch/x86/cpu.h>
 #include <arch/x86/fpu.h>
 
+#define THREAD_IDLE_TID 0
+
 #define THREAD_KERNEL   0
 #define THREAD_USER     1
 
@@ -39,9 +41,9 @@
 #define THREAD_STACK_SIZE   8192
 #define THREAD_STACK_BASE   (THREAD_STACK_TOP - THREAD_STACK_SIZE)
 
-
 typedef struct kstack {
     vaddr_t base;
+    vaddr_t top;
     size_t size;
 } kstack_t;
 
@@ -61,8 +63,10 @@ typedef struct thread {
     struct fpu_state *fpu_state;
     struct cpu_state *cpu_state;
     struct mm_context *mm_context;
+    struct mm_context *mm_context_borrowed;
+
     struct list_head thread_node;
-    struct list_head schduler_node;
+    struct list_head scheduler_node;
 } thread_t;
 
 thread_t *thread_allocate(void);
