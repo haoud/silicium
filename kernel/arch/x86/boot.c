@@ -27,6 +27,7 @@
 #include <arch/x86/fpu.h>
 #include <arch/x86/gdt.h>
 #include <arch/x86/idt.h>
+#include <arch/x86/irq.h>
 #include <arch/x86/pic.h>
 #include <arch/x86/pit.h>
 #include <arch/x86/tss.h>
@@ -41,6 +42,7 @@ _init void start(struct mb_info *info)
     gdt_install();
     tss_install();
     idt_install();
+    irq_install();
     exception_install();
     fpu_setup();
     pit_configure();
