@@ -29,7 +29,7 @@
 
 // Please use bracket when using this macro for better readability
 #define spin_acquire(spin)                                                  \
-    for (spinlock_t * __spin _cleanup(__spin_unlock) = (__spin_lock(spin)), \
+    for (spinlock_t *__spin _cleanup(__spin_unlock) = (__spin_lock(spin)),  \
                              *__i = (spin);                                 \
          __i == (spin);                                                     \
          __i++)

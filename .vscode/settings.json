@@ -57,6 +57,10 @@
         "pic.h": "c",
         "thread.h": "c",
         "source_location": "c",
-        "preempt.h": "c"
+        "preempt.h": "c",
+        "cmos.h": "c",
+        "functional": "c",
+        "numbers": "c",
+        "cmath": "c"
     },
 }

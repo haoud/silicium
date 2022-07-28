@@ -25,6 +25,7 @@
 })
 
 static irq_handler_t irq_handlers[IRQ_MAX];
+static unsigned int irq_disabled = 0;
 
 _init
 void irq_install(void)

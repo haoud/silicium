@@ -24,9 +24,14 @@
 #define hlt() asm volatile("hlt")
 #define clts() asm volatile("clts")
 
-#define cpu_stop() ({             \
-    asm volatile("1:hlt;jmp 1b"); \
-    _unreachable();               \
+#define cpu_stop() ({                 \
+    asm volatile("cli;1:hlt;jmp 1b"); \
+    _unreachable();                   \
+})
+
+#define __cli() ({ \
+    cli();         \
+    0;             \
 })
 
 #define cpu_relax() asm volatile("pause" ::: "memory")
@@ -202,8 +207,21 @@ static inline uint32_t get_eflags(void)
 {
     uint32_t e;
     asm volatile("pushf; pop %0"
-                 : "=r"(e));
+                 : "=r"(e)::"memory");
     return e;
+}
+
+static inline void set_eflags(const uint32_t eflags)
+{
+    asm volatile("push %0; popf"
+                 :
+                 : "r"(eflags)
+                 : "cc", "memory");
+}
+
+static void __set_eflags(const uint32_t *eflags)
+{
+    set_eflags(*eflags);
 }
 
 static inline uint64_t rdtsc(void)
