@@ -71,7 +71,7 @@ _init void date_setup(void)
  * 
  * @return time_t The startup POSIX time
  */
-time_t date_startup_posix_time(void)
+time_t date_startup_unix_time(void)
 {
     time_t time = startup_date.sec;
     time += startup_date.min * 60;

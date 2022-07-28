@@ -51,4 +51,5 @@
 #define PIT_MODE_HDW_TRIGGERED_STROBE 0x08
 
 _init void pit_configure(void);
-uint32_t pit_nano_offset(void);
+time_t pit_startup_tick(void);
+time_t pit_nano_offset(void);

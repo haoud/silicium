@@ -19,17 +19,11 @@
 #pragma once
 #include <kernel.h>
 
-struct tm {
-    int sec;
-    int min;
-    int hour;
-    int mday;
-    int mon;
-    int year;
-    int wday;
-    int yday;
-    int isdst;
-};
+typedef struct timespec {
+    time_t tv_sec;
+    long tv_nsec;
+} timespec_t;
 
-_init void date_setup(void);
-time_t date_startup_unix_time(void);
+time_t time_unix(void);
+time_t time_startup_unix(void);
+void time_current(timespec_t *ts);

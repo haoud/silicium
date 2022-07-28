@@ -26,6 +26,7 @@
 
 #include <process/thread.h>
 #include <process/schedule.h>
+#include <arch/x86/time.h>
 
 extern const char _init_start;
 extern const char _init_end;

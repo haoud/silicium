@@ -43,16 +43,26 @@ _init void pit_configure(void)
 }
 
 /**
+ * @brief Get the number of ticks since the startup of the kernel.
+ * 
+ * @return time_t The number of ticks since the startup of the kernel.
+ */
+time_t pit_startup_tick(void)
+{
+	return startup_tick;
+}
+
+/**
  * @brief Calculate the time elapsed in nanoseconds since the beginning of
  * the tick
  * 
  * @return The offset in nanosecond in the current tick
  */
-uint32_t pit_nano_offset(void)
+time_t pit_nano_offset(void)
 {
     outb(PIT_IO_CMD, PIT_CHANNEL0);
 	const uint32_t count_low = inb(PIT_IO_TIMER0);
 	const uint32_t count_high = inb(PIT_IO_TIMER0);
 	const uint32_t count = count_low | (count_high) << 8;
-    return ((PIT_KERN_LATCH - (PIT_KERN_LATCH - count)) * PIT_TICK_NS);
+    return (time_t) ((PIT_KERN_LATCH - (PIT_KERN_LATCH - count)) * PIT_TICK_NS);
 }

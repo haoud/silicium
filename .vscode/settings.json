@@ -63,6 +63,8 @@
         "numbers": "c",
         "cmath": "c",
         "type_traits": "cpp",
-        "chrono": "c"
+        "chrono": "c",
+        "time.h": "c",
+        "date.h": "c"
     },
 }

@@ -18,6 +18,9 @@
  */
 #pragma once
 
+#define static_assert(cond, msg)    _Static_assert(cond, msg)
+#define assume(cond)                assert(cond)
+
 #ifdef CONFIG_DEBUG
 #define assert_warning(expr, msg)                                       \
     if (!(expr)) {                                                      \
