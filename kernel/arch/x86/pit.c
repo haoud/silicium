@@ -17,17 +17,29 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <arch/x86/io.h>
+#include <arch/x86/irq.h>
+#include <arch/x86/pic.h>
 #include <arch/x86/pit.h>
+#include <process/schedule.h>
+
+static uint32_t startup_tick = 0;
+
+void pit_tick(struct cpu_state *state)
+{
+	schedule_tick();
+	startup_tick++;
+}
 
 /**
  * @brief Configure the channel of the PIT to generate a periodic interrupt at
  * 100 Hz.
  */
-void pit_configure(void)
+_init void pit_configure(void)
 {
     outb(PIT_IO_CMD, PIT_CHANNEL0 | PIT_MODE_RATE_GENERATOR);
 	outb(PIT_IO_TIMER0, PIT_KERN_LATCH & 0xFF);
 	outb(PIT_IO_TIMER0, (PIT_KERN_LATCH >> 8) & 0xFF);
+	irq_request(PIT_IRQ, pit_tick, "PIT", 0);
 }
 
 /**

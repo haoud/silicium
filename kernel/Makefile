@@ -7,14 +7,15 @@ KERNEL = silicium
 export CFLAGS += -I $(shell pwd)/include
 
 # LD flags
-LDFLAGS += -flto -nostdlib -T link.ld -Wl,--gc-sections
+LDFLAGS += -flto -nostdlib -T link.ld 
+LDFLAGS += -Wl,--whole-archive -Wl,--gc-sections
 
-.PHONY: $(SUBDIRS) all clean install
+.PHONY: all clean install
 all: $(KERNEL)
+	make -C module all
 
 $(KERNEL): $(TARGETS)
-	$(LD) $(LDFLAGS) -Wl,--start-group $^ -Wl,--end-group -o $@ -lgcc
-	make -C module all
+	$(LD) $(LDFLAGS) $^ -o $@ -lgcc
 
 %.a:
 	make -C $(basename $@) all

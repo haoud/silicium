@@ -50,5 +50,5 @@
 #define PIT_MODE_SFW_TRIGGERED_STROBE 0x08
 #define PIT_MODE_HDW_TRIGGERED_STROBE 0x08
 
-void pit_configure(void);
+_init void pit_configure(void);
 uint32_t pit_nano_offset(void);

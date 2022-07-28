@@ -44,6 +44,5 @@ irq_common:
     mov ss, ax
 	push esp
 	call irq_handler
-	add esp, 4
 	jmp ret_from_interrupt
 	

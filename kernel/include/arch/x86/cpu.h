@@ -25,8 +25,8 @@
 #define clts() asm volatile("clts")
 
 #define cpu_stop() ({             \
-	asm volatile("1:hlt;jmp 1b"); \
-	_unreachable();               \
+    asm volatile("1:hlt;jmp 1b"); \
+    _unreachable();               \
 })
 
 #define cpu_relax() asm volatile("pause" ::: "memory")
@@ -123,95 +123,126 @@
 #define CR4_SMAP 0x00200000
 
 typedef struct cpu_state {
-	uint32_t ss;
-	uint32_t gs;
-	uint32_t fs;
-	uint32_t es;
-	uint32_t ds;
-	uint32_t edi;
-	uint32_t esi;
-	uint32_t ebp;
-	uint32_t pushad_esp;
-	uint32_t ebx;
-	uint32_t edx;
-	uint32_t ecx;
-	uint32_t eax;
-	uint32_t data;
-	uint32_t error_code;
-	uint32_t eip;
-	uint32_t cs;
-	uint32_t eflags;
-	uint32_t esp3;
-	uint16_t ss3;
+    uint32_t ss;
+    uint32_t gs;
+    uint32_t fs;
+    uint32_t es;
+    uint32_t ds;
+    uint32_t edi;
+    uint32_t esi;
+    uint32_t ebp;
+    uint32_t pushad_esp;
+    uint32_t ebx;
+    uint32_t edx;
+    uint32_t ecx;
+    uint32_t eax;
+    uint32_t data;
+    uint32_t error_code;
+    uint32_t eip;
+    uint32_t cs;
+    uint32_t eflags;
+    uint32_t esp3;
+    uint16_t ss3;
 } _packed cpu_state_t;
 
 static inline void set_task_switched(void)
 {
-	asm volatile("	mov eax, cr0 		\n\
-					or eax, 0x08 		\n\
-					mov cr0, eax" ::
-					 : "eax");
+    asm volatile("	mov eax, cr0 		\n\
+                    or eax, 0x08 		\n\
+                    mov cr0, eax" ::
+                     : "eax");
 }
 
 static inline void cpuid_count(const uint32_t code, const uint32_t count,
-							   uint32_t *const eax, uint32_t *const ebx,
-							   uint32_t *const ecx, uint32_t *const edx)
+                               uint32_t *const eax, uint32_t *const ebx,
+                               uint32_t *const ecx, uint32_t *const edx)
 {
-	asm volatile("cpuid"
-				 : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
-				 : "0"(code), "2"(count)
-				 : "memory");
+    asm volatile("cpuid"
+                 : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
+                 : "0"(code), "2"(count)
+                 : "memory");
 }
 
 static inline void cpuid(const uint32_t code,
-						 uint32_t *const eax, uint32_t *const ebx,
-						 uint32_t *const ecx, uint32_t *const edx)
+                         uint32_t *const eax, uint32_t *const ebx,
+                         uint32_t *const ecx, uint32_t *const edx)
 {
-	cpuid_count(code, 0, eax, ebx, ecx, edx);
+    cpuid_count(code, 0, eax, ebx, ecx, edx);
 }
 
 static inline uint32_t cpuid_eax(const uint32_t code)
 {
-	uint32_t eax, ebx, ecx, edx;
-	cpuid_count(code, 0, &eax, &ebx, &ecx, &edx);
-	return eax;
+    uint32_t eax, ebx, ecx, edx;
+    cpuid_count(code, 0, &eax, &ebx, &ecx, &edx);
+    return eax;
 }
 
 static inline uint32_t cpuid_ebx(const uint32_t code)
 {
-	uint32_t eax, ebx, ecx, edx;
-	cpuid_count(code, 0, &eax, &ebx, &ecx, &edx);
-	return ebx;
+    uint32_t eax, ebx, ecx, edx;
+    cpuid_count(code, 0, &eax, &ebx, &ecx, &edx);
+    return ebx;
 }
 
 static inline uint32_t cpuid_ecx(const uint32_t code)
 {
-	uint32_t eax, ebx, ecx, edx;
-	cpuid_count(code, 0, &eax, &ebx, &ecx, &edx);
-	return ecx;
+    uint32_t eax, ebx, ecx, edx;
+    cpuid_count(code, 0, &eax, &ebx, &ecx, &edx);
+    return ecx;
 }
 
 static inline uint32_t cpuid_edx(const uint32_t code)
 {
-	uint32_t eax, ebx, ecx, edx;
-	cpuid_count(code, 0, &eax, &ebx, &ecx, &edx);
-	return edx;
+    uint32_t eax, ebx, ecx, edx;
+    cpuid_count(code, 0, &eax, &ebx, &ecx, &edx);
+    return edx;
 }
 
 static inline uint32_t get_eflags(void)
 {
-	uint32_t e;
-	asm volatile("pushf; pop %0"
-				 : "=r"(e));
-	return e;
+    uint32_t e;
+    asm volatile("pushf; pop %0"
+                 : "=r"(e));
+    return e;
 }
 
 static inline uint64_t rdtsc(void)
 {
-	uint64_t ret;
-	asm volatile("rdtsc"
-				 : "=A"(ret));
-	return ret;
+    uint64_t ret;
+    asm volatile("rdtsc"
+                 : "=A"(ret));
+    return ret;
+}
+
+static inline uint16_t get_fs(void)
+{
+    uint16_t fs;
+    asm volatile("mov %0, fs"
+                 : "=r"(fs));
+    return fs;
+}
+
+static inline uint16_t get_gs(void)
+{
+    uint16_t gs;
+    asm volatile("mov %0, gs"
+                 : "=r"(gs));
+    return gs;
+}
+
+static inline void set_fs(const uint32_t fs)
+{
+    asm volatile("mov %0, fs"
+                 :
+                 : "r"(fs));
+}
+
+static inline void set_gs(const uint32_t gs)
+{
+    asm volatile("mov %0, gs"
+                 :
+                 : "r"(gs));
 }
 
 _asmlinkage void switch_to(cpu_state_t *state);
+_asmlinkage void save_switch_to(cpu_state_t **location, cpu_state_t *state);

@@ -91,9 +91,8 @@ static int thread_creat(thread_t *thread)
     }
 
     // Place the cpu state in the stack
-    uintptr_t cpu_state = thread->kstack.base + thread->kstack.size;
-    cpu_state -= sizeof(struct cpu_state);
-    thread->cpu_state = (struct cpu_state *) (cpu_state & 0x0F);
+    const uintptr_t cpu_state = thread->kstack.top - sizeof(struct cpu_state);
+    thread->cpu_state = (struct cpu_state *) (cpu_state & 0xFFFFFFF0);
 
     list_init(&thread->scheduler_node);
     list_init(&thread->thread_node);
@@ -185,7 +184,7 @@ int thread_user_creat(thread_t *thread)
     thread->type = THREAD_KERNEL;
     thread->mm_context = mm_context_create();
     thread->mm_context_borrowed = NULL;
-        if (thread->mm_context == NULL) {
+    if (thread->mm_context == NULL) {
         thread_destroy(thread);
         return -ENOMEM;
     }

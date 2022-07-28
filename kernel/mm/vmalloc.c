@@ -130,6 +130,7 @@ _export vaddr_t vmalloc(size_t size, int flags)
         }
         return vma->base;
     }
+    _unreachable();
 }
 
 /**

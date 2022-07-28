@@ -33,6 +33,7 @@
 #define THREAD_STOPPED          3
 #define THREAD_SLEEPING         4
 #define THREAD_DEEP_SLEEPING    5
+#define THREAD_UNRUNNABLE       7
 #define THREAD_ZOMBIE           6
 
 #define THREAD_MAX      (PID_MAX - 1)

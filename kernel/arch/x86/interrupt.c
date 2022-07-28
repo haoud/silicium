@@ -16,19 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
 #include <kernel.h>
-#include <process/thread.h>
+#include <arch/x86/cpu.h>
+#include <process/schedule.h>
 
-#define SCHEDULER_DEFAULT_QUANTUM   25
-
-_init void scheduler_set_current(thread_t *thread);
-
-_no_inline void schedule(cpu_state_t *state);
-
-void schedule_tick(void);
-void scheduler_run(thread_t *thread, const bool save);
-
-int scheduler_add_thread(thread_t *thread);
-int scheduler_remove_thread(thread_t *thread);
-thread_t *scheduler_get_current_thread(void);
+_asmlinkage
+void interrupt_return(struct cpu_state *state)
+{
+    thread_t *current = scheduler_get_current_thread();
+    if (!current)
+        return;
+    if (current->reschedule)
+        schedule(state);
+}

@@ -21,11 +21,13 @@ default_int:
     mov ss, ax
 	push esp
 	# call exception_handler
-	add esp, 4
+	jmp ret_from_interrupt
 
 .global ret_from_interrupt
 .type ret_from_interrupt, @function
 ret_from_interrupt:
+	call interrupt_return
+	add esp, 4
     popd ss
 	popd gs
 	popd fs

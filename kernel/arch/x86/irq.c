@@ -91,4 +91,5 @@ void irq_handler(cpu_state_t *state)
 
     if (irq_handlers[state->data] != NULL)
         irq_handlers[state->data](state);
+    pic_send_eoi(state->data);
 }

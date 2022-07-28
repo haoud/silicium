@@ -47,7 +47,7 @@ static struct mm_context *mm_context_allocate(void)
     }
     context->usage = 1;
     return context;
-} 
+}
 
 /**
  * @brief Clone a memory context.

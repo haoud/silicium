@@ -51,6 +51,11 @@
         "shared_mutex": "c",
         "syncstream": "c",
         "schedule.h": "c",
-        "tss.h": "c"
+        "tss.h": "c",
+        "irq.h": "c",
+        "idt.h": "c",
+        "pic.h": "c",
+        "thread.h": "c",
+        "source_location": "c"
     },
 }
