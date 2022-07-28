@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <core/preempt.h>
 #include <lib/spinlock.h>
 
 void spin_init(spinlock_t *const spin)
@@ -25,14 +26,14 @@ void spin_init(spinlock_t *const spin)
 
 void spin_lock(spinlock_t *const spin)
 {
+	preempt_disable();
 #ifdef CONFIG_SMP
 	while (__sync_lock_test_and_set(&spin->lock, 1)) {
 		while (spin->lock)
 			__builtin_ia32_pause();
 	}
 #else
-	spin->lock = get_eflags() & EFLAGS_IF;
-	cli();
+	spin->lock = 1;
 #endif
 }
 
@@ -41,17 +42,24 @@ void spin_unlock(spinlock_t *const spin)
 #ifdef CONFIG_SMP
 	__sync_lock_release(&spin->lock);
 #else
-	if (spin->lock)
-		sti();
+	spin->lock = 0;
 #endif
+	preempt_enable();
 }
 
 int spin_trylock(spinlock_t *const spin)
 {
+	preempt_disable();
 #ifdef CONFIG_SMP
-	if (__sync_lock_test_and_set(&spin->lock, 1))
+	if (__sync_lock_test_and_set(&spin->lock, 1)) {
+		preempt_enable();
 		return 0;
+	}
 #else
+	if(spin->lock) {
+		preempt_enable();
+		return 0;
+	}
 	spin_lock(spin);
 #endif
 	return 1;

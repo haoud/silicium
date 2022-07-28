@@ -19,7 +19,7 @@
 #include <core/preempt.h>
 
 // TODO: Make this variable per-cpu
-static unsigned int preemt_count;
+static unsigned int preemt_count = 0;
 
 /**
  * @brief Enable preemption on the current CPU. This function use

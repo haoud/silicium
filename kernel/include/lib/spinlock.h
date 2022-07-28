@@ -18,20 +18,20 @@
  */
 #pragma once
 #include <kernel.h>
-#include <arch/x86/cpu.h>
 
 #define DECLARE_SPINLOCK(name) \
     spinlock_t name = {0}
 
 #define __spin_lock(spin) ({ \
     spin_lock(spin);         \
-    0;                       \
+    spin;                    \
 })
 
 // Please use bracket when using this macro for better readability
-#define spin_acquire(spin)                                                    \
-    for (spinlock_t * __spin _cleanup(__spin_unlock) = (spin), *__i = (spin); \
-         __i == (spin);                                                       \
+#define spin_acquire(spin)                                                  \
+    for (spinlock_t * __spin _cleanup(__spin_unlock) = (__spin_lock(spin)), \
+                             *__i = (spin);                                 \
+         __i == (spin);                                                     \
          __i++)
 
 typedef struct spinlock {

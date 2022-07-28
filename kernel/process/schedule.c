@@ -18,6 +18,7 @@
  */
 #include <lib/list.h>
 #include <lib/spinlock.h>
+#include <core/preempt.h>
 #include <arch/x86/fpu.h>
 #include <arch/x86/gdt.h>
 #include <arch/x86/tss.h>
@@ -115,6 +116,8 @@ _init void scheduler_set_current(thread_t *thread)
 _no_inline
 void schedule(cpu_state_t *state) 
 {
+    assert(preempt_enabled());
+    
     thread_t *next = schedule_next();
     if (current == NULL || current == next)
         return;

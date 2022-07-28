@@ -17,6 +17,7 @@
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <kernel.h>
+#include <core/preempt.h>
 #include <arch/x86/cpu.h>
 #include <process/schedule.h>
 
@@ -26,6 +27,6 @@ void interrupt_return(struct cpu_state *state)
     thread_t *current = scheduler_get_current_thread();
     if (!current)
         return;
-    if (current->reschedule)
+    if (current->reschedule && preempt_enabled())
         schedule(state);
 }
