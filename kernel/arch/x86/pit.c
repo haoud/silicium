@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Silicium. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <core/timer.h>
 #include <arch/x86/io.h>
 #include <arch/x86/irq.h>
 #include <arch/x86/pic.h>
@@ -26,8 +27,9 @@ static uint32_t startup_tick = 0;
 
 void pit_tick(struct cpu_state *state)
 {
-	schedule_tick();
 	startup_tick++;
+	schedule_tick();
+	timer_tick();
 }
 
 /**

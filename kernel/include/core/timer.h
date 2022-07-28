@@ -18,13 +18,23 @@
  */
 #pragma once
 #include <kernel.h>
+#include <lib/list.h>
 
-typedef struct timespec {
-    time_t tv_sec;
-    long tv_nsec;
-} timespec_t;
+typedef void (*timer_callback_t)(void *);
 
-time_t time_unix(void);
-time_t time_startup(void);
-time_t time_startup_ms(void);
-void time_current(timespec_t *ts);
+typedef struct timer {
+    timer_callback_t callback;
+    time_t expire;
+    bool active;
+    void *data;
+    struct list_head node;
+} timer_t;
+
+void timer_tick(void);
+void timer_init(timer_t *timer);
+
+int timer_add(timer_t *timer);
+int timer_remove(timer_t *timer);
+bool timer_expired(timer_t *timer);
+int timer_expire(timer_t *timer, time_t expire);
+int timer_update(timer_t *timer, time_t expire);

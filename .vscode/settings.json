@@ -65,6 +65,8 @@
         "type_traits": "cpp",
         "chrono": "c",
         "time.h": "c",
-        "date.h": "c"
+        "date.h": "c",
+        "timer.h": "c",
+        "spinlock.h": "c"
     },
 }

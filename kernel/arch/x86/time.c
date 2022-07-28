@@ -20,6 +20,9 @@
 #include <arch/x86/pit.h>
 #include <arch/x86/time.h>
 
+static_assert(PIT_KERN_FREQ <= 1000, "PIT_KERN_FREQ must be <= 1000");
+static_assert(sizeof(time_t) == 4, "time_t must be 4 bytes");
+
 /**
  * @brief Get the current time in seconds since the epoch (1970-01-01 
  * 00:00:00 UTC).
@@ -28,17 +31,32 @@
  */
 time_t time_unix(void)
 {
-    return time_startup_unix() + pit_startup_tick() / PIT_KERN_FREQ;
+    return date_startup_unix_time() + time_startup();
 }
 
 /**
- * @brief Get the unix time when the kernel was started.
+ * @brief Get the time in second since the kernel was started.
  * 
- * @return time_t The unix time when the kernel was started.
+ * @return time_t The time in seconds since the kernel was started.
  */
-time_t time_startup_unix(void)
+time_t time_startup(void)
 {
-    return date_startup_unix_time();
+    return pit_startup_tick() / PIT_KERN_FREQ;
+}
+
+/**
+ * @brief Get the time in millisecond since the kernel was started.
+ * FIXME: This function will overflow 49 days after the start of the kernel.
+ * For now it is absolutely not a problem, but it should be fixed.
+ * 
+ * @return time_t The unix time when the kernel was started, in ms
+ */
+time_t time_startup_ms(void)
+{
+    time_t time = pit_startup_tick() % PIT_KERN_FREQ;
+    time *= 1000 / PIT_KERN_FREQ;
+    time += time_startup() * 1000;
+    return time;
 }
 
 /**
