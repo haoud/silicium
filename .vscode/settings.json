@@ -62,6 +62,7 @@
         "functional": "c",
         "numbers": "c",
         "cmath": "c",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "chrono": "c"
     },
 }

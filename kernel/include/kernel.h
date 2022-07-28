@@ -29,6 +29,7 @@
 
 typedef atomic_uint uatomic_t;
 typedef atomic_int atomic_t;
+typedef uint32_t time_t;        // FIXME: 2033 bug
 
 typedef int pid_t;
 

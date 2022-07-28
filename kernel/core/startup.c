@@ -19,6 +19,7 @@
 #include <kernel.h>
 #include <mm/page.h>
 #include <mm/malloc.h>
+#include <core/date.h>
 #include <core/ustar.h>
 #include <core/module.h>
 #include <arch/x86/cpu.h>
@@ -88,6 +89,7 @@ static void tac(void)
 
 _init _noreturn void startup(char *initrd)
 {
+    date_setup();
     load_modules(initrd);
     thread_t * thread0 = thread_allocate();
     thread_t * thread1 = thread_allocate();

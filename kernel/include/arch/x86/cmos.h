@@ -38,7 +38,7 @@
 #define CMOS_REG_STAT_C             0x0C
 #define CMOS_REG_STAT_D             0x0D
 #define CMOS_REG_DIAGNOSTIC         0x0E
-#define CMOS_REG_REG_CENTURY        0x32
+#define CMOS_REG_CENTURY            0x32
 
 uint8_t cmos_read(const uint8_t reg);
 void cmos_write(const uint8_t reg, const uint8_t data);
