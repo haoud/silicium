@@ -42,9 +42,4 @@
 #define EXCEPTION_MACHINE_CHECK 18
 #define EXCEPTION_SIMD_ERROR 19
 
-#define install_exception(i) ({                 \
-    extern void exception_##i(void);            \
-    set_interrupt_gate(i, &exception_##i);      \
-})
-
 void exception_install(void);

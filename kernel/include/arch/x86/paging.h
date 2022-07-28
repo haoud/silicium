@@ -111,14 +111,16 @@ typedef struct pte {
 
 #define set_cr3(cr3)    asm volatile("mov cr3, %0" :: "r"(cr3) : "memory")
 #define invlpg(vaddr)   asm volatile("invlpg [%0]" :: "r"(vaddr) : "memory")
+
 #define flush_tlb(void)               \
     asm volatile("mov eax, cr3 \n"    \
-                 "mov cr3, eax \n" ::: "eax")
+                 "mov cr3, eax \n" :: \
+                     : "eax", "memory")
 #define get_cr2() ({           \
-    vaddr_t x;                 \
+    vaddr_t __x;               \
     asm volatile("mov %0, cr2" \
-                 : "=r"(x));   \
-    x                          \
+                 : "=r"(__x)); \
+    __x                        \
 })
 
 _init void paging_remap_kernel(void);

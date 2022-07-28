@@ -21,6 +21,11 @@
 #include <arch/x86/idt.h>
 #include <arch/x86/exception.h>
 
+#define install_exception(i) ({                 \
+    extern void exception_##i(void);            \
+    set_interrupt_gate(i, &exception_##i);      \
+})
+
 _init void exception_install(void)
 {
     install_exception(0);

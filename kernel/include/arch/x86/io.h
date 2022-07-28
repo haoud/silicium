@@ -25,48 +25,48 @@
 #define outw(port, data) asm volatile("out dx, ax" ::"d"(port), "a"(data));
 #define outd(port, data) asm volatile("out dx, eax" ::"d"(port), "a"(data));
 
-#define inb(port) ({           \
-	uint8_t data = 0;          \
-	asm volatile("in al, dx"   \
-				 : "=a"(data)  \
-				 : "d"(port)); \
-	data;                      \
+#define inb(port) ({            \
+	uint8_t __data = 0;         \
+	asm volatile("in al, dx"    \
+				 : "=a"(__data) \
+				 : "d"(port));  \
+	__data;                     \
 })
-#define inw(port) ({           \
-	uint16_t data = 0;         \
-	asm volatile("in ax, dx"   \
-				 : "=a"(data)  \
-				 : "d"(port)); \
-	data;                      \
+#define inw(port) ({            \
+	uint16_t __data = 0;        \
+	asm volatile("in ax, dx"    \
+				 : "=a"(__data) \
+				 : "d"(port));  \
+	__data;                     \
 })
-#define ind(port) ({           \
-	uint32_t data = 0;         \
-	asm volatile("in eax, dx"  \
-				 : "=a"(data)  \
-				 : "d"(port)); \
-	data;                      \
+#define ind(port) ({            \
+	uint32_t __data = 0;        \
+	asm volatile("in eax, dx"   \
+				 : "=a"(__data) \
+				 : "d"(port));  \
+	__data;                     \
 })
-#define inpb(port) ({          \
-	uint8_t data = 0;          \
-	asm volatile("in al, dx"   \
-				 : "=a"(data)  \
-				 : "d"(port)); \
-	iowait();                  \
-	data;                      \
+#define inpb(port) ({           \
+	uint8_t __data = 0;         \
+	asm volatile("in al, dx"    \
+				 : "=a"(__data) \
+				 : "d"(port));  \
+	iowait();                   \
+	__data;                     \
 })
-#define inpw(port) ({          \
-	uint16_t data = 0;         \
-	asm volatile("in ax, dx"   \
-				 : "=a"(data)  \
-				 : "d"(port)); \
-	iowait();                  \
-	data;                      \
+#define inpw(port) ({           \
+	uint16_t __data = 0;        \
+	asm volatile("in ax, dx"    \
+				 : "=a"(__data) \
+				 : "d"(port));  \
+	iowait();                   \
+	__data;                     \
 })
-#define inpd(port) ({          \
-	uint32_t data = 0;         \
-	asm volatile("in eax, dx"  \
-				 : "=a"(data)  \
-				 : "d"(port)); \
-	iowait();                  \
-	data;                      \
+#define inpd(port) ({           \
+	uint32_t __data = 0;        \
+	asm volatile("in eax, dx"   \
+				 : "=a"(__data) \
+				 : "d"(port));  \
+	iowait();                   \
+	__data;                     \
 })

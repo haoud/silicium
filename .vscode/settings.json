@@ -61,6 +61,7 @@
         "cmos.h": "c",
         "functional": "c",
         "numbers": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "type_traits": "cpp"
     },
 }
