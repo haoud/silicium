@@ -22,6 +22,7 @@
 #include <arch/x86/fpu.h>
 #include <arch/x86/gdt.h>
 #include <arch/x86/tss.h>
+#include <process/process.h>
 #include <process/schedule.h>
 
 static DECLARE_SPINLOCK(run_queue_lock);
@@ -130,18 +131,12 @@ void schedule(cpu_state_t *state)
         current->fpu_loaded = false;
     }
     
-    // If the next thread does not have a MM context (ie kernel thread), we 
-    // borrow the current one.
-    if (next->mm_context == NULL) {
-        if (current->mm_context == NULL)
-            next->mm_context_borrowed = current->mm_context_borrowed;
-        else
-            next->mm_context_borrowed = current->mm_context;
-        mm_context_set(next->mm_context_borrowed);
-    } else {
-        mm_context_use(next->mm_context);
-        mm_context_set(next->mm_context);
-        mm_context_drop(current->mm_context);
+    if (next->type == THREAD_KERNEL) {
+        // We keep the current process context
+    } else if (current->process->mm_context != next->process->mm_context) {
+        mm_context_use(next->process->mm_context);
+        mm_context_set(next->process->mm_context);
+        mm_context_drop(current->process->mm_context);
     }
 
     current->reschedule = false;

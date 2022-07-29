@@ -67,6 +67,7 @@
         "time.h": "c",
         "date.h": "c",
         "timer.h": "c",
-        "spinlock.h": "c"
+        "spinlock.h": "c",
+        "process.h": "c"
     },
 }

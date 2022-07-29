@@ -61,15 +61,15 @@ typedef struct thread {
     int reschedule : 1;
 
     struct kstack kstack;
+    struct process *process;
     struct fpu_state *fpu_state;
     struct cpu_state *cpu_state;
-    struct mm_context *mm_context;
-    struct mm_context *mm_context_borrowed;
-
     struct list_head thread_node;
+    struct list_head process_node;
     struct list_head scheduler_node;
 } thread_t;
 
+void thread_generate_tid(struct thread *thread);
 thread_t *thread_allocate(void);
 int thread_kernel_creat(thread_t *thread);
 int thread_user_creat(thread_t *thread);

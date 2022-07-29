@@ -21,6 +21,7 @@
 #include <lib/memory.h>
 #include <arch/x86/gdt.h>
 #include <process/thread.h>
+#include <process/process.h>
 
 static DECLARE_SPINLOCK(tid_lock);
 static DECLARE_SPINLOCK(lock);
@@ -54,7 +55,7 @@ static int thread_is_tid_free(pid_t id)
  * 
  * @param thread The thread to assign the TID to.
  */
-static void thread_generate_tid(struct thread *thread)
+void thread_generate_tid(struct thread *thread)
 {
     thread->tid = -1;
     spin_acquire(&lock) {
@@ -95,6 +96,7 @@ static int thread_creat(thread_t *thread)
     thread->cpu_state = (struct cpu_state *) (cpu_state & 0xFFFFFFF0);
 
     list_init(&thread->scheduler_node);
+    list_init(&thread->process_node);
     list_init(&thread->thread_node);
     thread->state = THREAD_CREATED;
     thread->reschedule = false;
@@ -151,9 +153,8 @@ int thread_kernel_creat(thread_t *thread)
     if (ret < 0)
         return ret;
 
+    thread->process = NULL;
     thread->type = THREAD_KERNEL;
-    thread->mm_context = NULL;
-    thread->mm_context_borrowed = NULL;
     thread->cpu_state->cs = GDT_KCODE_SELECTOR;
     thread->cpu_state->ds = GDT_KDATA_SELECTOR;
     thread->cpu_state->es = GDT_KDATA_SELECTOR;
@@ -181,14 +182,8 @@ int thread_user_creat(thread_t *thread)
     if (ret < 0)
         return ret;
 
+    thread->process = NULL;
     thread->type = THREAD_KERNEL;
-    thread->mm_context = mm_context_create();
-    thread->mm_context_borrowed = NULL;
-    if (thread->mm_context == NULL) {
-        thread_destroy(thread);
-        return -ENOMEM;
-    }
-
     thread->cpu_state->cs = GDT_UCODE_SELECTOR;
     thread->cpu_state->ds = GDT_UDATA_SELECTOR;
     thread->cpu_state->es = GDT_UDATA_SELECTOR;
@@ -222,21 +217,16 @@ int thread_clone(
     const thread_t *thread,
     const cpu_state_t *cpu_state)
 {
+    assume(!null(clone));
+    assume(!null(thread));
+    assume(!null(cpu_state));
+
     if (thread->type == THREAD_KERNEL)
         return -EINVAL;
 
     int ret = thread_creat(clone);
     if (clone == NULL)
         return ret;
-
-    // Clone the MM context if necessary
-    if (thread->mm_context) {
-        clone->mm_context = mm_context_clone(thread->mm_context);
-        if (clone->mm_context == NULL) {
-            thread_destroy(clone);
-            return -ENOMEM;
-        }
-    }
 
     // Copy the cpu state and the FPU state
     memcpy(clone->fpu_state, thread->fpu_state, sizeof(struct fpu_state));
@@ -278,8 +268,6 @@ void thread_set_entry(thread_t *thread, const vaddr_t entry)
 void thread_zombify(thread_t *thread, const int code)
 {
     assert(list_empty(&thread->scheduler_node));
-    if (thread->mm_context)
-        mm_context_drop(thread->mm_context);
     thread->state = THREAD_ZOMBIE;
     thread->exit_code = code;
 }
