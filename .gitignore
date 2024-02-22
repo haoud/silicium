@@ -1,0 +1,8 @@
+**/target
+**/bin
+
+iso
+docs
+site/docs
+site/book
+
