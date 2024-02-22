@@ -1,0 +1,10 @@
+[book]
+authors = ["Haoud"]
+multilingual = false
+title = "Silicium book"
+language = "en"
+src = "src"
+
+[build]
+build-dir = "../site/book"
+create-missing = false
