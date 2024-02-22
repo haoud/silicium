@@ -10,12 +10,12 @@
 
 <!-- PROJECT LOGO -->
 <br />
-<div align="center">
+<!--<div align="center">
   <a href="https://github.com/haoud/silicium">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a>
+  </a>-->
 
-<h3 align="center">Pluton</h3>
+<h3 align="center">Silicium</h3>
 
   <p align="center">
     A micro-kernel written in Rust exploring modern concepts
@@ -33,7 +33,7 @@
 
 <!-- TABLE OF CONTENTS -->
 <details>
-  fsummary>Table of Contents</summary>
+  <summary>Table of Contents</summary>
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
@@ -56,7 +56,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-> [!INFO]
+> [!IMPORTANT]
 > Silicium is a work in progress and is not ready for production use.
 
 Silicium is a micro-kernel written in Rust. It try to be a fast, portable kernel with a modern design. Its main goals are:
