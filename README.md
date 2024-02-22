@@ -15,8 +15,8 @@
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>-->
 
-<h3 align="center">Silicium</h3>
-
+<!--<h3 align="center">Silicium</h3>-->
+<h1 align="center">Silicium</h1>
   <p align="center">
     A micro-kernel written in Rust exploring modern concepts
     <br />
@@ -59,12 +59,11 @@
 > [!IMPORTANT]
 > Silicium is a work in progress and is not ready for production use.
 
-Silicium is a micro-kernel written in Rust. It try to be a fast, portable kernel with a modern design. Its main goals are:
- - Be portable: Silicium is designed to be able to run on many architectures, by including the smallest 
+Silicium is a *micro-kernel* written in Rust. It try to be a fast, portable kernel with a modern design. Its main goals are:
+ - **Being portable**: Silicium is designed to be able to run on many architectures, by including the smallest 
  amount of architecture-specific code as possible in the kernel without sacrificing performance.
- - Be (relatively) fast: Silicium is designed to be fast. Micro-kernels are known to be slower than monolithic kernels,
- but Silicium try to mitigate this by being scalable and using modern techniques
- - Be ABI-agnostic, meaning that it should be able to run, in theory, any program written for Linux, Windows or MacOS by using a server that will translate foreign ABIs to Silicium's ABI. This is a huge tasks that will take decades to achieve (for example, Wine is still incomplete after decades of development). It is likely that only Linux programs will be supported in the near future, and in a very incomplete way. However, the kernel design is intended to be as flexible as possible to allow for future improvements.
+ - **Being (relatively) fast**: Silicium is designed to be fast. Micro-kernels are known to be slower than monolithic kernels, but Silicium try to mitigate this by being scalable and using modern techniques.
+ - **Being ABI-agnostic**, meaning that it should be able to run, in theory, any program written for Linux, Windows or MacOS by using a server that will translate foreign ABIs to Silicium's ABI.
 
 > [!NOTE]
 > The goals of Silicium are very ambitious and it is likely that it will never be able to achieve them. However, I think it's a good idea to aim high and to correctly design the project from the start to be able to achieve these goals in the future.
