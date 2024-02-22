@@ -1,0 +1,145 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check formatting
+      run: make check-format
+
+    - name: Check clippy
+      run: make check-clippy
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: lld qemu-system-x86
+        version: 1.0
+
+    - name: Build kernel
+      run: make build-kernel
+
+    - name: Build servers
+      run: make build-servers
+
+    - name: Build user-space
+      run: make build-userspace
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifact
+        path: .
+
+  generate-docs:
+    name: Generate documentation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install rust toolchain
+      run: rustup toolchain install nightly
+
+    - name: Install mdbook
+      run: cargo +nightly install mdbook
+
+    - name: Generate documentation
+      run: make build-docs
+
+    - name: Generate book
+      run: make build-book
+
+    - name: Move build artifacts
+      run: |
+        rm -rf ./site/docs
+        mv ./docs ./site/
+
+    - name: Fix permissions
+      run: chmod -c -R +rX "site/"
+
+    - name: Upload documentation
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: "site/" 
+
+  unit-tests:
+    name: Unit tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: lld qemu-system-x86
+        version: 1.0
+
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifact
+
+    - name: Kernel unit tests
+      run: make unit-tests-kernel
+
+    - name: Servers unit tests
+      run: make unit-tests-servers
+
+    - name: Userspace unit tests
+      run: make unit-tests-userspace
+
+  integration-tests:
+    name: Integration tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: lld qemu-system-x86
+        version: 1.0
+
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifact
+
+    - name: Pluton integration tests (Kernel and userspace)
+      run: make integration-tests
+
+  deploy:
+    name: Deploy
+    needs: [generate-docs, unit-tests, integration-tests]
+
+    permissions:
+      id-token: write
+      pages: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy documentation
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+
