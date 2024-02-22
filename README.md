@@ -88,7 +88,7 @@ There are also a few more dependencies in order to build and run the project:
 
 Clone the repository:
 ```sh
-git clone --depth 1 https://github.com/haoud/pluton.git
+git clone --depth 1 https://github.com/haoud/silicium.git
 ```
 Make all the scripts contained in the `scripts` directory executable:
 ```sh
@@ -98,8 +98,12 @@ Build the kernel, servers and userland programs:
 ```sh
 make build
 ```
+Run the kernel in Qemy:
+```sh
+make run
+```
 
-> [INFO]
+> [!TIP]
 > If you are lost, you can run `make help` to see all the available commands.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -108,13 +112,13 @@ make build
 <!-- USAGE EXAMPLES -->
 ## Usage
 
+> [!CAUTION]
+> Running the kernel on real hardware is **strongly discouraged** as the kernel is not stable and may, even if unlikely, permanently damage your hardware or erasing your data. Use at your own risk.
+
 To run Silicium:
   * http://copy.sh/v86/ : Upload .iso file as an CD-ROM image
   * QEMU: `make run-{i686/x86_64/aarch64}`
   * Real hardware: Burn .iso file to USB or CD.
-
-> [!CAUTION]
-> Running the kernel on real hardware is **strongly discouraged** as the kernel is not stable and may, even if unlikely, permanently damage your hardware or erasing your data. Use at your own risk.
 
 By default, the kernel is built for all supported architectures, and the x86_64 version is run in a virtual machine.
 If you want to run a specific target, you must specify it in the `make` command:
