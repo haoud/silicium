@@ -1,0 +1,10 @@
+[unstable]
+build-std-features = ["compiler-builtins-mem"]
+build-std = ["core", "compiler_builtins", "alloc"]
+
+[build]
+target = [
+  "config/aarch64/aarch64.json",
+  "config/x86_64/x86_64.json",
+  "config/i686/i686.json",
+]

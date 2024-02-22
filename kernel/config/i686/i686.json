@@ -1,0 +1,23 @@
+{
+    "llvm-target": "i686-unknown-none",
+    "data-layout": "e-m:e-p:32:32-p270:32:32-p271:32:32-p272:64:64-i128:128-f64:32:64-f80:32-n8:16:32-S128",
+    "target-pointer-width": "32",
+    "target-c-int-width": "32", 
+    "target-endian": "little",
+    "arch": "x86", 
+    "os": "none",
+    "executables": true,
+    "linker-flavor": "ld.lld",
+    "linker": "rust-lld",
+    "pre-link-args": {
+        "ld.lld": ["-Tconfig/i686/link.ld"]
+    },
+    "position-independent-executables": false,
+    "tls-model": "global-dynamic",
+    "relocation-model": "static",
+    "frame-pointer": "always",
+    "dynamic-linking": false,
+    "panic-strategy": "abort",
+    "disable-redzone": true,
+    "features": "+soft-float,-sse,-sse2"
+}
