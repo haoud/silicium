@@ -64,6 +64,8 @@ Silicium is a *micro-kernel* written in Rust. It try to be a fast, portable kern
  amount of architecture-specific code as possible in the kernel without sacrificing performance.
  - **Being (relatively) fast**: Silicium is designed to be fast. Micro-kernels are known to be slower than monolithic kernels, but Silicium try to mitigate this by being scalable and using modern techniques.
  - **Being ABI-agnostic**, meaning that it should be able to run, in theory, any program written for Linux, Windows or MacOS by using a server that will translate foreign ABIs to Silicium's ABI.
+ - **Being secure**: Silicium is designed to be secure by default. It should be able to run untrusted code without any risk of compromising the system.
+ - **Being educational**. Silicium is designed to be a learning experience for me and for others. It should be easy to understand and to contribute to, and well documented
 
 > [!NOTE]
 > The goals of Silicium are very ambitious and it is likely that it will never be able to achieve them. However, I think it's a good idea to aim high and to correctly design the project from the start to be able to achieve these goals in the future.
@@ -135,7 +137,7 @@ make run-aarch64
 
 ### Milestone 1: Baremetal kernel (x86-64 only)
 
-- [ ] Babysteps (unit tests, CI, benchmarks...)
+- [x] Babysteps (unit tests, CI, benchmarks...)
 - [ ] Serial logging
 - [ ] GDT/IDT/TSS
 - [ ] Physical memory manager
