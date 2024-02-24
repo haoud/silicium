@@ -32,7 +32,7 @@ jobs:
 
     - uses: awalsh128/cache-apt-pkgs-action@latest
       with:
-        packages: lld qemu-system-x86
+        packages: lld
         version: 1.0
 
     - name: Build kernel
@@ -43,12 +43,6 @@ jobs:
 
     - name: Build user-space
       run: make build-userspace
-
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-artifact
-        path: .
 
   generate-docs:
     name: Generate documentation
@@ -86,15 +80,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v4
+
     - uses: awalsh128/cache-apt-pkgs-action@latest
       with:
-        packages: lld qemu-system-x86
+        packages: lld
         version: 1.0
-
-    - name: Download build artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: build-artifact
 
     - name: Kernel unit tests
       run: make unit-tests-kernel
@@ -110,16 +101,13 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - uses: awalsh128/cache-apt-pkgs-action@latest
+      - uses: actions/checkout@v4
+
+      - uses: awalsh128/cache-apt-pkgs-action@latest
       with:
         packages: lld qemu-system-x86
         version: 1.0
-
-    - name: Download build artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: build-artifact
-
+    
     - name: Pluton integration tests (Kernel and userspace)
       run: make integration-tests
 
