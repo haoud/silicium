@@ -54,7 +54,7 @@ check-format:
 
 
 unit-tests-kernel:
-	# cd kernel && cargo test --release
+	cd kernel && cargo test --release --target=x86_64-unknown-linux-gnu -Z build-std
 
 unit-tests-servers:
 	
