@@ -133,7 +133,47 @@ make run-aarch64
 <!-- ROADMAP -->
 ## Roadmap
 
-WIP
+### Milestone 1: Baremetal kernel (x86-64 only)
+
+- [ ] Babysteps (unit tests, CI, benchmarks...)
+- [ ] Serial logging
+- [ ] GDT/IDT/TSS
+- [ ] Physical memory manager
+- [ ] Virtual memory manager
+- [ ] Allocations
+- [ ] Paging
+- [ ] APIC
+- [ ] APIC timer
+- [ ] SIMD
+- [ ] SMP
+
+### Milestone 2: Userspace, here I come !
+
+- [ ] Userspace
+- [ ] Syscalls
+- [ ] Scheduling
+- [ ] Multi-threading
+- [ ] Asynchronous IPC
+- [ ] Userspace ELF loader
+
+### Milestone 3: Add a little bit of spice
+
+ - [ ] VFS server
+ - [ ] Ram filesystem
+ - [ ] Graphical server
+ - [ ] aarch64 support
+ - [ ] i686 suport
+
+### Milestone 4: An interactive userspace !
+ 
+ - [ ] Shell
+ - [ ] Basic commands
+ - [ ] Mouse and keyboard support
+ - [ ] Porting DOOM
+
+### Milestone 5: ABI compatibility
+
+ - [ ] Linux ABI
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
