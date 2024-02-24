@@ -3,6 +3,12 @@
 pub mod cpu;
 pub mod io;
 pub mod opcode;
+pub mod serial;
 
 /// Initializes the x86_64 architecture.
-pub fn setup() {}
+pub fn setup() {
+    let serial = serial::Serial::new(serial::Port::COM1).unwrap();
+    for byte in "Hello, world!".bytes() {
+        _ = serial.send(byte);
+    }
+}
