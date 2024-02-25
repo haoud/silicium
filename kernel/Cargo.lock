@@ -74,6 +74,7 @@ name = "silicium-x86_64"
 version = "0.1.0"
 dependencies = [
  "limine",
+ "log",
 ]
 
 [[package]]

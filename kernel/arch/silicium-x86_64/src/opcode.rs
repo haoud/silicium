@@ -1,3 +1,5 @@
+use crate::gdt;
+
 /// Enable interrupts on the current CPU core, allowing the current workflow to be interrupted by
 /// hardware interrupts. If interrupts are already enabled, this function will have no effect.
 ///
@@ -100,4 +102,18 @@ pub unsafe fn ind(port: u16) -> u32 {
     let mut value: u32;
     core::arch::asm!("in eax, dx", in("dx") port, out("eax") value);
     value
+}
+
+/// Load the Global Descriptor Table (GDT) register with the provided GDT register value.
+///
+/// # Safety
+/// The caller must ensure that the provided GDT reigster value is valid and reference a
+/// valid GDT that must stay in memory while it is loaded into the GDT register.Failing
+/// to meet these requirements can result in undefined behavior, memory unsafety or crashes.
+///
+/// However, the GDT register structure can be dropped as soon as the function returns
+/// because the CPU will keep a copy of the GDT register in its internal state.
+#[inline]
+pub unsafe fn lgdt(gdtr: &gdt::Register) {
+    core::arch::asm!("lgdt [{}]", in(reg) gdtr);
 }

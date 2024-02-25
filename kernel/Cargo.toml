@@ -14,7 +14,7 @@ arch = { path = "arch/silicium-hal", package = "silicium-hal" }
 log = "0.4.20"
 
 [features]
-default = []
+default = ["logging"]
 logging = ["arch/logging"]
 
 [profile.release]
