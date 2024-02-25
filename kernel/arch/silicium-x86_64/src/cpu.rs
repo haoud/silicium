@@ -5,7 +5,7 @@ use crate::opcode;
 /// low-power state.
 /// This action is irreversible and the only way to recover from it is to reset
 /// the entire system.
-#[cold]
+#[inline]
 pub fn halt() -> ! {
     loop {
         opcode::cli();

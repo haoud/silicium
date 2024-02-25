@@ -1,5 +1,5 @@
 /// Halt the current CPU forever
-#[cold]
+#[inline]
 pub fn halt() -> ! {
     arch::cpu::halt();
 }

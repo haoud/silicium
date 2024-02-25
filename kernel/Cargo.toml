@@ -17,3 +17,9 @@ log = "0.4.20"
 default = []
 logging = ["arch/logging"]
 
+[profile.release]
+codegen-units = 1
+opt-level = "s"
+strip = true
+lto = true
+
