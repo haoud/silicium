@@ -8,10 +8,43 @@ on:
       - completed
 
 jobs:
+  
+  generate-docs:
+    name: Generate documentation
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install rust toolchain
+      run: rustup toolchain install nightly
+
+    - name: Install mdbook
+      run: cargo +nightly install mdbook
+
+    - name: Generate documentation
+      run: make build-docs
+
+    - name: Generate book
+      run: make build-book
+
+    - name: Move build artifacts
+      run: |
+        rm -rf ./site/docs
+        mv ./docs ./site/
+
+    - name: Fix permissions
+      run: chmod -c -R +rX "site/"
+
+    - name: Upload documentation
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: "site/" 
+
   deploy:
     name: Deploy
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    
+    needs: generate-docs
+
     permissions:
       id-token: write
       pages: write
