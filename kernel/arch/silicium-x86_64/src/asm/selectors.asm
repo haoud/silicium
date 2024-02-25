@@ -1,4 +1,5 @@
 .global reload_selectors
+.section .init
 reload_selectors:
   mov rax, 0x10
   mov ds, ax    # Load the kernel data segment
@@ -15,3 +16,4 @@ reload_selectors:
   push [rsp + 8]
   retfq
 
+.section .text

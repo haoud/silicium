@@ -45,6 +45,7 @@ impl log::Log for Logger {
 }
 
 /// Setup the architecture dependent logger.
+#[inline]
 pub fn setup() {
     *LOGGER.serial.lock() = Serial::new(Port::COM1);
     log::set_max_level(log::LevelFilter::Trace);

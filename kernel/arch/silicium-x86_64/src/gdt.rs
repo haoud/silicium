@@ -12,6 +12,8 @@ extern "C" {
     /// current CPU core. This function assumes that the second entry of the GDT
     /// is the 64-bits kernel code segment and the third entry is the 64-bits
     /// kernel data segment.
+    /// This function should also be called only during the initialization of the
+    /// kernel.
     /// Failing to meet this requirement will result in undefined behavior, most
     /// likely a triple fault and a immediate reboot of the system.
     fn reload_selectors();
@@ -92,6 +94,7 @@ impl Register {
 
 /// Initializes the GDT on the current CPU core and reloads the
 /// default GDT selectors.
+#[inline]
 pub fn setup() {
     // SAFETY: This is safe because the GDT is valid and will remain valid and in
     // the memory for the entire lifetime of the kernel.
