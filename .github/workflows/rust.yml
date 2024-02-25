@@ -111,23 +111,3 @@ jobs:
     - name: Pluton integration tests (Kernel and userspace)
       run: make integration-tests
 
-  deploy:
-    name: Deploy
-    needs: [generate-docs, unit-tests, integration-tests]
-
-    permissions:
-      id-token: write
-      pages: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Deploy documentation
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-
