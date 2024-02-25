@@ -10,3 +10,6 @@ arch = {path = "../silicium-x86_64", package = "silicium-x86_64"}
 spin = {path = "../../crates/silicium-spin", package = "silicium-spin"}
 log = "0.4.20"
 
+[features]
+default = []
+logging = []
