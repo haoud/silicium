@@ -1,23 +1,26 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 
-/// The entry point for the kernel
-///
-/// # Safety
-/// This function is unsafe because at this point, the kernel is not yet initialized
-/// and any code that runs here must be very careful to not cause undefined behavior.
+/// The entry point for the kernel. This function call the architecture specific setup
+/// function, print a message to the console and then halts the CPU.
 #[cfg(not(test))]
 #[no_mangle]
-pub unsafe extern "C" fn _start() -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
+pub extern "C" fn _start() -> ! {
+    // Call the architecture specific setup function
+    arch::setup();
+
+    // Log that the kernel has successfully booted
+    log::info!("Silicium booted successfully");
+
+    // Halt the CPU
+    arch::cpu::halt();
 }
 
 #[cfg(not(test))]
 #[panic_handler]
 pub fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
+    // Halt the CPU
+    arch::cpu::halt();
 }
 
 #[cfg(test)]

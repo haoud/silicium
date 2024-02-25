@@ -15,7 +15,7 @@
     "position-independent-executables": false,
     "tls-model": "global-dynamic",
     "relocation-model": "static",
-    "frame-pointer": "always",
+    "frame-pointer": "may-omit",
     "dynamic-linking": false,
     "panic-strategy": "abort",
     "disable-redzone": true,

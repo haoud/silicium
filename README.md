@@ -138,7 +138,7 @@ make run-aarch64
 ### Milestone 1: Baremetal kernel (x86-64 only)
 
 - [x] Babysteps (unit tests, CI, benchmarks...)
-- [ ] Serial logging
+- [x] Serial logging
 - [ ] GDT/IDT/TSS
 - [ ] Physical memory manager
 - [ ] Virtual memory manager

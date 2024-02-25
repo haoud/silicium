@@ -3,15 +3,23 @@ name = "kernel"
 version = "0.1.0"
 edition = "2021"
 
-# Unfortunatly, the Limine boot protocol is not supported on x86,
-# so we have to use the multiboot2 protocol instead.
-[target.'cfg(not(target_arch = "x86"))'.dependencies]
-limine = "0.2.0"
+[workspace]
+members = [
+  "arch/*",
+  "crates/*"
+]
 
-[target.'cfg(target_arch = "x86")'.dependencies]
-multiboot2 = "0.19.0"
+[dependencies]
+arch = { path = "arch/silicium-hal", package = "silicium-hal" }
+log = "0.4.20"
 
 [features]
-default = ["logging"]
-logging = []
+default = []
+logging = ["arch/logging"]
+
+[profile.release]
+codegen-units = 1
+opt-level = "s"
+strip = true
+lto = true
 
