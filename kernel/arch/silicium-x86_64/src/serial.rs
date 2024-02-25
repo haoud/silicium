@@ -110,6 +110,15 @@ impl Serial {
     }
 }
 
+impl core::fmt::Write for Serial {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        for byte in s.bytes() {
+            _ = self.send(byte);
+        }
+        Ok(())
+    }
+}
+
 /// Represents an error that can occur when sending a byte to a serial port.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SendError {

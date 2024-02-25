@@ -1,5 +1,5 @@
 [package]
-name = "silicum-x86_64"
+name = "silicium-x86_64"
 version = "0.1.0"
 edition = "2021"
 

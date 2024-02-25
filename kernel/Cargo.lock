@@ -18,6 +18,7 @@ checksum = "ed570934406eb16438a4e976b1b4500774099c13b8cb96eec99f620f05090ddf"
 name = "kernel"
 version = "0.1.0"
 dependencies = [
+ "log",
  "silicium-hal",
 ]
 
@@ -41,6 +42,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "log"
+version = "0.4.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
+
+[[package]]
 name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -50,7 +57,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 name = "silicium-hal"
 version = "0.1.0"
 dependencies = [
- "silicum-x86_64",
+ "log",
+ "silicium-spin",
+ "silicium-x86_64",
 ]
 
 [[package]]
@@ -61,7 +70,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "silicum-x86_64"
+name = "silicium-x86_64"
 version = "0.1.0"
 dependencies = [
  "limine",

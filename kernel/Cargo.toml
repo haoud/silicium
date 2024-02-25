@@ -5,11 +5,13 @@ edition = "2021"
 
 [workspace]
 members = [
-  "arch/*", "crates/silicium-spin",
+  "arch/*",
+  "crates/*"
 ]
 
 [dependencies]
 arch = { path = "arch/silicium-hal", package = "silicium-hal" }
+log = "0.4.20"
 
 [features]
 default = ["logging"]

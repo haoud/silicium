@@ -4,5 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
-arch = {path = "../silicum-x86_64", package = "silicum-x86_64"}
+arch = {path = "../silicium-x86_64", package = "silicium-x86_64"}
+
+[dependencies]
+spin = {path = "../../crates/silicium-spin", package = "silicium-spin"}
+log = "0.4.20"
 
