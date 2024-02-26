@@ -1,4 +1,4 @@
-use crate::gdt;
+use crate::{gdt, idt};
 
 /// Enable interrupts on the current CPU core, allowing the current workflow to be interrupted by
 /// hardware interrupts. If interrupts are already enabled, this function will have no effect.
@@ -121,6 +121,20 @@ pub unsafe fn ind(port: u16) -> u32 {
 #[inline]
 pub unsafe fn lgdt(gdtr: &gdt::Register) {
     core::arch::asm!("lgdt [{}]", in(reg) gdtr);
+}
+
+/// Load the Interrupt Descriptor Table (IDT) register with the provided IDT register value.
+///
+/// # Safety
+/// The caller must ensure that the provided IDT reigster value is valid and reference a
+/// valid IDT that must stay in memory while it is loaded into the IDT register.Failing
+/// to meet these requirements can result in undefined behavior, memory unsafety or crashes.
+///
+/// However, the IDT register structure can be dropped as soon as the function returns
+/// because the CPU will keep a copy of the IDT register in its internal state.
+#[inline]
+pub unsafe fn lidt(idtr: &idt::Register) {
+    core::arch::asm!("lidt [{}]", in(reg) idtr);
 }
 
 /// Load the Task State Segment (TSS) register with the provided TSS selector.

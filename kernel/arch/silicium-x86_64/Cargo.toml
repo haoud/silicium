@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# macros = { path = "macros" }
+x86_64-macros = { path = "macros", package = "macros" }
 bitfield = { workspace = true }
+macros = { workspace = true }
 spin = { workspace = true }
 log = { workspace = true }
 limine = "0.2.0"
