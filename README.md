@@ -139,7 +139,7 @@ make run-aarch64
 
 - [x] Babysteps (unit tests, CI, benchmarks...)
 - [x] Serial logging
-- [ ] GDT/IDT/TSS
+- [x] GDT/IDT/TSS
 - [ ] Physical memory manager
 - [ ] Virtual memory manager
 - [ ] Allocations

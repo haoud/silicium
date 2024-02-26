@@ -2,6 +2,7 @@
 #![feature(asm_const)]
 #![feature(naked_functions)]
 
+pub mod boot;
 pub mod cpu;
 pub mod gdt;
 pub mod idt;
