@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 # macros = { path = "macros" }
+bitfield = { workspace = true }
 spin = { workspace = true }
 log = { workspace = true }
 limine = "0.2.0"

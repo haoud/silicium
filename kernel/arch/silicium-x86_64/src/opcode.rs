@@ -122,3 +122,15 @@ pub unsafe fn ind(port: u16) -> u32 {
 pub unsafe fn lgdt(gdtr: &gdt::Register) {
     core::arch::asm!("lgdt [{}]", in(reg) gdtr);
 }
+
+/// Load the Task State Segment (TSS) register with the provided TSS selector.
+///
+/// # Safety
+/// The caller must ensure that the provided TSS selector is valid and reference a valid
+/// TSS inside the GDT. The TSS entry and the TSS itself must stay in memory while it is
+/// loaded into the TSS register. Failing to meet these requirements can result in undefined
+/// behavior, memory unsafety or crashes.
+#[inline]
+pub unsafe fn ltr(selector: u16) {
+    core::arch::asm!("ltr ax", in("ax") selector);
+}

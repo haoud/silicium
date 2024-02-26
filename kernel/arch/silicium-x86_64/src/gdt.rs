@@ -1,4 +1,6 @@
-use crate::opcode;
+use bitfield::{BitMut, BitRangeMut};
+
+use crate::{opcode, tss::TaskStateSegment};
 
 core::arch::global_asm!(include_str!("asm/selectors.asm"));
 
@@ -28,11 +30,13 @@ extern "C" {
 /// 4. 32-bit user code segment
 /// 5. 64-bit user data segment
 /// 6. 64-bit user code segment
+/// 7. TSS entry
+/// 8. TSS entry
 ///
 /// The disposition of the entries must not be changed as it is expected by the
 /// rest of the kernel, and especially by the `syscall` and `sysret` instructions
 /// that require an exact layout of the GDT to work properly.
-static TABLE: [Entry; 6] = [
+static mut TABLE: [Entry; 8] = [
     // Null entry
     Entry(0),
     // 64-bit kernel code segment
@@ -45,6 +49,9 @@ static TABLE: [Entry; 6] = [
     Entry(0x00af_f300_0000_ffff),
     // 64-bit user code segment
     Entry(0x00af_fb00_0000_ffff),
+    // TSS entry
+    Entry(0),
+    Entry(0),
 ];
 
 /// A GDT entry. It is a simple wrapper around a 64-bits integer that represents
@@ -69,12 +76,13 @@ pub struct Register {
 impl Register {
     /// Creates a new GDT register with the provided table. It will set the limit
     /// to the size of the table minus one and the base to the address of the table.
+    /// The given table MUST stay in memory while it is loaded in the CPU !
     #[must_use]
-    pub fn new(table: &'static [Entry; 6]) -> Self {
+    pub fn new(table: *const [Entry; 8]) -> Self {
         Self {
             #[allow(clippy::cast_possible_truncation)]
-            limit: (core::mem::size_of::<[Entry; 6]>() - 1) as u16,
-            base: table.as_ptr() as u64,
+            limit: (core::mem::size_of::<[Entry; 8]>() - 1) as u16,
+            base: table as u64,
         }
     }
 
@@ -102,7 +110,7 @@ pub fn setup() {
     // SAFETY: This is safe because the GDT is valid and will remain valid and in
     // the memory for the entire lifetime of the kernel.
     unsafe {
-        let register = Register::new(&TABLE);
+        let register = Register::new(core::ptr::addr_of!(TABLE));
         register.load();
     }
 
@@ -111,5 +119,37 @@ pub fn setup() {
     // the third entry is the 64-bits kernel data segment.
     unsafe {
         reload_selectors();
+    }
+}
+
+/// Loads the provided Task State Segment (TSS) in the GDT. It will set the TSS
+/// entries in the GDT to the provided TSS (the TSS entry needs to be split in
+/// two parts). The TSS entry is the 6th and 7th entries, so the index of the
+/// TSS in the GDT is 6 and its selector are 0x28
+#[inline]
+pub fn load_tss(tss: &'static TaskStateSegment) {
+    let address = core::ptr::addr_of!(tss) as u64;
+    let mut low = 0;
+
+    // Set the limit to the size of the TSS minus 1 (inclusive limit)
+    low.set_bit_range(15, 0, (core::mem::size_of::<TaskStateSegment>() - 1) as u64);
+
+    // Set the low 32 bits of the base address
+    low.set_bit_range(63, 56, (address >> 24) & 0xFF);
+    low.set_bit_range(39, 16, address & 0xFF_FFFF);
+
+    // Set the type to 0b1001 (x86_64 available TSS)
+    low.set_bit_range(43, 40, 0b1001);
+
+    // Set the present bit to 1
+    low.set_bit(47, true);
+
+    // SAFETY: This is safe because the TSS is valid and will remain valid and in
+    // the memory for the entire lifetime of the kernel.
+    // Also, there is no other thread that can access the GDT at the same time, and
+    // we doesn't not create multiple mutable references to the GDT.
+    unsafe {
+        TABLE[6] = Entry(low);
+        TABLE[7] = Entry(address >> 32);
     }
 }
