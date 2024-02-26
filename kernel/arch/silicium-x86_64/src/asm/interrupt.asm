@@ -1,30 +1,3 @@
-.altmacro
-.macro generate_handler irq
-  .if irq == 8 || irq == 10 || irq == 11 || irq == 12 || irq == 13 || irq == 14 || irq == 17 || irq == 21 || irq == 29 || irq == 30
-    .align 16
-    .global irq_\irq
-    irq_\irq :
-      push irq
-      jmp interrupt_common
-  .else
-    .align 16
-    .global irq_\irq
-    irq_\irq :
-      push 0
-      push irq
-      jmp interrupt_common
-  .endif
-.endm
-
-.global interrupt_handlers
-.align 16
-interrupt_handlers:
-.set irq, 0
-.rept 256
-  generate_handler %irq
-  .set irq, irq + 1
-.endr
-
 # This is the common interrupt handler, which is called by all interrupt
 # handlers. It switchs to the kernel GS segment if we was in user mode,
 # and saves all registers before calling the irq_handler function that will
@@ -85,4 +58,33 @@ interrupt_common:
 1:
     # Skip error code and the interrupt number and return
     add rsp, 16
-    iretq 
+    iretq
+
+
+.altmacro
+.macro generate_handler irq
+  .if irq == 8 || irq == 10 || irq == 11 || irq == 12 || irq == 13 || irq == 14 || irq == 17 || irq == 21 || irq == 29 || irq == 30
+    .align 16
+    .global irq_\irq
+    irq_\irq :
+      push irq
+      jmp interrupt_common
+  .else
+    .align 16
+    .global irq_\irq
+    irq_\irq :
+      push 0
+      push irq
+      jmp interrupt_common
+  .endif
+.endm
+
+.global interrupt_handlers
+.align 16
+interrupt_handlers:
+.set irq, 0
+.rept 256
+  generate_handler %irq
+  .set irq, irq + 1
+.endr
+

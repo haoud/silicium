@@ -1,4 +1,5 @@
 pub mod cpu;
+pub mod irq;
 pub mod log;
 
 /// Setup the architecture dependent parts of the kernel depending

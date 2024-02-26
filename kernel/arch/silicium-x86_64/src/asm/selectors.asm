@@ -1,3 +1,8 @@
+# Reloads the default GDT selectors in the current CPU core. This function
+# set the ds`, `es` and `ss` selectors to 0x10, and the `cs` selector to 0x08.
+#
+# This function is put in the .init section because it should only be called
+# once per core at the beginning of the kernel.
 .global reload_selectors
 .section .init
 reload_selectors:
