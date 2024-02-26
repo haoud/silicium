@@ -9,12 +9,27 @@ members = [
   "crates/*"
 ]
 
-[dependencies]
-arch = { path = "arch/silicium-hal", package = "silicium-hal" }
+[workspace.lints.clippy]
+undocumented_unsafe_blocks = "deny"
+inline_asm_x86_att_syntax = "deny"
+if_then_some_else_none = "deny"
+pedantic = "deny"
+all = "deny"
+
+[workspace.dependencies]
+macros = { path = "crates/silicium-macros", package = "silicium-macros" }
+spin = { path = "crates/silicium-spin", package = "silicium-spin" }
+bitfield = "0.14.0"
 log = "0.4.20"
 
+[dependencies]
+arch = { path = "arch/silicium-hal", package = "silicium-hal" }
+macros = { workspace = true }
+spin = { workspace = true }
+log = { workspace = true }
+
 [features]
-default = []
+default = ["logging"]
 logging = ["arch/logging"]
 
 [profile.release]

@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 spin = "0.9.8"
 
+[lints]
+workspace = true

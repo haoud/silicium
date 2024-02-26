@@ -11,6 +11,12 @@
         "check": {
           "command": "clippy",
           "allTargets": false
+        },
+        "procMacro": {
+          "attribute": {
+            "enable": true
+          },
+          "enable": true
         }
       }
     }
