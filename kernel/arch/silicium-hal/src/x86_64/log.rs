@@ -2,11 +2,11 @@ use arch::serial::{Port, Serial};
 use core::fmt::Write;
 use spin::Spinlock;
 
-/// The logger for the x86_64 architecture. This logger writes messages to the
+/// The logger for the `x86_64` architecture. This logger writes messages to the
 /// serial port COM1. If the serial port is not available, the logger does nothing.
 static LOGGER: Logger = Logger::uninitialized();
 
-/// The logger for the x86_64 architecture. It's a simple logger that encapsulates
+/// The logger for the `x86_64` architecture. It's a simple logger that encapsulates
 /// a serial port (COM1) and writes messages to it.
 struct Logger {
     serial: Spinlock<Option<Serial>>,
@@ -14,6 +14,7 @@ struct Logger {
 
 impl Logger {
     /// Create a new uninitialized logger.
+    #[must_use]
     pub const fn uninitialized() -> Self {
         Self {
             serial: Spinlock::new(None),

@@ -9,6 +9,13 @@ members = [
   "crates/*"
 ]
 
+[workspace.lints.clippy]
+undocumented_unsafe_blocks = "deny"
+inline_asm_x86_att_syntax = "deny"
+if_then_some_else_none = "deny"
+pedantic = "deny"
+all = "deny"
+
 [workspace.dependencies]
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }

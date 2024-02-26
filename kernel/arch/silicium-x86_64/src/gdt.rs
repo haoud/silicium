@@ -69,14 +69,17 @@ pub struct Register {
 impl Register {
     /// Creates a new GDT register with the provided table. It will set the limit
     /// to the size of the table minus one and the base to the address of the table.
+    #[must_use]
     pub fn new(table: &'static [Entry; 6]) -> Self {
         Self {
+            #[allow(clippy::cast_possible_truncation)]
             limit: (core::mem::size_of::<[Entry; 6]>() - 1) as u16,
             base: table.as_ptr() as u64,
         }
     }
 
     /// Creates a new GDT register that is uninitialized.
+    #[must_use]
     pub const fn uninitialized() -> Self {
         Self { limit: 0, base: 0 }
     }

@@ -8,3 +8,6 @@ edition = "2021"
 spin = { workspace = true }
 log = { workspace = true }
 limine = "0.2.0"
+
+[lints]
+workspace = true

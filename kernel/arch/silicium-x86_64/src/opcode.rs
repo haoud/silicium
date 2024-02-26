@@ -21,6 +21,8 @@ pub unsafe fn sti() {
 /// If interrupts are already disabled, this function will have no effect.
 #[inline]
 pub fn cli() {
+    // SAFETY: This is safe because disabling interrupts should not break
+    // Rust's safety guarantees, unlike enabling them.
     unsafe {
         core::arch::asm!("cli");
     }
@@ -30,6 +32,9 @@ pub fn cli() {
 /// effectively halt the CPU indefinitely.
 #[inline]
 pub fn hlt() {
+    // SAFETY: This is safe because waiting for an interrupt should not break
+    // Rust's safety guarantees. If interrupts are disabled, this will effectively
+    // halt the CPU indefinitely, but again, this is not a memory safety issue.
     unsafe {
         core::arch::asm!("hlt");
     }

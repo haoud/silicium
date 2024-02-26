@@ -6,7 +6,7 @@ use crate::opcode;
 /// receiving buffer (which can happen if no data is being sent to the port by the other device).
 pub const TIMEOUT_ITER: u16 = 16384;
 
-/// Represents a serial port. It should be the same on all x86_64 systems, since the x86_64
+/// Represents a serial port. It should be the same on all `x86_64` systems, since the `x86_64`
 /// architecture try to keep compatibility with the original IBM PC. However, it's not guaranteed
 /// that the serial ports are present on all systems.
 #[repr(u16)]
@@ -36,13 +36,18 @@ impl Serial {
     /// # Safety
     /// This function can cause memory unsafety if the port is not initialized before being used or
     /// if the port is not present on the system and used by another device.
+    #[must_use]
     pub const unsafe fn uninitialized(port: Port) -> Self {
         Self { port }
     }
 
     /// Creates a new serial port object and initializes it. If the port is not present on the system
     /// or is faulty, this function returns `None`.
+    #[must_use]
     pub fn new(port: Port) -> Option<Self> {
+        // SAFETY: This should be safe because we use standard I/O ports to initialize
+        // the serial device. If the serial device is not present, the initialization
+        // will gracefully fail and return None.
         unsafe {
             // Disable interrupts
             opcode::outb(u16::from(port) + 1, 0x00);
@@ -80,10 +85,15 @@ impl Serial {
         Some(Self { port })
     }
 
-    /// Sends a byte to the serial port. If the operation times out, this function returns
-    /// `Err(SendError::Timeout)`.
+    /// Sends a byte to the serial port.
+    ///
+    /// # Errors
+    /// If the operation times out, this function returns `Err(SendError::Timeout)`.
     pub fn send(&self, byte: u8) -> Result<(), SendError> {
         for _ in 0..TIMEOUT_ITER {
+            // SAFETY: This is safe because we checked in the `new` function that the port
+            // is avaible and functioning. Readed or writting to a serial port should not
+            // break memory safety.
             unsafe {
                 if opcode::inb(u16::from(self.port) + 5) & 0x20 != 0 {
                     opcode::outb(u16::from(self.port), byte);
@@ -95,10 +105,15 @@ impl Serial {
         Err(SendError::Timeout)
     }
 
-    /// Receives a byte from the serial port. If the operation times out, this function returns
-    /// `Err(ReceiveError::Timeout)`.
+    /// Receives a byte from the serial port.
+    ///
+    /// # Errors
+    /// If the operation times out, this function returns `Err(ReceiveError::Timeout)`.
     pub fn receive(&self) -> Result<u8, ReceiveError> {
         for _ in 0..TIMEOUT_ITER {
+            // SAFETY: This is safe because we checked in the `new` function that the port
+            // is avaible and functioning. Readed or writting to a serial port should not
+            // break memory safety.
             unsafe {
                 if opcode::inb(u16::from(self.port) + 5) & 0x01 != 0 {
                     return Ok(opcode::inb(u16::from(self.port)));
