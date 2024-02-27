@@ -1,5 +1,4 @@
 #![cfg_attr(not(test), no_std)]
-#![feature(negative_impls)]
 
 pub mod boot;
 pub mod cpu;

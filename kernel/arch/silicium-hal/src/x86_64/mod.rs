@@ -3,6 +3,7 @@ use arch::boot;
 pub mod cpu;
 pub mod irq;
 pub mod log;
+pub mod percpu;
 
 /// Setup the architecture dependent parts of the kernel depending
 /// on the target architecture.
