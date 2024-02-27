@@ -1,6 +1,6 @@
+use crate::{self as arch, opcode, tss::TaskStateSegment};
+use arch_macros::per_cpu;
 use bitfield::{BitMut, BitRangeMut};
-
-use crate::{opcode, tss::TaskStateSegment};
 
 core::arch::global_asm!(include_str!("asm/selectors.asm"));
 
@@ -36,6 +36,10 @@ extern "C" {
 /// The disposition of the entries must not be changed as it is expected by the
 /// rest of the kernel, and especially by the `syscall` and `sysret` instructions
 /// that require an exact layout of the GDT to work properly.
+///
+/// Each CPU core has its own GDT, so this table is not shared between CPU cores.
+/// This allow to have the same identifier for the TSS entry in the GDT for all CPU
+#[per_cpu]
 static mut TABLE: [Entry; 8] = [
     // Null entry
     Entry(0),
@@ -110,7 +114,7 @@ pub fn setup() {
     // SAFETY: This is safe because the GDT is valid and will remain valid and in
     // the memory for the entire lifetime of the kernel.
     unsafe {
-        let register = Register::new(core::ptr::addr_of!(TABLE));
+        let register = Register::new(TABLE.local().as_ptr());
         register.load();
     }
 
@@ -149,7 +153,7 @@ pub fn load_tss(tss: &'static TaskStateSegment) {
     // Also, there is no other thread that can access the GDT at the same time, and
     // we doesn't not create multiple mutable references to the GDT.
     unsafe {
-        TABLE[6] = Entry(low);
-        TABLE[7] = Entry(address >> 32);
+        TABLE.local_mut()[6] = Entry(low);
+        TABLE.local_mut()[7] = Entry(address >> 32);
     }
 }

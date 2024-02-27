@@ -1,4 +1,5 @@
 #![cfg_attr(not(test), no_std)]
+#![feature(negative_impls)]
 
 use macros::init;
 
