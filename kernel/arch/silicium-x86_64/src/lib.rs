@@ -1,6 +1,5 @@
 #![cfg_attr(not(test), no_std)]
-#![feature(asm_const)]
-#![feature(naked_functions)]
+#![feature(negative_impls)]
 
 pub mod boot;
 pub mod cpu;
@@ -8,6 +7,7 @@ pub mod gdt;
 pub mod idt;
 pub mod io;
 pub mod opcode;
+pub mod percpu;
 pub mod serial;
 pub mod tss;
 
