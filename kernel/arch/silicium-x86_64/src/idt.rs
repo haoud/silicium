@@ -1,4 +1,5 @@
 use crate::opcode;
+use macros::init;
 
 core::arch::global_asm!(include_str!("asm/interrupt.asm"));
 
@@ -134,13 +135,21 @@ pub fn setup() {
             *descriptor = Descriptor::new(start + i * 16);
         }
     }
+}
 
-    // SAFETY: This is safe because the IDT is valid and will remain valid and in
-    // the memory for the entire lifetime of the kernel.
-    unsafe {
-        let register = Register::new(core::ptr::addr_of!(TABLE));
-        register.load();
-    }
+/// Load the IDT in the current CPU core using the `lidt` instruction.
+///
+/// # Safety
+/// The caller must ensure that the IDT provided is initialized, valid and
+/// must remain valid for the entire lifetime of the kernel. This function
+/// should also only called only during the initialization of the kernel.
+/// Failure to do so will result in a general protection fault, and a triple
+/// fault and a reboot of the computer if the CPU doesn't have a proper
+/// exception handler set up.
+#[init]
+pub unsafe fn load() {
+    let register = Register::new(core::ptr::addr_of!(TABLE));
+    register.load();
 }
 
 #[no_mangle]

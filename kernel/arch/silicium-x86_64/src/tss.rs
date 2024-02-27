@@ -1,8 +1,17 @@
-use crate::{gdt, opcode};
+use crate::{self as arch, gdt, opcode};
+use arch_macros::per_cpu;
+use macros::init;
 
 /// The Task State Segment (TSS) for the current CPU core. It is initialized to an
 /// uninitialized TSS and should be initialized before being used.
+#[per_cpu]
 static TSS: TaskStateSegment = TaskStateSegment::uninitialized();
+
+/// The selector used to load the TSS in the current CPU core.
+pub const LTR_SELECTOR: u16 = 0x30;
+
+/// The index of the TSS entry in the local GDT.
+pub const GDT_INDEX: usize = 6;
 
 /// The Task State Segment (TSS) is a structure used by the x86 architecture to
 /// store information about a task. On `x86_64`, the TSS is only used to store the
@@ -54,11 +63,13 @@ impl TaskStateSegment {
 
 /// Initializes the TSS, put it in the GDT and load it in the current CPU core
 /// using the `ltr` instruction.
-pub fn setup() {
-    gdt::load_tss(&TSS);
-
-    // SAFETY: This is safe because the TSS and the GDT are valid and will remain valid
-    // for the entire lifetime of the kernel. The provided selectors is also valid and
-    // reference a valid TSS inside the GDT.
-    unsafe { opcode::ltr(0x30) }
+///
+/// # Safety
+/// This function should only called during the initialization of the kernel and
+/// after the per-CPU data has been initialized. Failing to do so will result in
+/// undefined behavior.
+#[init]
+pub unsafe fn setup() {
+    gdt::load_tss(TSS.local().as_ptr());
+    opcode::ltr(LTR_SELECTOR);
 }
