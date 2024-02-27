@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]
+macros = { path = "../silicium-x86_64/macros", package = "macros" }
 arch = { path = "../silicium-x86_64", package = "silicium-x86_64" }
 
 [dependencies]

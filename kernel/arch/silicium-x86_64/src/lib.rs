@@ -8,6 +8,7 @@ pub mod cpu;
 pub mod gdt;
 pub mod idt;
 pub mod io;
+pub mod irq;
 pub mod msr;
 pub mod opcode;
 pub mod percpu;

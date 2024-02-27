@@ -93,6 +93,7 @@ name = "silicium-hal"
 version = "0.1.0"
 dependencies = [
  "log",
+ "macros",
  "silicium-spin",
  "silicium-x86_64",
 ]

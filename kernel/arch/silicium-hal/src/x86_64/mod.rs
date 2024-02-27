@@ -1,8 +1,11 @@
 use arch::boot;
 
-pub mod cpu;
-pub mod irq;
 pub mod log;
+
+pub use arch::cpu;
+pub use arch::irq;
+pub use arch::percpu;
+pub use macros::*;
 
 /// Setup the architecture dependent parts of the kernel depending
 /// on the target architecture.
