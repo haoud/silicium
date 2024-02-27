@@ -147,7 +147,7 @@ make run-aarch64
 - [ ] APIC
 - [ ] APIC timer
 - [ ] SIMD
-- [ ] SMP
+- [x] SMP
 
 ### Milestone 2: Userspace, here I come !
 
