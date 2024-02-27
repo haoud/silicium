@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-x86_64-macros = { path = "macros", package = "macros" }
+arch-macros = { path = "macros", package = "macros" }
 bitfield = { workspace = true }
 macros = { workspace = true }
 spin = { workspace = true }

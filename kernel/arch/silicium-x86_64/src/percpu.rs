@@ -13,7 +13,7 @@ extern "C" {
 /// during the initialization of the kernel. Failing to do so will result in
 /// undefined behavior.
 #[init]
-pub unsafe fn setup() {
+pub unsafe fn setup(lapic_id: u64) {
     // Compute some information about the per-CPU section
     let percpu_start = core::ptr::addr_of!(__percpu_start) as usize;
     let percpu_end = core::ptr::addr_of!(__percpu_end) as usize;
@@ -34,6 +34,10 @@ pub unsafe fn setup() {
     // Store the per-CPU section base in the GS:0 location to easily access it
     // when the code needs to access the per-CPU section
     core::arch::asm!("mov gs:0, {}", in(reg) percpu);
+
+    // Store the LAPIC ID in the GS:8 location to easily access it when the code
+    // needs to access the LAPIC ID
+    core::arch::asm!("mov gs:8, {}", in(reg) lapic_id);
 }
 
 /// Fetch the per-CPU object for the current CPU for the static variable located at
