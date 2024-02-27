@@ -1,0 +1,2 @@
+#[inline]
+pub fn setup() {}

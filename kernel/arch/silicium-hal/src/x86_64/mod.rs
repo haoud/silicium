@@ -17,5 +17,10 @@ pub fn setup() {
     boot::setup();
 
     // Initialize the architecture dependent parts of the CPU
-    arch::setup();
+    // SAFETY: this is safe because the function is only called once
+    // during boot and we initialized the boot allocator before
+    // calling this function.
+    unsafe {
+        arch::setup();
+    }
 }
