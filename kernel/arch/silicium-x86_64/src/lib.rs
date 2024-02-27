@@ -25,8 +25,9 @@ pub mod tss;
 #[init]
 pub unsafe fn setup() {
     percpu::setup(0);
-    smp::setup();
     idt::setup();
+    idt::load();
+    smp::setup();
     gdt::setup();
     tss::setup();
 }

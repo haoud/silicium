@@ -130,8 +130,16 @@ pub fn setup() {
 /// entries in the GDT to the provided TSS (the TSS entry needs to be split in
 /// two parts). The TSS entry is the 6th and 7th entries, so the index of the
 /// TSS in the GDT is 6 and its selector are 0x28
+///
+/// # Safety
+/// The caller must ensure that the TSS provided will remain valid until the
+/// TSS entry in the GDT is removed. Currently, this means that the TSS must
+/// remain in memory for the entire lifetime of the kernel. The caller must
+/// also ensure that the memory provided is accessible and readable. Failing
+/// to meet these requirements will result in undefined behavior, and probably
+/// a general protection fault.
 #[inline]
-pub fn load_tss(tss: &'static TaskStateSegment) {
+pub unsafe fn load_tss(tss: *const TaskStateSegment) {
     let address = core::ptr::addr_of!(tss) as u64;
     let mut low = 0;
 
@@ -152,8 +160,6 @@ pub fn load_tss(tss: &'static TaskStateSegment) {
     // the memory for the entire lifetime of the kernel.
     // Also, there is no other thread that can access the GDT at the same time, and
     // we doesn't not create multiple mutable references to the GDT.
-    unsafe {
-        TABLE.local_mut()[6] = Entry(low);
-        TABLE.local_mut()[7] = Entry(address >> 32);
-    }
+    TABLE.local_mut()[6] = Entry(low);
+    TABLE.local_mut()[7] = Entry(address >> 32);
 }
