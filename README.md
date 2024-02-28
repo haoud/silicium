@@ -143,7 +143,7 @@ make run-aarch64
 - [ ] Physical memory manager
 - [ ] Virtual memory manager
 - [ ] Allocations
-- [ ] Paging
+- [x] Paging
 - [ ] APIC
 - [ ] APIC timer
 - [ ] SIMD
