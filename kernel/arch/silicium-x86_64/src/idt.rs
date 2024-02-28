@@ -153,4 +153,7 @@ pub unsafe fn load() {
 }
 
 #[no_mangle]
-pub extern "C" fn irq_handler() {}
+#[allow(clippy::missing_panics_doc)]
+pub extern "C" fn irq_handler() {
+    panic!("Unhandled IRQ");
+}

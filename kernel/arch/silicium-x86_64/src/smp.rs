@@ -1,4 +1,4 @@
-use crate::{cpu, gdt, idt, percpu, tss};
+use crate::{cpu, gdt, idt, paging, percpu, tss};
 use macros::init;
 
 /// The SMP request to Limine. This will order Limine to fetch information about
@@ -45,6 +45,7 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     idt::load();
     gdt::setup();
     tss::setup();
+    paging::load_kernel_pml4();
 
     log::info!("AP {} correctly booted", info.lapic_id);
     cpu::halt();

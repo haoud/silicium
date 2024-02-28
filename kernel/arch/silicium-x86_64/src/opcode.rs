@@ -148,3 +148,17 @@ pub unsafe fn lidt(idtr: &idt::Register) {
 pub unsafe fn ltr(selector: u16) {
     core::arch::asm!("ltr ax", in("ax") selector);
 }
+
+/// Invalidate the Translation Lookaside Buffer (TLB) entry for the
+/// provided virtual address. This should be used only when needed
+/// because it will cause a performance penalty when the CPU will
+/// translate the virtual address to a physical address.
+#[inline]
+pub fn invlpg(address: usize) {
+    // SAFETY: This is safe because invalidating a TLB entry should not cause
+    // memory unsafety. It will cause a performance penalty, but this is not
+    // a memory safety issue.
+    unsafe {
+        core::arch::asm!("invlpg [{}]", in(reg) address);
+    }
+}

@@ -4,8 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 arch-macros = { path = "macros", package = "macros" }
 bitfield = { workspace = true }
+bitflags = { workspace = true }
+tailcall = { workspace = true }
 macros = { workspace = true }
 spin = { workspace = true }
 log = { workspace = true }

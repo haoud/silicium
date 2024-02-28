@@ -34,7 +34,7 @@ pub fn disable() {
 #[inline]
 #[must_use]
 pub fn enabled() -> bool {
-    let eflags = cpu::read_eflags();
+    let eflags = cpu::eflags::read();
     eflags & (1 << 9) == 0
 }
 
