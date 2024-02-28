@@ -33,7 +33,7 @@ spin = { workspace = true }
 log = { workspace = true }
 
 [features]
-default = []
+default = ["logging"]
 logging = ["arch/logging"]
 
 [profile.release]
