@@ -70,7 +70,6 @@ impl Pml4 {
         Self::fetch_entry(&mut self.table[..], addr, table::Level::Pml4, behavior)
     }
 
-    #[inline]
     #[tailcall]
     unsafe fn fetch_entry(
         table: &mut [page::Entry],
@@ -215,7 +214,6 @@ impl Pml4 {
 /// This function is unsafe because it must be called only once during the initialization
 /// of the kernel and before initializing others cores.
 #[init]
-#[tailcall]
 pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level: table::Level) {
     for (to, from) in to
         .iter_mut()
