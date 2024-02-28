@@ -15,6 +15,7 @@ pub mod msr;
 pub mod opcode;
 pub mod paging;
 pub mod percpu;
+pub mod pic;
 pub mod serial;
 pub mod smp;
 pub mod tss;
@@ -39,10 +40,17 @@ pub unsafe fn setup() {
     paging::setup();
     idt::setup();
     idt::load();
+
+    // Remap the PIC and disable it
+    pic::remap_and_disable();
+
+    // Setup the APIC, LAPIC and IOAPIC
+    apic::setup();
+    apic::local::setup();
+    apic::io::setup();
+
     smp::setup();
     gdt::setup();
     tss::setup();
-    apic::setup();
-    apic::local::setup();
     paging::load_kernel_pml4();
 }
