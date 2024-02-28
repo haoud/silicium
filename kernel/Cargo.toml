@@ -5,7 +5,9 @@ edition = "2021"
 
 [workspace]
 members = [
-  "arch/*",
+  "arch/silicium-hal",
+  "arch/silicium-x86_64",
+  "arch/silicium-x86_64/crates/*",
   "crates/*"
 ]
 
@@ -20,6 +22,8 @@ all = "deny"
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
 bitfield = "0.14.0"
+bitflags = "2.4.2"
+tailcall = "1.0.1"
 log = "0.4.20"
 
 [dependencies]
@@ -29,12 +33,11 @@ spin = { workspace = true }
 log = { workspace = true }
 
 [features]
-default = ["logging"]
+default = []
 logging = ["arch/logging"]
 
 [profile.release]
 codegen-units = 1
 opt-level = "s"
-strip = true
 lto = true
 
