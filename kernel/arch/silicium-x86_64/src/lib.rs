@@ -4,6 +4,7 @@
 
 use macros::init;
 
+pub mod apic;
 pub mod boot;
 pub mod cpu;
 pub mod gdt;
@@ -41,5 +42,7 @@ pub unsafe fn setup() {
     smp::setup();
     gdt::setup();
     tss::setup();
+    apic::setup();
+    apic::local::setup();
     paging::load_kernel_pml4();
 }
