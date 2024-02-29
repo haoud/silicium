@@ -154,7 +154,7 @@ pub unsafe fn load() {
 
 #[no_mangle]
 #[allow(clippy::missing_panics_doc)]
-pub extern "C" fn irq_handler(frame: &mut InterruptFrame) {
+pub extern "C" fn irq_handler(_frame: &mut InterruptFrame) {
     // If the interrupt is raised by the local APIC, we must send
     // an EOI to the APIC, otherwise no more interrupts will be
     // received from the local APIC.
