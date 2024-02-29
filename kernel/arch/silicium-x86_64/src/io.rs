@@ -1,4 +1,4 @@
-use core::ops::{BitAnd, BitOr};
+use core::ops::{BitAnd, BitOr, Sub};
 
 use super::opcode;
 
@@ -132,6 +132,35 @@ impl<T: IO + BitAnd<T, Output = T>> Port<T> {
     /// causing the hardware to do something unexpected and possibly violating memory safety.
     pub unsafe fn clear_bits(&self, value: T) {
         self.write(self.read() & value);
+    }
+}
+
+impl<T: IO + Copy + Eq + BitAnd<T, Output = T>> Port<T> {
+    /// Poll until all the specified bits are cleared in the port. If the bits are never
+    /// cleared, this function will loop forever.
+    ///
+    /// # Safety
+    /// This function is unsafe because reading from a port can have side effects, including
+    /// causing the hardware to do something unexpected and possibly violating memory safety.
+    pub unsafe fn poll_set_bits(&self, value: T) {
+        while (self.read() & value) != value {
+            core::hint::spin_loop();
+        }
+    }
+}
+
+impl<T: IO + Copy + Eq + Sub<T, Output = T> + BitAnd<T, Output = T>> Port<T> {
+    /// Poll until all the specified bits are cleared in the port. If the bits are never
+    /// cleared, this function will loop forever.
+    ///
+    /// # Safety
+    /// This function is unsafe because reading from a port can have side effects, including
+    /// causing the hardware to do something unexpected and possibly violating memory safety.
+    #[allow(clippy::eq_op)]
+    pub unsafe fn poll_clear_bits(&self, value: T) {
+        while (self.read() & value) != (value - value) {
+            core::hint::spin_loop();
+        }
     }
 }
 
