@@ -61,8 +61,8 @@ pub fn disable_allocator() {
 /// - There is not enough memory to allocate the requested size.
 #[init]
 #[must_use]
-pub fn allocate_align(size: usize, align: usize) -> *mut u8 {
-    allocate_align_physical(size, align).as_mut_ptr()
+pub unsafe fn allocate_align(size: usize, align: usize) -> *mut u8 {
+    Virtual::from(allocate_align_physical(size, align)).as_mut_ptr()
 }
 
 /// Allocates a memory region of the given size during the kernel initialization,
