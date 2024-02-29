@@ -1,4 +1,5 @@
 use crate::{apic, cpu, gdt, idt, paging, percpu, tss};
+use core::sync::atomic::{AtomicUsize, Ordering};
 use macros::init;
 
 /// The SMP request to Limine. This will order Limine to fetch information about
@@ -7,16 +8,21 @@ use macros::init;
 /// authors of Limine.
 static SMP_REQUEST: limine::request::SmpRequest = limine::request::SmpRequest::new();
 
+/// The number of CPUs in the system
+static CPU_COUNT: AtomicUsize = AtomicUsize::new(1);
+
 /// Setup the SMP environment and start the APs
 ///
 /// # Panics
 /// Panics if the SMP response from Limine is not received
 #[inline]
 pub fn setup() {
+    // Get the response from Limine
     let response = SMP_REQUEST
         .get_response()
         .expect("No SMP response from Limine");
 
+    // Start the APs
     response
         .cpus()
         .iter()
@@ -24,6 +30,16 @@ pub fn setup() {
         .for_each(|cpu| {
             cpu.goto_address.write(ap_start);
         });
+
+    // Wait for the APs to finish their setup
+    while CPU_COUNT.load(Ordering::Relaxed) != response.cpus().len() {
+        core::hint::spin_loop();
+    }
+}
+
+#[must_use]
+pub fn core_count() -> usize {
+    CPU_COUNT.load(Ordering::Relaxed)
 }
 
 /// Get the current core id
@@ -47,6 +63,8 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     tss::setup();
     apic::local::setup();
     paging::load_kernel_pml4();
+
+    CPU_COUNT.fetch_add(1, Ordering::SeqCst);
 
     log::info!("AP {} correctly booted", info.lapic_id);
     cpu::halt();
