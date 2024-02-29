@@ -137,7 +137,7 @@ pub fn setup() {
 /// remain in memory for the entire lifetime of the kernel. The caller must
 /// also ensure that the memory provided is accessible and readable. Failing
 /// to meet these requirements will result in undefined behavior, and probably
-/// a general protection fault.
+/// a triple fault and an immediate reboot of the system.
 #[inline]
 pub unsafe fn load_tss(tss: *const TaskStateSegment) {
     let address = core::ptr::addr_of!(tss) as u64;

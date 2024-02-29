@@ -38,8 +38,10 @@ static HHDM_REQUEST: limine::request::HhdmRequest = limine::request::HhdmRequest
 pub unsafe fn setup() {
     percpu::setup(0);
     paging::setup();
+    gdt::setup();
     idt::setup();
     idt::load();
+    tss::setup();
 
     // Remap the PIC and disable it
     pic::remap_and_disable();
@@ -49,8 +51,9 @@ pub unsafe fn setup() {
     apic::local::setup();
     apic::io::setup();
 
+    // Setup the APIC timer only on the boot CPU
+    apic::local::timer::setup();
+
     smp::setup();
-    gdt::setup();
-    tss::setup();
     paging::load_kernel_pml4();
 }

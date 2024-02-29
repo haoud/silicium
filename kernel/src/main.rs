@@ -20,8 +20,11 @@ pub unsafe extern "C" fn _start() -> ! {
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
-    // Halt the CPU
-    arch::cpu::halt();
+    // Enable interrupts and wait for them
+    arch::irq::enable();
+    loop {
+        arch::irq::wait();
+    }
 }
 
 #[cfg(not(test))]

@@ -1,6 +1,8 @@
 use addr::Virtual;
 use macros::init;
 
+pub mod timer;
+
 /// The base address of the LAPIC MMIO
 pub const LAPIC_BASE: Virtual = Virtual::new(0xFFFF_8000_FEE0_0000);
 
@@ -54,6 +56,18 @@ impl Register {
     pub const LVT_CMCI: Register = Register(0x2F0);
     pub const INTERRUPT_COMMAND0: Register = Register(0x300);
     pub const INTERRUPT_COMMAND1: Register = Register(0x310);
+
+    pub const LVT_TIMER: Register = Register(0x320);
+    pub const LVT_THERMAL_SENSOR: Register = Register(0x330);
+    pub const LVT_PERFORMANCE_MONITORING_COUNTERS: Register = Register(0x340);
+    pub const LVT_LINT0: Register = Register(0x350);
+    pub const LVT_LINT1: Register = Register(0x360);
+    pub const LVT_ERROR: Register = Register(0x370);
+
+    pub const INITIAL_COUNT: Register = Register(0x380);
+    pub const CURRENT_COUNT: Register = Register(0x390);
+
+    pub const DIVIDE_CONFIGURATION: Register = Register(0x3E0);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
