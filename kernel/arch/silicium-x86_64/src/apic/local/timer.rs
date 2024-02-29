@@ -19,21 +19,12 @@ pub const IRQ_VECTOR: u8 = 32;
 /// of the kernel, after initializing the APIC/LAPIC/IOAPIC.
 #[init]
 pub unsafe fn setup() {
-    // Get the bus and core crystal frequency
-    let crystal_freq = core::arch::x86_64::__cpuid(0x15).ecx;
-    let bus_freq = core::arch::x86_64::__cpuid(0x16).ecx & 0xFFFF;
-
-    log::debug!("Local APIC: Crystal frequency: {} Hz", crystal_freq);
-    log::debug!("Local APIC: Bus frequency: {} Hz", bus_freq);
-
-    // Calculate the divisor to get the desired IRS frequency
-    let divisor = crystal_freq * (1_000_000 / LAPIC_IRQ_HZ);
-
-    // Set the divisor to 16, configure the timer to periodic mode and set the IRQ vector.
-    apic::local::write(Register::DIVIDE_CONFIGURATION, 3);
-    apic::local::write(Register::LVT_TIMER, u32::from(IRQ_VECTOR) | (1 << 17));
-    apic::local::write(Register::INITIAL_COUNT, divisor);
-
+    let count = 1_000_000;
     // Enable the IRQ vector
     apic::io::enable_irq(IRQ_VECTOR - IRQ_BASE);
+
+    // Set the divisor to 16, configure the timer to periodic mode and set the IRQ vector.
+    apic::local::write(Register::LVT_TIMER, u32::from(IRQ_VECTOR) | 0x20000);
+    apic::local::write(Register::DIVIDE_CONFIGURATION, 0b1011);
+    apic::local::write(Register::INITIAL_COUNT, count);
 }
