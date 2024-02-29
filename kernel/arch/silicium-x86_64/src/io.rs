@@ -1,3 +1,5 @@
+use core::ops::{BitAnd, BitOr};
+
 use super::opcode;
 
 pub trait IO {
@@ -108,6 +110,28 @@ impl<T: IO> Port<T> {
     #[must_use]
     pub unsafe fn read(&self) -> T {
         T::read(self.port)
+    }
+}
+
+impl<T: IO + BitOr<T, Output = T>> Port<T> {
+    /// Set a bit in the port.
+    ///
+    /// # Safety
+    /// This function is unsafe because writing to a port can have side effects, including
+    /// causing the hardware to do something unexpected and possibly violating memory safety.
+    pub unsafe fn set_bits(&self, value: T) {
+        self.write(self.read() | value);
+    }
+}
+
+impl<T: IO + BitAnd<T, Output = T>> Port<T> {
+    /// Clear a bit in the port.
+    ///
+    /// # Safety
+    /// This function is unsafe because writing to a port can have side effects, including
+    /// causing the hardware to do something unexpected and possibly violating memory safety.
+    pub unsafe fn clear_bits(&self, value: T) {
+        self.write(self.read() & value);
     }
 }
 
