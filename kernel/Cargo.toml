@@ -33,7 +33,12 @@ spin = { workspace = true }
 log = { workspace = true }
 
 [features]
-default = ["logging"]
+default = ["panic_info", "logging"]
+
+# Enable panic messages at the cost of increased binary size, but useful for debugging
+panic_info = ["logging"]
+
+# Enable logging at the cost of reduced performance and increased binary size
 logging = ["arch/logging"]
 
 [profile.release]
