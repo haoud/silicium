@@ -1,5 +1,6 @@
 use crate::opcode;
 
+pub mod cr0;
 pub mod cr3;
 pub mod eflags;
 pub mod xcr0;
