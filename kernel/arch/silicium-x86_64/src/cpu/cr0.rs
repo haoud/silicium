@@ -72,12 +72,13 @@ pub unsafe fn disable(features: Features) {
 }
 
 /// Get the current CR0 features enabled.
-///
-/// # Safety
-/// The caller must ensure that the `cr0` register exists.
 #[must_use]
-pub unsafe fn current() -> Features {
+pub fn current() -> Features {
     let cr0: u64;
-    core::arch::asm!("mov {}, cr0", out(reg) cr0);
+    // SAFETY: Reading the CR0 register is safe and should not cause any side
+    // effects that could lead to undefined behavior.
+    unsafe {
+        core::arch::asm!("mov {}, cr0", out(reg) cr0);
+    }
     Features::from_bits_truncate(cr0)
 }
