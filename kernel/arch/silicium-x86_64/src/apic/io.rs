@@ -7,6 +7,10 @@ pub const IOAPIC_BASE: Virtual = Virtual::new(0xFFFF_8000_FEC0_0000);
 /// The base IRQ number for the IOAPIC
 pub const IOAPIC_IRQ_BASE: u8 = 32;
 
+/// The number of IRQs in the IOAPIC
+static mut IRQ_COUNT: u8 = 0;
+
+/// A register in the IOAPIC
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Register(u32);
 
@@ -16,6 +20,8 @@ impl Register {
     pub const ARBITRATION_ID: Register = Register(0x02);
     pub const REDIRECTION_TABLE_BASE: Register = Register(0x10);
 
+    /// Compute the register address for the given redirection entry. The result
+    /// will always to read the low 32 bits of the entry.
     #[must_use]
     pub const fn redirection_low(n: u8) -> Register {
         Register(Self::REDIRECTION_TABLE_BASE.0 + (n as u32) * 2)
@@ -36,11 +42,11 @@ impl Register {
 /// initializing other cores and after the Local APIC was initialized.
 /// It should also only be called during the kernel initialization.
 pub unsafe fn setup() {
-    let count = (((read(Register::VERSION) >> 16) + 1) & 0xFF) as u8;
-    log::debug!("IOAPIC has {} entries", count);
+    IRQ_COUNT = (((read(Register::VERSION) >> 16) + 1) & 0xFF) as u8;
+    log::debug!("IOAPIC: {} entries found", IRQ_COUNT);
 
     // Disable all interrupts
-    for i in 0..count {
+    for i in 0..IRQ_COUNT {
         write(Register::redirection_high(i), 0);
         write(Register::redirection_low(i), 1 << 16);
     }
@@ -57,14 +63,13 @@ pub unsafe fn setup() {
 /// the IDT handler is misconfigured. The caller must ensure that enabling
 /// the IRQ is safe and will not cause undefined behavior.
 pub unsafe fn enable_irq(irq: u8) {
-    let count = (((read(Register::VERSION) >> 16) + 1) & 0xFF) as u8;
     let vector = u32::from(IOAPIC_IRQ_BASE + irq);
 
-    if irq >= count {
+    if irq >= IRQ_COUNT {
         log::warn!(
             "IOAPIC: Trying to enable IRQ {} out of range (max {})",
             irq,
-            count
+            IRQ_COUNT
         );
         return;
     }
@@ -82,13 +87,11 @@ pub unsafe fn enable_irq(irq: u8) {
 /// must ensure that disabling the IRQ is safe and will not cause undefined
 /// behavior.
 pub unsafe fn disable_irq(irq: u8) {
-    let count = (((read(Register::VERSION) >> 16) + 1) & 0xFF) as u8;
-
-    if irq >= count {
+    if irq >= IRQ_COUNT {
         log::warn!(
             "IOAPIC: Trying to disable IRQ {} out of range (max {})",
             irq,
-            count
+            IRQ_COUNT
         );
         return;
     }
@@ -96,6 +99,22 @@ pub unsafe fn disable_irq(irq: u8) {
     // Disable the IRQ by masking it
     write(Register::redirection_high(irq), 0);
     write(Register::redirection_low(irq), 1 << 16);
+}
+
+/// Get the number of entries in the IOAPIC. If the IOAPIC is not initialized,
+/// this will return 0.
+#[must_use]
+pub fn entry_count() -> u8 {
+    // SAFETY: IRQ_COUNT is set in `setup` and never modified afterwards, and we
+    // don't creat mutable references to it, so it's safe to read it.
+    unsafe { IRQ_COUNT }
+}
+
+/// Check if an IRQ is owned by the IOAPIC, i.e. if it is in the range of
+/// IOAPIC IRQs. If the IOAPIC is not initialized, this will always return false.
+#[must_use]
+pub fn own_irq(irq: u8) -> bool {
+    entry_count() != 0 && irq >= IOAPIC_IRQ_BASE && irq < IOAPIC_IRQ_BASE + entry_count()
 }
 
 /// Write a value to a register in the IOAPIC
