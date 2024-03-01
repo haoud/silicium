@@ -101,8 +101,6 @@ pub unsafe fn disable_irq(irq: u8) {
     write(Register::redirection_low(irq), 1 << 16);
 }
 
-/// Get the number of entries in the IOAPIC. If the IOAPIC is not initialized,
-/// this will return 0.
 #[must_use]
 pub fn entry_count() -> u8 {
     // SAFETY: IRQ_COUNT is set in `setup` and never modified afterwards, and we
