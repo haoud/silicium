@@ -137,7 +137,7 @@ make run-aarch64
 
 ### Milestone 1: Baremetal kernel (x86-64 only)
 
-- [ ] Babysteps (unit tests, CI, benchmarks...)
+- [x] Babysteps (unit tests, CI, benchmarks...)
 - [x] Serial logging
 - [x] GDT/IDT/TSS
 - [ ] Physical memory manager
@@ -148,7 +148,7 @@ make run-aarch64
 - [x] IOAPIC
 - [x] Local APIC
 - [x] APIC timer
-- [ ] SIMD
+- [x] SIMD
 - [x] SMP
 
 ### Milestone 2: Userspace, here I come !
