@@ -6,7 +6,7 @@
 # and returns to the interrupted code.
 interrupt_common:
     # Swap the kernel and user GS if we was in user mode
-    cmp QWORD ptr [rsp + 8 * 3], 0x08
+    cmp QWORD ptr [rsp + 24], 0x08
     je 1f
     swapgs
 1:
@@ -52,7 +52,7 @@ interrupt_common:
     pop r11
 
     # Restore user GS if we was in user mode
-    cmp QWORD ptr [rsp + 8 * 3], 0x08
+    cmp QWORD ptr [rsp + 24], 0x08
     je 1f
     swapgs
 1:

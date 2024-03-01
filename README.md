@@ -147,7 +147,7 @@ make run-aarch64
 - [x] APIC
 - [x] IOAPIC
 - [x] Local APIC
-- [ ] APIC timer
+- [x] APIC timer
 - [ ] SIMD
 - [x] SMP
 

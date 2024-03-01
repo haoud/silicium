@@ -29,6 +29,13 @@ pub fn disable() {
     opcode::cli();
 }
 
+/// Halt the CPU until the next interrupt occurs. If interrupts are disabled,
+/// this will result in an infinite loop.
+#[inline]
+pub fn wait() {
+    opcode::hlt();
+}
+
 /// Check if interrupts are enabled. Returns true if interrupts are enabled,
 /// false otherwise.
 #[inline]
