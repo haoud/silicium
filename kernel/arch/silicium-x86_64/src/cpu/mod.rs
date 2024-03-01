@@ -1,5 +1,7 @@
 use crate::opcode;
+pub use cpuid::cpuid;
 
+pub mod cpuid;
 pub mod cr0;
 pub mod cr2;
 pub mod cr3;

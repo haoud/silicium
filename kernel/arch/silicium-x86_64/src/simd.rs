@@ -1,5 +1,5 @@
 use crate::{
-    cpu::{self, cr0, cr4, xcr0},
+    cpu::{self, cpuid::Features, cr0, cr4, xcr0},
     opcode,
 };
 use macros::init;
@@ -67,8 +67,8 @@ impl Default for ExtendedState {
 #[init]
 pub unsafe fn setup() {
     assert!(
-        (core::arch::x86_64::__cpuid(1).ecx & (1 << 26)) != 0,
-        "xsave instruction not supported by the CPU"
+        cpu::cpuid::has_feature(Features::XSAVE),
+        "xsave instruction is not supported by the CPU !"
     );
 
     // Disable FPU emulation and enable monitor of the coprocessor
