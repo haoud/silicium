@@ -1,6 +1,5 @@
-use core::arch::x86_64::CpuidResult;
-
 use bitflags::bitflags;
+use core::arch::x86_64::CpuidResult;
 
 pub type Result = CpuidResult;
 
@@ -146,7 +145,7 @@ bitflags! {
         const PCID = 1 << 48;
 
         /// Direct cache access
-        const DCA = 1 << 50
+        const DCA = 1 << 50;
 
         /// Streaming SIMD extensions 4.1 (SSE4.1)
         const SSE4_1 = 1 << 51;
@@ -198,8 +197,7 @@ pub unsafe fn setup() {
     let vendor_bytes = vendor();
     let leaf_max = leaf_max();
 
-    let vendor = core::str::from_utf8(&vendor_bytes).unwrap_or("????????????");
-
+    let vendor = core::str::from_utf8(&vendor_bytes).unwrap_or("Unknown");
     log::trace!("CPUID: highest supported leaf is 0x{:08X}", leaf_max);
     log::trace!("CPUID: vendor string is `{}`", vendor);
 }
@@ -234,6 +232,19 @@ pub fn vendor() -> [u8; 12] {
         cpuid.ecx.to_le_bytes()[2],
         cpuid.ecx.to_le_bytes()[3],
     ]
+}
+
+/// Verify if the CPU supports the given feature.
+#[must_use]
+pub fn has_feature(feature: Features) -> bool {
+    supported_features().contains(feature)
+}
+
+/// Return the CPU supported features.
+#[must_use]
+pub fn supported_features() -> Features {
+    let cpuid = cpuid(1);
+    Features::from_bits_truncate(u64::from(cpuid.edx) | (u64::from(cpuid.ecx) << 32))
 }
 
 /// Execute the `cpuid` instruction with the given leaf and return the result.
