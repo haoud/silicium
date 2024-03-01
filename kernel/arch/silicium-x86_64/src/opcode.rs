@@ -162,3 +162,35 @@ pub fn invlpg(address: usize) {
         core::arch::asm!("invlpg [{}]", in(reg) address);
     }
 }
+
+/// Set the value of the Extended Control Register (XCR0) to the provided value.
+///
+/// # Safety
+/// The caller must ensure that the `xsetbv` instruction is supported by the CPU,
+/// and that the provided value is valid and will not cause UB or memory unsafety.
+#[inline]
+pub unsafe fn xsetbv(index: u32, value: u64) {
+    core::arch::asm!(
+        "xsetbv",
+        in("ecx") index,
+        in("eax") (value & 0xFFFF_FFFF) as u32,
+        in("edx") (value >> 32) as u32
+    );
+}
+
+/// Get the value of the Extended Control Register (XCR0) for the provided index.
+///
+/// # Safety
+/// The caller must ensure that the `xgetbv` instruction is supported by the CPU.
+#[inline]
+#[must_use]
+pub unsafe fn xgetbv(index: u32) -> u64 {
+    let (low, high): (u32, u32);
+    core::arch::asm!(
+        "xgetbv",
+        in("ecx") index,
+        out("eax") low,
+        out("edx") high,
+    );
+    u64::from(high) << 32 | u64::from(low)
+}

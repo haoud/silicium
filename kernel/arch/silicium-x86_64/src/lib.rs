@@ -19,6 +19,7 @@ pub mod percpu;
 pub mod pic;
 pub mod pit;
 pub mod serial;
+pub mod simd;
 pub mod smp;
 pub mod tss;
 
