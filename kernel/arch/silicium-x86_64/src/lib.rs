@@ -46,6 +46,7 @@ pub unsafe fn setup() {
     idt::load();
     tss::setup();
     simd::setup();
+    cpu::cpuid::setup();
 
     // Remap the PIC and disable it
     pic::remap_and_disable();

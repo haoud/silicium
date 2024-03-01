@@ -67,7 +67,7 @@ impl Default for ExtendedState {
 #[init]
 pub unsafe fn setup() {
     assert!(
-        (core::arch::x86_64::__cpuid(1).ecx & (1 << 26)) != 0,
+        (cpu::cpuid(1).ecx & (1 << 26)) != 0,
         "xsave instruction not supported by the CPU"
     );
 
