@@ -1,7 +1,11 @@
 use crate::opcode;
 
+pub mod cr0;
+pub mod cr2;
 pub mod cr3;
+pub mod cr4;
 pub mod eflags;
+pub mod xcr0;
 
 /// The interrupt frame that is pushed to the stack when an interrupt is triggered.
 /// This structure is used to save the state of the CPU before the interrupt

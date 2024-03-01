@@ -19,6 +19,7 @@ pub mod percpu;
 pub mod pic;
 pub mod pit;
 pub mod serial;
+pub mod simd;
 pub mod smp;
 pub mod tss;
 
@@ -44,6 +45,7 @@ pub unsafe fn setup() {
     idt::setup();
     idt::load();
     tss::setup();
+    simd::setup();
 
     // Remap the PIC and disable it
     pic::remap_and_disable();

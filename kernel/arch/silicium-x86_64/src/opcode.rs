@@ -162,3 +162,69 @@ pub fn invlpg(address: usize) {
         core::arch::asm!("invlpg [{}]", in(reg) address);
     }
 }
+
+/// Set the value of the Extended Control Register (XCR0) to the provided value.
+///
+/// # Safety
+/// The caller must ensure that the `xsetbv` instruction is supported by the CPU,
+/// and that the provided value is valid and will not cause UB or memory unsafety.
+#[inline]
+pub unsafe fn xsetbv(index: u32, value: u64) {
+    core::arch::asm!(
+        "xsetbv",
+        in("ecx") index,
+        in("eax") (value & 0xFFFF_FFFF) as u32,
+        in("edx") (value >> 32) as u32
+    );
+}
+
+/// Get the value of the Extended Control Register (XCR0) for the provided index.
+///
+/// # Safety
+/// The caller must ensure that the `xgetbv` instruction is supported by the CPU.
+#[inline]
+#[must_use]
+pub unsafe fn xgetbv(index: u32) -> u64 {
+    let (low, high): (u32, u32);
+    core::arch::asm!(
+        "xgetbv",
+        in("ecx") index,
+        out("eax") low,
+        out("edx") high,
+    );
+    u64::from(high) << 32 | u64::from(low)
+}
+
+/// Save the extended state of the CPU into the provided buffer.
+///
+/// # Safety
+/// The caller must ensure that the provided buffer is valid and has enough space
+/// to store the extended state of the CPU. The caller must also ensure that the
+/// `xsave` instruction is supported by the CPU.
+#[inline]
+pub unsafe fn xsave(buffer: *mut u8) {
+    core::arch::asm!(
+        "xsave [{}]",
+        in(reg) buffer,
+        in("eax") u32::MAX,
+        in("edx") u32::MAX
+    );
+}
+
+/// Restore the extended state of the CPU from the provided buffer using features
+/// specified in the `xCR0`
+///
+/// # Safety
+/// The caller must ensure that the provided buffer is valid and contains the
+/// extended state of the CPU. The caller must also ensure that the `xrstor`
+/// instruction is supported by the CPU, and that the data inside the buffer
+/// was previously saved using the `xsave` instruction.
+#[inline]
+pub unsafe fn xrstor(buffer: *const u8) {
+    core::arch::asm!(
+        "xrstor [{}]",
+        in(reg) buffer,
+        in("eax") u32::MAX,
+        in("edx") u32::MAX
+    );
+}
