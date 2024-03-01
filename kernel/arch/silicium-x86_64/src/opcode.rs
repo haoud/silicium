@@ -194,3 +194,37 @@ pub unsafe fn xgetbv(index: u32) -> u64 {
     );
     u64::from(high) << 32 | u64::from(low)
 }
+
+/// Save the extended state of the CPU into the provided buffer.
+///
+/// # Safety
+/// The caller must ensure that the provided buffer is valid and has enough space
+/// to store the extended state of the CPU. The caller must also ensure that the
+/// `xsave` instruction is supported by the CPU.
+#[inline]
+pub unsafe fn xsave(buffer: *mut u8) {
+    core::arch::asm!(
+        "xsave [{}]",
+        in(reg) buffer,
+        in("eax") u32::MAX,
+        in("edx") u32::MAX
+    );
+}
+
+/// Restore the extended state of the CPU from the provided buffer using features
+/// specified in the `xCR0`
+///
+/// # Safety
+/// The caller must ensure that the provided buffer is valid and contains the
+/// extended state of the CPU. The caller must also ensure that the `xrstor`
+/// instruction is supported by the CPU, and that the data inside the buffer
+/// was previously saved using the `xsave` instruction.
+#[inline]
+pub unsafe fn xrstor(buffer: *const u8) {
+    core::arch::asm!(
+        "xrstor [{}]",
+        in(reg) buffer,
+        in("eax") u32::MAX,
+        in("edx") u32::MAX
+    );
+}

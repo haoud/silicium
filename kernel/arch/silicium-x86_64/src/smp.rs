@@ -1,4 +1,4 @@
-use crate::{apic, cpu, gdt, idt, paging, percpu, tss};
+use crate::{apic, cpu, gdt, idt, paging, percpu, simd, tss};
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use macros::init;
 
@@ -77,6 +77,7 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     idt::load();
     gdt::setup();
     tss::setup();
+    simd::setup();
     apic::local::setup();
     paging::load_kernel_pml4();
 
