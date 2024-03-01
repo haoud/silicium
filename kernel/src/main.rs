@@ -1,6 +1,5 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
-#![feature(panic_info_message)]
 
 use macros::init;
 
@@ -25,27 +24,6 @@ pub unsafe extern "C" fn _start() -> ! {
     loop {
         arch::irq::wait();
     }
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-pub fn panic(info: &core::panic::PanicInfo) -> ! {
-    arch::irq::disable();
-    // TODO: Halt other cores
-
-    log::error!("The kernel has encountered a fatal error that it cannot recover from");
-    log::error!("The kernel must stop to prevent further damage");
-
-    if let Some(message) = info.message() {
-        if let Some(location) = info.location() {
-            log::error!("{} at {}@CPU 0", message, location);
-        } else {
-            log::error!("{}", message);
-        }
-    }
-
-    // Halt the CPU
-    arch::cpu::halt();
 }
 
 #[cfg(test)]

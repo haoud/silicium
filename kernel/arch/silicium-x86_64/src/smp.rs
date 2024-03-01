@@ -1,5 +1,5 @@
 use crate::{apic, cpu, gdt, idt, paging, percpu, tss};
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use macros::init;
 
 /// The SMP request to Limine. This will order Limine to fetch information about
@@ -10,6 +10,9 @@ static SMP_REQUEST: limine::request::SmpRequest = limine::request::SmpRequest::n
 
 /// The number of CPUs in the system
 static CPU_COUNT: AtomicUsize = AtomicUsize::new(1);
+
+/// A flag to check if the APs has been booted or not
+static AP_BOOTED: AtomicBool = AtomicBool::new(false);
 
 /// Setup the SMP environment and start the APs
 ///
@@ -35,8 +38,21 @@ pub fn setup() {
     while CPU_COUNT.load(Ordering::Relaxed) != response.cpus().len() {
         core::hint::spin_loop();
     }
+
+    // The APs have been booted
+    AP_BOOTED.store(true, Ordering::Relaxed);
 }
 
+/// Check if the APs have been booted or not. This is useful to check if the
+/// system is ready for SMP operations such has sending IPIs. This function
+/// will return true after all the APs have been booted and has finished their
+/// setup (see [`ap_start`]).
+#[must_use]
+pub fn ap_booted() -> bool {
+    AP_BOOTED.load(Ordering::Relaxed)
+}
+
+/// Get the number of active cores in the system.
 #[must_use]
 pub fn core_count() -> usize {
     CPU_COUNT.load(Ordering::Relaxed)

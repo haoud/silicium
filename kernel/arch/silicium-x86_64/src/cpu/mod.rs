@@ -3,6 +3,9 @@ use crate::opcode;
 pub mod cr3;
 pub mod eflags;
 
+/// The interrupt frame that is pushed to the stack when an interrupt is triggered.
+/// This structure is used to save the state of the CPU before the interrupt
+/// handler is called.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 #[repr(C)]
 pub struct InterruptFrame {
@@ -35,6 +38,19 @@ pub struct InterruptFrame {
     pub rflags: u64,
     pub rsp: u64,
     pub ss: u64,
+}
+
+/// Return an unique identifier for the current CPU core. This identifier is
+/// unique for each core and is used to identify the core in the SMP.
+#[must_use]
+pub fn id() -> u64 {
+    let id: u64;
+    // SAFETY: This is safe because the gs points to the per-cpu data, and gs:8
+    // contains the lapic_id of the current core
+    unsafe {
+        core::arch::asm!("mov {}, gs:8", out(reg) id);
+    }
+    id
 }
 
 /// Halt the current CPU core indefinitely. This function is used to permanently
