@@ -58,6 +58,7 @@ pub unsafe fn setup() {
 
     // Setup the SIMD support
     simd::setup();
+    cpu::cpuid::setup();
 
     // Setup the CPU identification
     cpu::cpuid::setup();
