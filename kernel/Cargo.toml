@@ -20,7 +20,9 @@ all = "deny"
 
 [workspace.dependencies]
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
+config = { path = "crates/silicium-config", package = "silicium-config" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
+static_assertions = "1.1.0"
 bitfield = "0.14.0"
 bitflags = "2.4.2"
 tailcall = "1.0.1"

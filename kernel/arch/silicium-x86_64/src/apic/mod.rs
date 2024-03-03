@@ -11,5 +11,5 @@ pub mod local;
 /// initialization.
 #[init]
 pub unsafe fn setup() {
-    // TODO: Remap the APIC MMIO
+    // TODO: Remap the APIC MMIO without caching
 }
