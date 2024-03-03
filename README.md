@@ -147,14 +147,16 @@ make run-aarch64
 - [x] SIMD
 - [x] SMP
 
-### Milestone 2: Userspace, here I come !
+### Milestone 2: More memory, please !
+ - [ ] Physical memory management
+ - [ ] Virtual memory allocation
+ - [ ] User memory management
+ - [ ] Kernel heap
+ - [ ] Purgeable memory
+ - [ ] Reclaim boot memory
 
-- [ ] Userspace
-- [ ] Syscalls
-- [ ] Scheduling
-- [ ] Multi-threading
-- [ ] Asynchronous IPC
-- [ ] Userspace ELF loader
+### Milestone 3: Userspace, here we come !
+ - WIP
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
