@@ -20,7 +20,9 @@ all = "deny"
 
 [workspace.dependencies]
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
+config = { path = "crates/silicium-config", package = "silicium-config" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
+static_assertions = "1.1.0"
 bitfield = "0.14.0"
 bitflags = "2.4.2"
 tailcall = "1.0.1"
@@ -33,7 +35,12 @@ spin = { workspace = true }
 log = { workspace = true }
 
 [features]
-default = ["logging"]
+default = ["panic_info", "logging"]
+
+# Enable panic messages at the cost of increased binary size, but useful for debugging
+panic_info = ["logging"]
+
+# Enable logging at the cost of reduced performance and increased binary size
 logging = ["arch/logging"]
 
 [profile.release]

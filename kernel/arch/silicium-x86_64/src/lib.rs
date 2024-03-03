@@ -1,5 +1,5 @@
 #![cfg_attr(not(test), no_std)]
-#![feature(panic_info_message)]
+#![cfg_attr(feature = "panic_info", feature(panic_info_message))]
 #![feature(negative_impls)]
 #![feature(const_pin)]
 
@@ -12,6 +12,7 @@ pub mod gdt;
 pub mod idt;
 pub mod io;
 pub mod irq;
+pub mod lang;
 pub mod msr;
 pub mod opcode;
 pub mod paging;
@@ -39,13 +40,27 @@ static HHDM_REQUEST: limine::request::HhdmRequest = limine::request::HhdmRequest
 /// memory.
 #[init]
 pub unsafe fn setup() {
+    // Initialized the per-cpu variable for this core
     percpu::setup(0);
+
+    // Setup the pagingation
     paging::setup();
+
+    // Create and load the GDT
     gdt::setup();
+
+    // Create and load the IDT
     idt::setup();
     idt::load();
+
+    // Insert the TSS into the GDT and load it
     tss::setup();
+
+    // Setup the SIMD support
     simd::setup();
+    cpu::cpuid::setup();
+
+    // Setup the CPU identification
     cpu::cpuid::setup();
 
     // Remap the PIC and disable it
@@ -59,35 +74,9 @@ pub unsafe fn setup() {
     // Setup the APIC timer only on the boot CPU
     apic::local::timer::setup();
 
+    // Start the APs
     smp::setup();
+
+    // Load the kernel PML4
     paging::load_kernel_pml4();
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-pub fn panic(info: &core::panic::PanicInfo) -> ! {
-    use crate::apic::local::{IpiDestination, IpiPriority};
-
-    irq::disable();
-    if smp::ap_booted() {
-        // SAFETY: This is safe because we have ensured that the APs are booted, meaning
-        // that they can safely receive IPIs without triple faulting.
-        unsafe {
-            apic::local::send_ipi(IpiDestination::AllExcludingSelf, IpiPriority::Nmi, 0x00);
-        }
-    }
-
-    log::error!("The kernel has encountered a fatal error that it cannot recover from");
-    log::error!("The kernel must stop to prevent further damage");
-
-    if let Some(message) = info.message() {
-        if let Some(location) = info.location() {
-            log::error!("CPU {}: {} at {}", cpu::id(), message, location);
-        } else {
-            log::error!("{}", message);
-        }
-    }
-
-    // Halt the CPU
-    cpu::halt();
 }

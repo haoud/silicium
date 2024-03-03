@@ -1,15 +1,11 @@
 use crate::{
-    apic::{self, local::Register},
-    pic::IRQ_BASE,
+    apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
     pit,
 };
 use macros::init;
 
-/// The frequency of IRQ raised by the Local APIC timer interrupt
-pub const LAPIC_IRQ_HZ: u32 = 1000;
-
 /// The IRQ vector used by the Local APIC timer interrupt
-pub const IRQ_VECTOR: u8 = 32;
+pub const IRQ_VECTOR: u8 = IOAPIC_IRQ_BASE;
 
 /// Initialize the Local APIC timer interrupt for the current core. This
 /// function will setup the Local APIC timer to raise an IRQ at the specified
@@ -21,7 +17,7 @@ pub const IRQ_VECTOR: u8 = 32;
 #[init]
 pub unsafe fn setup() {
     // Enable the IRQ vector
-    apic::io::enable_irq(IRQ_VECTOR - IRQ_BASE);
+    apic::io::enable_irq(IRQ_VECTOR);
 
     // Configure the Local APIC timer, respectivelly:
     // - Set the IRQ vector to 32, use periodic mode
@@ -36,13 +32,19 @@ pub unsafe fn setup() {
     pit::perform_sleep();
 
     // Get the current count and calculate the frequency and the counter
-    // to get the desired frequency (LAPIC_IRQ_HZ)
+    // to get the desired frequency ([`config::TIMER_HZ`])
     let elapsed = u32::MAX - apic::local::read(Register::CURRENT_COUNT);
     let frequency = elapsed * 100;
-    let counter = frequency / LAPIC_IRQ_HZ;
+    let counter = frequency / u32::from(config::TIMER_HZ);
 
-    log::debug!("APIC: Internal frequency is {frequency} Hz (calibrated with PIT)");
-    log::debug!("APIC: Timer configured at {LAPIC_IRQ_HZ} Hz");
+    // Verify that the frequency is correct
+    if frequency < 25_000_000 {
+        log::warn!("APIC: Internal frequency is too low ({})", frequency);
+        todo!("APIC: Implement a fallback for low frequencies");
+    }
+
+    log::debug!("APIC: Internal frequency is {} MHz", frequency / 1_000_000);
+    log::debug!("APIC: Timer configured at {} Hz", config::TIMER_HZ);
 
     // Configure the Local APIC timer with the calculated counter
     apic::local::write(Register::INITIAL_COUNT, counter);

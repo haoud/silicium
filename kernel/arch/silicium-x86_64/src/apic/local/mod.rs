@@ -85,9 +85,10 @@ pub enum IpiDestination {
     Single(u8),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum IpiPriority {
     /// Send the IPI with a fixed priority
+    #[default]
     Fixed = 0,
     /// Send the IPI with a low priority
     Low = 1,
@@ -135,6 +136,7 @@ pub unsafe fn send_ipi(destination: IpiDestination, priority: IpiPriority, vecto
         IpiDestination::SelfOnly => (0, u32::from(vector) | ((priority as u32) << 8) | 1 << 18),
     };
 
+    // Send the IPI
     write(Register::INTERRUPT_COMMAND1, cmd.0);
     write(Register::INTERRUPT_COMMAND0, cmd.1);
 

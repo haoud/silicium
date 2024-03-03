@@ -10,6 +10,7 @@ bitfield = { workspace = true }
 bitflags = { workspace = true }
 tailcall = { workspace = true }
 macros = { workspace = true }
+config = { workspace = true }
 spin = { workspace = true }
 log = { workspace = true }
 limine = "0.2.0"

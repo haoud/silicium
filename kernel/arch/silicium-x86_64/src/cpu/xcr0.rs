@@ -46,6 +46,6 @@ pub unsafe fn disable(features: Features) {
 /// The caller must ensure that the xCR0 register exists and that the `xgetbv`
 /// instruction is supported.
 #[must_use]
-pub unsafe fn current() -> Features {
+pub unsafe fn read() -> Features {
     Features::from_bits_truncate(opcode::xgetbv(0))
 }

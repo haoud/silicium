@@ -25,11 +25,3 @@ pub unsafe extern "C" fn _start() -> ! {
         arch::irq::wait();
     }
 }
-
-#[cfg(test)]
-pub mod test {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

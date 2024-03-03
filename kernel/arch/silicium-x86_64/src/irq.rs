@@ -1,4 +1,7 @@
-use crate::{cpu, opcode};
+use crate::{
+    cpu::{self, rflags::Flags},
+    opcode,
+};
 
 /// The state of the interrupts.
 #[derive(Debug, PartialEq, Eq)]
@@ -41,8 +44,7 @@ pub fn wait() {
 #[inline]
 #[must_use]
 pub fn enabled() -> bool {
-    let eflags = cpu::eflags::read();
-    eflags & (1 << 9) == 0
+    cpu::rflags::read().contains(Flags::IF)
 }
 
 /// Save the current state of the interrupts and return it. This state can be

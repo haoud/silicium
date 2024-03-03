@@ -108,7 +108,6 @@ pub unsafe fn map(
 
     entry.set_address(frame);
     entry.add_flags(flags);
-
     Ok(())
 }
 

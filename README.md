@@ -18,7 +18,7 @@
 <!--<h3 align="center">Silicium</h3>-->
 <h1 align="center">Silicium</h1>
   <p align="center">
-    A micro-kernel written in Rust exploring modern concepts
+    A kernel written in Rust exploring modern concepts
     <br />
     <a href="https://github.com/haoud/silicium"><strong>Explore the docs »</strong></a>
     <br />
@@ -59,10 +59,9 @@
 > [!IMPORTANT]
 > Silicium is a work in progress and is not ready for production use.
 
-Silicium is a *micro-kernel* written in Rust. It try to be a fast, portable kernel with a modern design. Its main goals are:
- - **Being portable**: Silicium is designed to be able to run on many architectures, by including the smallest 
- amount of architecture-specific code as possible in the kernel without sacrificing performance.
- - **Being (relatively) fast**: Silicium is designed to be fast. Micro-kernels are known to be slower than monolithic kernels, but Silicium try to mitigate this by being scalable and using modern techniques.
+Silicium is a *kernel* written in Rust. It try to be a fast, portable kernel with a modern design. Its main goals are:
+ - **Being portable**: Silicium is designed to be able to run on many architectures, by including good abstractions since the beginning of the project. 
+ - **Being fast**: Silicium is designed to be fast, efficient and scalable. It should be able to run on low-end hardware as well as on high-end hardware and to take advantage of modern hardware features and design.
  - **Being ABI-agnostic**, meaning that it should be able to run, in theory, any program written for Linux, Windows or MacOS by using a server that will translate foreign ABIs to Silicium's ABI.
  - **Being secure**: Silicium is designed to be secure by default. It should be able to run untrusted code without any risk of compromising the system.
  - **Being educational**. Silicium is designed to be a learning experience for me and for others. It should be easy to understand and to contribute to, and well documented
@@ -140,9 +139,6 @@ make run-aarch64
 - [x] Babysteps (unit tests, CI, benchmarks...)
 - [x] Serial logging
 - [x] GDT/IDT/TSS
-- [ ] Physical memory manager
-- [ ] Virtual memory manager
-- [ ] Allocations
 - [x] Paging
 - [x] APIC
 - [x] IOAPIC
@@ -151,33 +147,16 @@ make run-aarch64
 - [x] SIMD
 - [x] SMP
 
-### Milestone 2: Userspace, here I come !
+### Milestone 2: More memory, please !
+ - [ ] Physical memory management
+ - [ ] Virtual memory allocation
+ - [ ] User memory management
+ - [ ] Kernel heap
+ - [ ] Purgeable memory
+ - [ ] Reclaim boot memory
 
-- [ ] Userspace
-- [ ] Syscalls
-- [ ] Scheduling
-- [ ] Multi-threading
-- [ ] Asynchronous IPC
-- [ ] Userspace ELF loader
-
-### Milestone 3: Add a little bit of spice
-
- - [ ] VFS server
- - [ ] Ram filesystem
- - [ ] Graphical server
- - [ ] aarch64 support
- - [ ] i686 suport
-
-### Milestone 4: An interactive userspace !
- 
- - [ ] Shell
- - [ ] Basic commands
- - [ ] Mouse and keyboard support
- - [ ] Porting DOOM
-
-### Milestone 5: ABI compatibility
-
- - [ ] Linux ABI
+### Milestone 3: Userspace, here we come !
+ - WIP
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
