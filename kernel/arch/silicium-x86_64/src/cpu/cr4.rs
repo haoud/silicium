@@ -112,9 +112,9 @@ pub unsafe fn disable(features: Features) {
     core::arch::asm!("mov cr4, {}", in(reg) cr4);
 }
 
-/// Get the current CR4 features enabled.
+/// Read the CR4 register and return the current features enabled.
 #[must_use]
-pub fn current() -> Features {
+pub fn read() -> Features {
     let cr4: u64;
     // SAFETY: Reading the CR4 register is safe and should not cause any side
     // effects that could lead to undefined behavior.

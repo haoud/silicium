@@ -4,7 +4,12 @@ use core::ops::{Deref, DerefMut};
 use macros::init;
 
 extern "C" {
+    /// The start of the per-CPU section. This is a linker symbol that is used to
+    /// get the start of the per-CPU section.
     static __percpu_start: [u64; 0];
+
+    /// The end of the per-CPU section. This is a linker symbol that is used to
+    /// get the end of the per-CPU section.
     static __percpu_end: [u64; 0];
 }
 
@@ -174,6 +179,7 @@ pub struct PerCpuGuard<'a, T> {
 }
 
 impl<'a, T> PerCpuGuard<'a, T> {
+    /// Create a new per-CPU guard.
     unsafe fn new(inner: &'a T) -> Self {
         Self { inner }
     }
@@ -206,6 +212,7 @@ pub struct PerCpuGuardMut<'a, T> {
 }
 
 impl<'a, T> PerCpuGuardMut<'a, T> {
+    /// Create a new per-CPU mutable guard.
     unsafe fn new(inner: &'a mut T) -> Self {
         Self { inner }
     }

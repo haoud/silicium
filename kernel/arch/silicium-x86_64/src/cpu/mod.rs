@@ -6,7 +6,7 @@ pub mod cr0;
 pub mod cr2;
 pub mod cr3;
 pub mod cr4;
-pub mod eflags;
+pub mod rflags;
 pub mod xcr0;
 
 /// The interrupt frame that is pushed to the stack when an interrupt is triggered.

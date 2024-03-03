@@ -18,9 +18,9 @@ bitflags! {
           /// exception. This is used to implement lazy FPU saving/restoring.
           const TS = 1 << 3;
 
-          // Indicates that the processor supports the 387DX math coprocessor
-          // instructions. On modern processors, this is always set and cannot
-          // be cleared.
+          /// Indicates that the processor supports the 387DX math coprocessor
+          /// instructions. On modern processors, this is always set and cannot
+          /// be cleared.
           const ET = 1 << 4;
 
           /// Enable the native error reporting mechanism for x87 FPU errors.
@@ -71,9 +71,9 @@ pub unsafe fn disable(features: Features) {
     core::arch::asm!("mov cr0, {}", in(reg) cr0);
 }
 
-/// Get the current CR0 features enabled.
+/// Read the CR0 register and return the enabled features.
 #[must_use]
-pub fn current() -> Features {
+pub fn read() -> Features {
     let cr0: u64;
     // SAFETY: Reading the CR0 register is safe and should not cause any side
     // effects that could lead to undefined behavior.

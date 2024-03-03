@@ -40,13 +40,26 @@ static HHDM_REQUEST: limine::request::HhdmRequest = limine::request::HhdmRequest
 /// memory.
 #[init]
 pub unsafe fn setup() {
+    // Initialized the per-cpu variable for this core
     percpu::setup(0);
+
+    // Setup the pagingation
     paging::setup();
+
+    // Create and load the GDT
     gdt::setup();
+
+    // Create and load the IDT
     idt::setup();
     idt::load();
+
+    // Insert the TSS into the GDT and load it
     tss::setup();
+
+    // Setup the SIMD support
     simd::setup();
+
+    // Setup the CPU identification
     cpu::cpuid::setup();
 
     // Remap the PIC and disable it
@@ -60,6 +73,9 @@ pub unsafe fn setup() {
     // Setup the APIC timer only on the boot CPU
     apic::local::timer::setup();
 
+    // Start the APs
     smp::setup();
+
+    // Load the kernel PML4
     paging::load_kernel_pml4();
 }

@@ -55,52 +55,47 @@ pub unsafe fn setup() {
     apic::local::end_of_interrupt();
 }
 
-/// Enable an IRQ in the IOAPIC.
+/// Enable an IRQ in the IOAPIC, identified by its vector.
 ///
 /// # Safety
 /// This function is unsafe because enabling an IRQ can cause undefined
 /// behavior if the IOAPIC is not properly initialized and mapped, or if
 /// the IDT handler is misconfigured. The caller must ensure that enabling
 /// the IRQ is safe and will not cause undefined behavior.
-pub unsafe fn enable_irq(irq: u8) {
-    let vector = u32::from(IOAPIC_IRQ_BASE + irq);
-
-    if irq >= IRQ_COUNT {
-        log::warn!(
-            "IOAPIC: Trying to enable IRQ {} out of range (max {})",
-            irq,
-            IRQ_COUNT
-        );
+pub unsafe fn enable_irq(vector: u8) {
+    if !own_irq(vector) {
+        log::warn!("IOAPIC: Trying to enable IRQ {vector} not owned by the IOAPIC");
         return;
     }
 
+    let irq = vector - IOAPIC_IRQ_BASE;
+
     // Enable the IRQ by setting the vector and unmasking it
     write(Register::redirection_high(irq), 0);
-    write(Register::redirection_low(irq), vector);
+    write(Register::redirection_low(irq), u32::from(vector));
 }
 
-/// Disable an IRQ in the IOAPIC.
+/// Disable an IRQ in the IOAPIC, identified by its vector.
 ///
 /// # Safety
 /// This function is unsafe because disabling an IRQ can cause undefined
 /// behavior if the IOAPIC is not properly initialized and mapped. The caller
 /// must ensure that disabling the IRQ is safe and will not cause undefined
 /// behavior.
-pub unsafe fn disable_irq(irq: u8) {
-    if irq >= IRQ_COUNT {
-        log::warn!(
-            "IOAPIC: Trying to disable IRQ {} out of range (max {})",
-            irq,
-            IRQ_COUNT
-        );
+pub unsafe fn disable_irq(vector: u8) {
+    if !own_irq(vector) {
+        log::warn!("IOAPIC: Trying to disable IRQ {vector} not owned by the IOAPIC");
         return;
     }
 
     // Disable the IRQ by masking it
+    let irq = vector - IOAPIC_IRQ_BASE;
     write(Register::redirection_high(irq), 0);
     write(Register::redirection_low(irq), 1 << 16);
 }
 
+/// Return the number of IRQs in the IOAPIC. If the IOAPIC is not initialized,
+/// this will return 0.
 #[must_use]
 pub fn entry_count() -> u8 {
     // SAFETY: IRQ_COUNT is set in `setup` and never modified afterwards, and we

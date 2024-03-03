@@ -205,7 +205,7 @@ pub unsafe fn allocate_align_physical(size: usize, align: usize) -> Physical {
 
     // Calculate the offset to add to the base address to align
     // it to the requested alignment using bitwise operations
-    let offset = align - (address & (align - 1));
+    let offset = (align - (address & (align - 1))) & (align - 1);
 
     // Update the region's length and base address to reflect the allocation
     // and return the address of the allocated memory
