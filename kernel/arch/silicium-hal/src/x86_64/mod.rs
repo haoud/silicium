@@ -36,6 +36,8 @@ pub fn setup() -> boot::Info {
     // kernel's memory map format. This is needed to support different
     // bootloaders and architectures.
     let mmap_request = arch::boot::disable_allocator();
+    let boot_allocated = arch::boot::allocated_size();
+
     let mmap = mmap_request
         .get_response()
         .expect("Failed to get memory map")
@@ -48,5 +50,8 @@ pub fn setup() -> boot::Info {
         })
         .collect::<ArrayVec<boot::mmap::Entry, 32>>();
 
-    boot::Info { mmap }
+    boot::Info {
+        mmap,
+        boot_allocated,
+    }
 }

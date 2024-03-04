@@ -26,7 +26,8 @@ impl State {
     /// Creates a new state from the given memory map. It will allocate an array of `frame::Info`
     /// and initialize it with the given memory map.
     #[must_use]
-    pub fn new(mmap: &[boot::mmap::Entry]) -> Self {
+    pub fn new(info: &boot::Info) -> Self {
+        let mmap = &info.mmap;
         let last_frame = mmap
             .iter()
             .filter(|entry| entry.kind.regular_memory())
@@ -59,8 +60,8 @@ impl State {
         let mut boot = 0;
         let mut free = 0;
 
-        /// Initialize the frame info array with the given memory map and
-        /// update the statistics about the memory usage of the system.
+        // Initialize the frame info array with the given memory map and
+        // update the statistics about the memory usage of the system.
         for entry in mmap {
             let start = Self::frame_info_index(entry.start);
             let end = Self::frame_info_index(entry.end());
@@ -112,6 +113,9 @@ impl State {
             kernel += 1;
         }
 
+        poisoned -= info.boot_allocated / usize::from(PAGE_SIZE);
+        kernel += info.boot_allocated / usize::from(PAGE_SIZE);
+
         log::info!(
             "Physical: {} KiB poisoned, {} KiB reserved, {} KiB kernel, {} KiB bootloader, {} KiB free",
             (poisoned * usize::from(PAGE_SIZE)) / 1024,
@@ -153,5 +157,5 @@ impl State {
 /// and during the initialization of the kernel.
 #[init]
 pub unsafe fn setup(info: &boot::Info) {
-    *STATE.lock() = State::new(&info.mmap);
+    *STATE.lock() = State::new(info);
 }

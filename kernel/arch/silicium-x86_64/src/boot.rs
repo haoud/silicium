@@ -1,3 +1,5 @@
+use core::sync::atomic::{AtomicUsize, Ordering};
+
 use addr::{Frame, Physical, Virtual};
 use config::PAGE_SIZE;
 use macros::init;
@@ -6,6 +8,9 @@ use spin::Spinlock;
 /// The request that will order the Limine bootloader to provide a memory map.
 static MMAP_REQUEST: Spinlock<Option<limine::request::MemoryMapRequest>> =
     Spinlock::new(Some(limine::request::MemoryMapRequest::new()));
+
+/// The total amount of memory allocated by the boot allocator.
+static ALLOCATED: AtomicUsize = AtomicUsize::new(0);
 
 /// Initializes the kernel boot memory allocator by requesting a memory map from
 /// Limine.
@@ -61,6 +66,12 @@ pub fn disable_allocator() -> limine::request::MemoryMapRequest {
         });
 
     request
+}
+
+/// Returns the total amount of memory allocated by the boot allocator.
+#[must_use]
+pub fn allocated_size() -> usize {
+    ALLOCATED.load(Ordering::Relaxed)
 }
 
 /// Allocates a memory region of the given size during the kernel initialization,
@@ -235,5 +246,6 @@ pub unsafe fn allocate_align_physical(size: usize, align: usize) -> Physical {
     region.length -= (size + offset) as u64;
     region.base += (size + offset) as u64;
 
+    ALLOCATED.fetch_add(size + offset, Ordering::Relaxed);
     Physical::new_unchecked(address + offset)
 }
