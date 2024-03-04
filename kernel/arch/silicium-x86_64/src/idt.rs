@@ -1,8 +1,4 @@
-use crate::{
-    apic,
-    cpu::{self, InterruptFrame},
-    opcode,
-};
+use crate::{apic, cpu::InterruptFrame, opcode};
 use macros::init;
 
 core::arch::global_asm!(include_str!("asm/interrupt.asm"));
