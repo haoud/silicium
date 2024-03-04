@@ -63,7 +63,7 @@ pub unsafe fn setup() {
 /// the IDT handler is misconfigured. The caller must ensure that enabling
 /// the IRQ is safe and will not cause undefined behavior.
 pub unsafe fn enable_irq(vector: u8) {
-    if !own_irq(vector) {
+    if !is_irq(vector) {
         log::warn!("IOAPIC: Trying to enable IRQ {vector} not owned by the IOAPIC");
         return;
     }
@@ -83,7 +83,7 @@ pub unsafe fn enable_irq(vector: u8) {
 /// must ensure that disabling the IRQ is safe and will not cause undefined
 /// behavior.
 pub unsafe fn disable_irq(vector: u8) {
-    if !own_irq(vector) {
+    if !is_irq(vector) {
         log::warn!("IOAPIC: Trying to disable IRQ {vector} not owned by the IOAPIC");
         return;
     }
@@ -103,11 +103,10 @@ pub fn entry_count() -> u8 {
     unsafe { IRQ_COUNT }
 }
 
-/// Check if an IRQ is owned by the IOAPIC, i.e. if it is in the range of
-/// IOAPIC IRQs. If the IOAPIC is not initialized, this will always return false.
+/// Check if an interrupt is an IRQ from the IOAPIC
 #[must_use]
-pub fn own_irq(irq: u8) -> bool {
-    entry_count() != 0 && irq >= IOAPIC_IRQ_BASE && irq < IOAPIC_IRQ_BASE + entry_count()
+pub fn is_irq(vector: u8) -> bool {
+    entry_count() != 0 && vector >= IOAPIC_IRQ_BASE && vector < IOAPIC_IRQ_BASE + entry_count()
 }
 
 /// Write a value to a register in the IOAPIC
