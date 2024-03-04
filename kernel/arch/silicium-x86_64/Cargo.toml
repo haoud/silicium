@@ -4,16 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 arch-macros = { path = "macros", package = "macros" }
 bitfield = { workspace = true }
 bitflags = { workspace = true }
 tailcall = { workspace = true }
+limine = { workspace = true }
 macros = { workspace = true }
 config = { workspace = true }
+addr = { workspace = true }
+boot = { workspace = true }
 spin = { workspace = true }
 log = { workspace = true }
-limine = "0.2.0"
 
 [lints]
 workspace = true
