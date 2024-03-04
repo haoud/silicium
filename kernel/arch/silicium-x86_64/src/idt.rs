@@ -1,4 +1,8 @@
-use crate::{apic, cpu::InterruptFrame, opcode};
+use crate::{
+    apic,
+    cpu::{self, InterruptFrame},
+    opcode,
+};
 use macros::init;
 
 core::arch::global_asm!(include_str!("asm/interrupt.asm"));
@@ -155,6 +159,12 @@ pub unsafe fn load() {
 #[no_mangle]
 #[allow(clippy::missing_panics_doc)]
 pub extern "C" fn irq_handler(frame: &mut InterruptFrame) {
+    match frame.irq {
+        14 => {
+            panic!("Page fault at address {:#x}", cpu::cr2::read());
+        }
+        _ => (),
+    }
     // If the interrupt is raised by the I/O APIC, we must send
     // an EOI to the APIC, otherwise no more interrupts will be
     // received from the local APIC.

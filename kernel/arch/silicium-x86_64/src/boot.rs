@@ -1,39 +1,66 @@
 use addr::{Frame, Physical, Virtual};
-use core::sync::atomic::{AtomicBool, Ordering};
+use config::PAGE_SIZE;
 use macros::init;
 use spin::Spinlock;
 
 /// The request that will order the Limine bootloader to provide a memory map.
-static MMAP_REQUEST: Spinlock<limine::request::MemoryMapRequest> =
-    Spinlock::new(limine::request::MemoryMapRequest::new());
-
-/// A boolean that indicates whether the kernel boot memory allocator can
-/// be used or not. The boot allocator can only be used after its initialization
-/// and before the memory manager is initialized. See [`allocate`] for more
-/// information.
-/// By default, the boot allocator is enabled because it does not require any
-/// initialization. The setup function simply checks if the memory map has been
-/// provided by Limine.
-static CAN_ALLOCATE: AtomicBool = AtomicBool::new(true);
+static MMAP_REQUEST: Spinlock<Option<limine::request::MemoryMapRequest>> =
+    Spinlock::new(Some(limine::request::MemoryMapRequest::new()));
 
 /// Initializes the kernel boot memory allocator by requesting a memory map from
 /// Limine.
+///
+/// TODO: Keep track of which memory regions are allocated to correctly implement
+/// memory usage statistics.
 ///
 /// # Panics
 /// If Limine fails to provide a memory map, this function will panic.
 #[inline]
 pub fn setup() {
     assert!(
-        MMAP_REQUEST.lock().get_response().is_some(),
+        MMAP_REQUEST
+            .lock()
+            .as_ref()
+            .unwrap()
+            .get_response()
+            .is_some(),
         "Failed to get memory map from Limine"
     );
 }
 
-/// Disable the kernel boot memory allocator. This function should be called
-/// before the memory manager is initialized. Calling the boot allocator after
-/// it has been disabled will result in a panic.
-pub fn disable_allocator() {
-    CAN_ALLOCATE.store(false, Ordering::Relaxed);
+/// Disable the kernel boot memory allocator and return the memory map request. The memory map
+/// is sanitized to ensure that all usable memory regions base address are aligned to the page size.
+///
+/// This function should be called before the memory manager is initialized. Calling the
+/// boot allocator after it has been disabled will result in a panic.
+///
+/// # Panics
+/// This function will panic if the boot allocator has already been disabled.
+pub fn disable_allocator() -> limine::request::MemoryMapRequest {
+    let mut request = MMAP_REQUEST
+        .lock()
+        .take()
+        .expect("Boot allocator has been disabled");
+
+    let mmap = request
+        .get_response_mut()
+        .expect("Failed to get memory map from Limine");
+
+    // Align all usable memory regions to the page size
+    mmap.entries_mut()
+        .iter_mut()
+        .filter(|entry| entry.entry_type == limine::memory_map::EntryType::USABLE)
+        .filter(|entry| entry.base & !u64::from(PAGE_SIZE) != 0)
+        .for_each(|entry| {
+            let offset = u64::from(PAGE_SIZE) - (entry.base & (u64::from(PAGE_SIZE) - 1));
+            let length = entry.length;
+            let start = entry.base;
+
+            entry.base = start + offset;
+            entry.length = length - offset;
+        });
+
+    request
 }
 
 /// Allocates a memory region of the given size during the kernel initialization,
@@ -176,6 +203,8 @@ pub unsafe fn allocate_zeroed_frame() -> Frame {
 pub unsafe fn allocate_align_physical(size: usize, align: usize) -> Physical {
     let mut mmap_request = MMAP_REQUEST.lock();
     let response = mmap_request
+        .as_mut()
+        .expect("Boot allocator has been disabled")
         .get_response_mut()
         .expect("Failed to get memory map from Limine");
 
@@ -183,12 +212,6 @@ pub unsafe fn allocate_align_physical(size: usize, align: usize) -> Physical {
     assert!(
         align.is_power_of_two(),
         "The alignment must be a power of two"
-    );
-
-    // Check if the boot allocator has been disabled
-    assert!(
-        CAN_ALLOCATE.load(Ordering::Relaxed),
-        "Boot allocator has been disabled"
     );
 
     // Search for a free region in the memory map
