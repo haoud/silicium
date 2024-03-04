@@ -79,3 +79,9 @@ impl Info {
         }
     }
 }
+
+impl Default for Info {
+    fn default() -> Self {
+        Self::new()
+    }
+}

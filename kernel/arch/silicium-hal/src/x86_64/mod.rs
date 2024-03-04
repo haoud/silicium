@@ -16,6 +16,7 @@ pub use macros::*;
 /// This function will panic if the boot process fails
 #[inline]
 #[must_use]
+#[allow(clippy::cast_possible_truncation)]
 pub fn setup() -> boot::Info {
     // Initialize logging if this feature is enabled
     #[cfg(feature = "logging")]
