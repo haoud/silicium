@@ -1,5 +1,4 @@
 #![cfg_attr(not(test), no_std)]
-#![cfg_attr(feature = "panic_info", feature(panic_info_message))]
 #![feature(negative_impls)]
 #![feature(const_pin)]
 
@@ -12,7 +11,6 @@ pub mod gdt;
 pub mod idt;
 pub mod io;
 pub mod irq;
-pub mod lang;
 pub mod msr;
 pub mod opcode;
 pub mod paging;
@@ -58,7 +56,6 @@ pub unsafe fn setup() {
 
     // Setup the SIMD support
     simd::setup();
-    cpu::cpuid::setup();
 
     // Setup the CPU identification
     cpu::cpuid::setup();

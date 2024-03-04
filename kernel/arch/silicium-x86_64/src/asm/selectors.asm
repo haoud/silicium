@@ -14,11 +14,13 @@ reload_selectors:
   # A little trick to load the kernel code segment. We must use the retqf
   # instruction that work almost like a ret instruction, but it also pops
   # the CS register from the stack.
-  # So we push the desired value of CS on the stack and the address of the
-  # call instruction, and then we use the retfq instruction to pop the
-  # desired value of CS into the CS register and return to the caller
+  # So we pop the return address from the stack, and then we push the desired 
+  # value of CS on the stack and we push the return address back on the stack
+  # before calling retfq. It will return to the address we pushed on the stack
+  # and load the CS register with the desired value.
+  pop rax
   push 0x08
-  push [rsp + 8]
+  push rax
   retfq
 
 .section .text

@@ -157,6 +157,7 @@ impl From<Frame> for Virtual {
         // of the virtual address space, and the physical address is always valid and
         // never greater than the maximum physical address. So the resulting virtual is
         // always in the kernel address space.
+        //log::debug!("frame: {:#x}", usize::from(frame.0));
         unsafe { Self::new_unchecked(frame.0 .0 + HHDM_START.0) }
     }
 }

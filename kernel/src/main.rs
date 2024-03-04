@@ -1,7 +1,10 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
+#![feature(const_mut_refs)]
 
 use macros::init;
+
+pub mod mm;
 
 /// The entry point for the kernel. This function call the architecture specific setup
 /// function, print a message to the console and then halts the CPU.
@@ -14,7 +17,10 @@ use macros::init;
 #[init]
 pub unsafe extern "C" fn _start() -> ! {
     // Call the architecture specific setup function
-    arch::setup();
+    let info = arch::setup();
+
+    // Setup the memory management system
+    mm::setup(&info);
 
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");

@@ -1,0 +1,12 @@
+[package]
+name = "silicium-boot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+arrayvec = { workspace = true }
+limine = { workspace = true }
+addr = { workspace = true }
+
+[lints]
+workspace = true

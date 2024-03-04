@@ -3,6 +3,12 @@
 version = 3
 
 [[package]]
+name = "arrayvec"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96d30a06541fbafbc7f82ed10c06164cfbd2c401138f6addd8404629c4b16711"
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -24,7 +30,11 @@ checksum = "ed570934406eb16438a4e976b1b4500774099c13b8cb96eec99f620f05090ddf"
 name = "kernel"
 version = "0.1.0"
 dependencies = [
+ "bitflags",
  "log",
+ "silicium-addr",
+ "silicium-boot",
+ "silicium-config",
  "silicium-hal",
  "silicium-macros",
  "silicium-spin",
@@ -51,9 +61,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.20"
+version = "0.4.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
+checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
 
 [[package]]
 name = "macros"
@@ -61,7 +71,7 @@ version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.50",
+ "syn 2.0.52",
 ]
 
 [[package]]
@@ -91,6 +101,18 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "silicium-addr"
 version = "0.1.0"
+dependencies = [
+ "log",
+]
+
+[[package]]
+name = "silicium-boot"
+version = "0.1.0"
+dependencies = [
+ "arrayvec",
+ "limine",
+ "silicium-addr",
+]
 
 [[package]]
 name = "silicium-config"
@@ -103,8 +125,12 @@ dependencies = [
 name = "silicium-hal"
 version = "0.1.0"
 dependencies = [
+ "arrayvec",
+ "limine",
  "log",
  "macros",
+ "silicium-addr",
+ "silicium-boot",
  "silicium-spin",
  "silicium-x86_64",
 ]
@@ -115,7 +141,7 @@ version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.50",
+ "syn 2.0.52",
 ]
 
 [[package]]
@@ -135,6 +161,7 @@ dependencies = [
  "log",
  "macros",
  "silicium-addr",
+ "silicium-boot",
  "silicium-config",
  "silicium-macros",
  "silicium-spin",
@@ -169,9 +196,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.50"
+version = "2.0.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74f1bdc9872430ce9b75da68329d1c1746faf50ffac5f19e02b71e37ff881ffb"
+checksum = "b699d15b36d1f02c3e7c69f8ffef53de37aefae075d8488d4ba1a7788d574a07"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -13,3 +13,7 @@ use static_assertions::const_assert;
 /// - 1000 Hz: For high-end desktops and laptops or for a more responsive system.
 pub const TIMER_HZ: u16 = 1000;
 const_assert!(TIMER_HZ == 10 || TIMER_HZ == 100 || TIMER_HZ == 250 || TIMER_HZ == 1000);
+
+/// The size of a page in bytes. The value is always 4096.
+pub const PAGE_SIZE: u16 = 4096;
+const_assert!(PAGE_SIZE == 4096);

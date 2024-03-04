@@ -7,7 +7,6 @@ edition = "2021"
 members = [
   "arch/silicium-hal",
   "arch/silicium-x86_64",
-  "arch/silicium-x86_64/crates/*",
   "crates/*"
 ]
 
@@ -21,16 +20,24 @@ all = "deny"
 [workspace.dependencies]
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
+boot = { path = "crates/silicium-boot", package = "silicium-boot" }
+addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
+arrayvec = { version = "0.7.4", default-features = false }
 static_assertions = "1.1.0"
 bitfield = "0.14.0"
 bitflags = "2.4.2"
 tailcall = "1.0.1"
+limine = "0.2"
 log = "0.4.20"
 
 [dependencies]
 arch = { path = "arch/silicium-hal", package = "silicium-hal" }
+bitflags = { workspace = true }
 macros = { workspace = true }
+config = { workspace = true }
+addr = { workspace = true }
+boot = { workspace = true }
 spin = { workspace = true }
 log = { workspace = true }
 
@@ -38,7 +45,7 @@ log = { workspace = true }
 default = ["panic_info", "logging"]
 
 # Enable panic messages at the cost of increased binary size, but useful for debugging
-panic_info = ["logging"]
+panic_info = ["arch/panic_info"]
 
 # Enable logging at the cost of reduced performance and increased binary size
 logging = ["arch/logging"]
