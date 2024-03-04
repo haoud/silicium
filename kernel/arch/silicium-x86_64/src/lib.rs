@@ -7,6 +7,7 @@ use macros::init;
 pub mod apic;
 pub mod boot;
 pub mod cpu;
+pub mod exception;
 pub mod gdt;
 pub mod idt;
 pub mod io;
