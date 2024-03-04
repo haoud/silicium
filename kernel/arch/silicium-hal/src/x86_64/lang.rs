@@ -1,10 +1,10 @@
-use crate::{apic, cpu, irq, smp};
+use arch::{apic, cpu, irq, smp};
 
 #[cfg(feature = "panic_info")]
 #[cfg(not(test))]
 #[panic_handler]
 pub fn panic(info: &core::panic::PanicInfo) -> ! {
-    use crate::apic::local::{IpiDestination, IpiPriority};
+    use arch::apic::local::{IpiDestination, IpiPriority};
 
     irq::disable();
     if smp::ap_booted() {
@@ -34,7 +34,7 @@ pub fn panic(info: &core::panic::PanicInfo) -> ! {
 #[cfg(not(test))]
 #[panic_handler]
 pub fn panic(_: &core::panic::PanicInfo) -> ! {
-    use crate::apic::local::{IpiDestination, IpiPriority};
+    use arch::apic::local::{IpiDestination, IpiPriority};
 
     irq::disable();
     if smp::ap_booted() {
