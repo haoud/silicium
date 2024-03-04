@@ -122,6 +122,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "silicium-config"
+version = "0.1.0"
+dependencies = [
+ "static_assertions",
+]
+
+[[package]]
 name = "silicium-hal"
 version = "0.1.0"
 dependencies = [
