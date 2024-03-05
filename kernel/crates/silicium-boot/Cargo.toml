@@ -5,8 +5,11 @@ edition = "2021"
 
 [dependencies]
 arrayvec = { workspace = true }
+macros = { workspace = true }
+config = { workspace = true }
 limine = { workspace = true }
 addr = { workspace = true }
+spin = { workspace = true }
 
 [lints]
 workspace = true

@@ -5,7 +5,6 @@
 use macros::init;
 
 pub mod apic;
-pub mod boot;
 pub mod cpu;
 pub mod exception;
 pub mod gdt;
@@ -22,13 +21,6 @@ pub mod serial;
 pub mod simd;
 pub mod smp;
 pub mod tss;
-
-/// Request for the `HHDM` (High Half Direct Mapping) feature. This will order Limine
-/// to map all physical memory to the high half of the virtual address space, at a fixed
-/// offset of `0xFFFF_8000_0000_0000`. However, `Reserved` and `Bad Memory` regions will
-/// not be mapped into the HHDM region.
-#[used]
-static HHDM_REQUEST: limine::request::HhdmRequest = limine::request::HhdmRequest::new();
 
 /// Initializes the `x86_64` architecture.
 ///

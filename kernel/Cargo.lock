@@ -112,6 +112,9 @@ dependencies = [
  "arrayvec",
  "limine",
  "silicium-addr",
+ "silicium-config",
+ "silicium-macros",
+ "silicium-spin",
 ]
 
 [[package]]

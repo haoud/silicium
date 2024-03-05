@@ -1,6 +1,7 @@
 #![cfg_attr(not(test), no_std)]
 pub use arrayvec::ArrayVec;
 
+pub mod allocator;
 pub mod mmap;
 
 pub struct Info {
