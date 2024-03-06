@@ -1,8 +1,9 @@
+pub mod irq;
 pub mod lang;
 pub mod log;
-
-pub use arch::irq;
-pub use arch::percpu;
+pub mod paging;
+pub mod percpu;
+pub mod physical;
 
 /// Request for the `HHDM` (High Half Direct Mapping) feature. This will order Limine
 /// to map all physical memory to the high half of the virtual address space, at a fixed

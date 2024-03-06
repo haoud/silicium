@@ -1,5 +1,4 @@
-use super::Physical;
-use crate::Frame;
+use crate::{Frame, Physical};
 
 /// The start of the HHDM region. Since the kernel does not use the 5 level paging, the
 /// HHDM region starts at `0xFFFF_8000_0000_0000`. In theory, we should use the value

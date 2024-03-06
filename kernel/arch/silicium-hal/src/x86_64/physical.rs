@@ -1,5 +1,11 @@
 use addr::{Frame, Virtual};
 
+/// The start of the HHDM region. Since the kernel does not use the 5 level paging, the
+/// HHDM region starts at `0xFFFF_8000_0000_0000`. In theory, we should use the value
+/// given by Limine in the HHDM response but with the current implementation, the value
+/// is always `0xFFFF_8000_0000_0000`.
+const HHDM_START: Virtual = Virtual::new(0xFFFF_8000_0000_0000);
+
 /// A physical frame that can be accessed using a virtual address.
 ///
 /// This type is used to allow reading and writing to a physical frame.
@@ -13,10 +19,10 @@ use addr::{Frame, Virtual};
 /// map a physical frame to a virtual address and unmap it when it is
 /// no longer needed.
 #[derive(Default, Debug)]
-pub struct Mapped {}
+pub struct Mapped(Frame);
 
 impl Mapped {
-    /// Map a physical frame to a virtual address.
+    /// Map a physical frame to a virtual address
     ///
     /// # Safety
     /// The caller must ensure that the physical frame will remain valid
@@ -24,22 +30,18 @@ impl Mapped {
     /// that the frame is not already mapped to a virtual address, because it
     /// could result in mutiple mutable aliasing and undefined behavior.
     #[must_use]
-    pub unsafe fn new(_frame: Frame) -> Self {
-        unimplemented!()
+    pub unsafe fn new(frame: Frame) -> Self {
+        Mapped(frame)
     }
 
     /// Returns the base address of the virtual address where the physical frame
     /// is mapped.
     #[must_use]
     pub fn base(&self) -> Virtual {
-        unimplemented!()
-    }
-}
-
-/// Unmap the physical frame from the virtual address when the `Mapped` object
-/// is dropped.
-impl Drop for Mapped {
-    fn drop(&mut self) {
-        unimplemented!()
+        // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in the
+        // `x86_64` architecture, the physical address is at most 52 bits. Therefore, the
+        // addition of the physical address to the HHDM_START will always result in a valid
+        // canonical address.
+        unsafe { Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(self.0)) }
     }
 }

@@ -9,6 +9,7 @@ arch = { path = "../silicium-x86_64", package = "silicium-x86_64" }
 
 [dependencies]
 arrayvec = { workspace = true }
+bitflags = { workspace = true }
 limine = { workspace = true }
 addr = { workspace = true }
 boot = { workspace = true }
@@ -22,4 +23,3 @@ logging = []
 
 [lints]
 workspace = true
-
