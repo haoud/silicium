@@ -1,11 +1,10 @@
 use super::{
     page,
     table::{self, Table},
-    translate,
+    translate, KERNEL_PML4,
 };
 use crate::{cpu, physical};
 use addr::{Frame, Virtual};
-use core::pin::Pin;
 use macros::init;
 use tailcall::tailcall;
 
@@ -19,7 +18,7 @@ use tailcall::tailcall;
 #[derive(Debug)]
 pub struct Pml4 {
     /// The page map level 4 table
-    table: Pin<Table>,
+    table: Table,
 
     /// The physical address of the page table. This is used to load the page table
     /// into the CR3 register. If this is `None`, the physical address of the page
@@ -28,6 +27,22 @@ pub struct Pml4 {
 }
 
 impl Pml4 {
+    /// Create a new root page table, with an empty user space and with the global
+    /// kernel space. The kernel space is copied from the kernel PML4 table.
+    /// Unlike the [`empty`] function, the returned page table is valid and can be
+    /// loaded into the CR3 register without triple faulting.
+    #[must_use]
+    pub fn new() -> Self {
+        // SAFETY: This is safe because the kernel PML4 is never modified
+        // after the kernel initialization. We also doesn't create multiple
+        // mutable references to the kernel PML4.
+        let kernel_space = unsafe { KERNEL_PML4.kernel_space() };
+
+        let mut pml4 = Self::empty();
+        pml4.kernel_space_mut().copy_from_slice(kernel_space);
+        pml4
+    }
+
     /// Create a new empty root page table, with all entries set to empty. Loading
     /// this page table into the CR3 register will result in a page fault that will
     /// lead to a double and triple fault because there is no translation for any
@@ -35,7 +50,7 @@ impl Pml4 {
     #[must_use]
     pub const fn empty() -> Self {
         Self {
-            table: Pin::new(Table::empty()),
+            table: Table::empty(),
             frame: None,
         }
     }
@@ -212,6 +227,12 @@ impl Pml4 {
     #[must_use]
     pub fn user_space(&self) -> &[page::Entry] {
         &self.table[0..256]
+    }
+}
+
+impl Default for Pml4 {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

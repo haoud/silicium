@@ -16,7 +16,7 @@ impl PageTable {
     /// further initialization.
     #[must_use]
     pub fn new() -> Self {
-        unimplemented!()
+        Self(Pml4::new())
     }
 
     /// Load the current page table into the CPU. This function is unsafe
@@ -32,7 +32,7 @@ impl PageTable {
     /// the CPU, so the caller must ensure that the table will not be deallocated
     /// while still in use.
     pub unsafe fn load_current(&mut self) {
-        unimplemented!()
+        self.0.set_current();
     }
 }
 

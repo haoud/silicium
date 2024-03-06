@@ -42,10 +42,6 @@ impl Table {
     }
 }
 
-/// The page table is not `Unpin` because it when it is loaded into the CR3
-/// register, it is not allowed to move in memory.
-impl !Unpin for Table {}
-
 impl Deref for Table {
     type Target = [page::Entry; Table::COUNT];
     fn deref(&self) -> &Self::Target {
