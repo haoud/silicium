@@ -1,5 +1,5 @@
 use crate::mmap;
-use addr::{Frame, Physical, Virtual};
+use addr::{Frame, Physical};
 use arrayvec::ArrayVec;
 use config::PAGE_SIZE;
 use core::sync::atomic::{AtomicUsize, Ordering};
@@ -54,62 +54,6 @@ pub fn allocated_size() -> usize {
     ALLOCATED.load(Ordering::Relaxed)
 }
 
-/// Allocates a memory region of the given size during the kernel initialization,
-/// when there is no memory manager available. However, the memory allocated by
-/// this function cannot be freed due to the simplicity of this allocator. This
-/// should not be a problem since the memory allocated during the boot process is
-/// often used during the entire lifetime of the kernel.
-///
-/// The memory allocated is guaranteed to be aligned at least to the requested
-/// alignment, which must be a power of two.
-///
-/// # Safety
-/// This function is unsafe because it is put in the .init section and will be
-/// discarded from memory after the kernel has been initialized. This means that
-/// this function should only be used during the kernel initialization process.
-/// Failure to do so will result in undefined behavior.
-///
-/// # Panics
-/// This function will panic if:
-/// - The bootloader has failed to provide a memory map.
-/// - The alignement is not a power of two.
-/// - The boot allocator has been disabled, meaning that the memory manager has
-/// begun its initialization and the boot memory allocator is no longer safe to
-/// use. This should never happens if the kernel is correctly implemented.
-/// - There is not enough memory to allocate the requested size.
-#[init]
-#[must_use]
-pub unsafe fn allocate_align(size: usize, align: usize) -> *mut u8 {
-    Virtual::from(allocate_align_physical(size, align)).as_mut_ptr()
-}
-
-/// Allocates a memory region of the given size during the kernel initialization,
-/// when there is no memory manager available. However, the memory allocated by
-/// this function cannot be freed due to the simplicity of this allocator. This
-/// should not be a problem since the memory allocated during the boot process is
-/// often used during the entire lifetime of the kernel.
-///
-/// The memory allocated is guaranteed to be aligned at least to 16 bytes.
-///
-/// # Safety
-/// This function is unsafe because it is put in the .init section and will be
-/// discarded from memory after the kernel has been initialized. This means that
-/// this function should only be used during the kernel initialization process.
-/// Failure to do so will result in undefined behavior.
-///
-/// # Panics
-/// This function will panic if:
-/// - The bootloader has failed to provide a memory map.
-/// - The boot allocator has been disabled, meaning that the memory manager has
-/// begun its initialization and the boot memory allocator is no longer safe to
-/// use. This should never happens if the kernel is correctly implemented.
-/// - There is not enough memory to allocate the requested size.
-#[init]
-#[must_use]
-pub unsafe fn allocate(size: usize) -> *mut u8 {
-    allocate_align(size, 16)
-}
-
 /// Allocates a physical frame during the kernel initialization, when there is
 /// no memory manager available. However, the memory allocated by this function
 /// cannot be freed due to the simplicity of this allocator. This should not be
@@ -135,35 +79,6 @@ pub unsafe fn allocate(size: usize) -> *mut u8 {
 #[must_use]
 pub unsafe fn allocate_frame() -> Frame {
     Frame::from_ptr_unchecked(allocate_align_physical(4096, 4096).as_mut_ptr::<u8>())
-}
-
-/// Allocates a zeroed physical frame during the kernel initialization, when there is
-/// no memory manager available. However, the memory allocated by this function
-/// cannot be freed due to the simplicity of this allocator. This should not be
-/// a problem since the memory allocated during the boot process is often used
-/// during the entire lifetime of the kernel.
-///
-/// The memory allocated is guaranteed to be page aligned
-///
-/// # Safety
-/// This function is unsafe because it is put in the .init section and will be
-/// discarded from memory after the kernel has been initialized. This means that
-/// this function should only be used during the kernel initialization process.
-/// Failure to do so will result in undefined behavior.
-///
-/// # Panics
-/// This function will panic if:
-/// - The bootloader has failed to provide a memory map.
-/// - The boot allocator has been disabled, meaning that the memory manager has
-/// begun its initialization and the boot memory allocator is no longer safe to
-/// use. This should never happens if the kernel is correctly implemented.
-/// - There is not enough memory to allocate the requested size.
-#[init]
-#[must_use]
-pub unsafe fn allocate_zeroed_frame() -> Frame {
-    let frame = allocate_frame();
-    core::ptr::write_bytes(Virtual::from(frame).as_mut_ptr::<u8>(), 0, 4096);
-    frame
 }
 
 /// Allocates a memory region of the given size during the kernel initialization,

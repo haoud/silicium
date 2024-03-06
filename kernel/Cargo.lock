@@ -36,6 +36,7 @@ dependencies = [
  "silicium-arch",
  "silicium-boot",
  "silicium-config",
+ "silicium-hal",
  "silicium-macros",
  "silicium-spin",
  "talc",

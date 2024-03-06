@@ -5,6 +5,7 @@
 use macros::init;
 
 pub mod apic;
+pub mod bump;
 pub mod cpu;
 pub mod exception;
 pub mod gdt;
@@ -15,6 +16,7 @@ pub mod msr;
 pub mod opcode;
 pub mod paging;
 pub mod percpu;
+pub mod physical;
 pub mod pic;
 pub mod pit;
 pub mod serial;

@@ -1,5 +1,6 @@
 use super::page;
-use addr::{Frame, Virtual};
+use crate::physical;
+use addr::Frame;
 use core::ops::{Deref, DerefMut};
 
 /// A page table, which is a collection of page table entries. A page table
@@ -23,15 +24,17 @@ impl Table {
     /// Returns a mutable pointer to the page table from the given frame.
     #[must_use]
     pub fn from_frame_mut(frame: Frame) -> *mut Self {
-        let virt = Virtual::from(frame);
-        virt.as_mut_ptr::<Self>()
+        // SAFETY: The mapping to the frame will remain valid for the lifetime
+        // of the kernel
+        unsafe { physical::Mapped::new(frame).base().as_mut_ptr::<Self>() }
     }
 
     /// Returns a pointer to the page table from the given frame.
     #[must_use]
     pub fn from_frame(frame: Frame) -> *const Self {
-        let virt = Virtual::from(frame);
-        virt.as_ptr::<Self>()
+        // SAFETY: The mapping to the frame will remain valid for the lifetime
+        // of the kernel
+        unsafe { physical::Mapped::new(frame).base().as_ptr::<Self>() }
     }
 }
 

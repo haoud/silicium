@@ -3,7 +3,7 @@ use super::{
     table::{self, Table},
     translate,
 };
-use crate::cpu;
+use crate::{cpu, physical};
 use addr::{Frame, Virtual};
 use core::pin::Pin;
 use macros::init;
@@ -143,15 +143,25 @@ impl Pml4 {
     /// Returns a mutable pointer to the current page table.
     #[must_use]
     pub fn get_current_mut() -> *mut Self {
-        let current = Virtual::from(cpu::cr3::read());
-        current.as_mut_ptr::<Self>()
+        // SAFETY: This is safe because we can always access the current page
+        // table using the HHDM region.
+        unsafe {
+            physical::Mapped::new(cpu::cr3::read())
+                .base()
+                .as_mut_ptr::<Self>()
+        }
     }
 
     /// Returns a pointer to the current page table.
     #[must_use]
     pub fn get_current() -> *const Self {
-        let current = Virtual::from(cpu::cr3::read());
-        current.as_ptr::<Self>()
+        // SAFETY: This is safe because we can always access the current page
+        // table using the HHDM region.
+        unsafe {
+            physical::Mapped::new(cpu::cr3::read())
+                .base()
+                .as_ptr::<Self>()
+        }
     }
 
     /// Returns a mutable slice of the page table entries. The slice contains all
@@ -244,8 +254,12 @@ pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level
             let dst_frame = boot::allocator::allocate_frame();
 
             // Copy the source table into the destination table
-            let dst = Virtual::from(dst_frame).as_mut_ptr::<page::Entry>();
-            let src = Virtual::from(src_frame).as_ptr::<page::Entry>();
+            let dst = physical::Mapped::new(dst_frame)
+                .base()
+                .as_mut_ptr::<page::Entry>();
+            let src = physical::Mapped::new(src_frame)
+                .base()
+                .as_ptr::<page::Entry>();
             core::ptr::copy_nonoverlapping(src, dst, Table::COUNT);
 
             // Update the destination entry with the new frame address

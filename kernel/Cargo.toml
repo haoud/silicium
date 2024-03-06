@@ -43,6 +43,7 @@ addr = { workspace = true }
 boot = { workspace = true }
 spin = { workspace = true }
 talc = { workspace = true }
+hal = { workspace = true }
 log = { workspace = true }
 
 [features]

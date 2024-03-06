@@ -1,4 +1,4 @@
-use addr::{Physical, Virtual};
+use addr::{Frame, Physical};
 use config::PAGE_SIZE;
 use macros::init;
 use spin::Spinlock;
@@ -46,13 +46,14 @@ impl State {
         let array_location = mmap
             .iter()
             .filter(|entry| entry.kind == boot::mmap::Kind::Usable)
-            .find(|entry| entry.length >= array_size)
+            .find(|entry| entry.length >= array_size + 4096)
             .expect("No suitable memory region found for frame infos");
 
         // Initialize the frame info array with default values and create it from the
         // computed location and size
         let array = unsafe {
-            let ptr = Virtual::from(array_location.start).as_mut_ptr::<frame::Info>();
+            let base = arch::physical::Mapped::new(Frame::new(usize::from(array_location.start)));
+            let ptr = base.base().as_mut_ptr::<frame::Info>();
             let len = array_size / core::mem::size_of::<frame::Info>();
 
             (0..len).for_each(|i| ptr.add(i).write(frame::Info::new()));
