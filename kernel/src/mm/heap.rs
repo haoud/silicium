@@ -3,6 +3,12 @@ use addr::Virtual;
 use config::PAGE_SHIFT;
 use spin::Spinlock;
 
+/// The global heap allocator. This allocator is used to allocate memory on the
+/// kernel heap. However, the kernel heap should only used to allocate relatively
+/// small chunks of memory. Large allocations should be done using the virtual
+/// memory allocator (not yet implemented).
+///
+/// TODO: Maybe integrate the virtual memory allocator with the heap allocator ?
 #[cfg(not(test))]
 #[global_allocator]
 static ALLOCATOR: talc::Talck<Spinlock<()>, OomHandler> =
