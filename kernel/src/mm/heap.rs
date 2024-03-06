@@ -3,6 +3,7 @@ use addr::Virtual;
 use config::PAGE_SHIFT;
 use spin::Spinlock;
 
+#[cfg(not(test))]
 #[global_allocator]
 static ALLOCATOR: talc::Talck<Spinlock<()>, OomHandler> =
     talc::Talck::new(talc::Talc::new(OomHandler {}));
