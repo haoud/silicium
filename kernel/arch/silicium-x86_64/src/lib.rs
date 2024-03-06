@@ -20,6 +20,7 @@ pub mod pit;
 pub mod serial;
 pub mod simd;
 pub mod smp;
+pub mod tsc;
 pub mod tss;
 
 /// Initializes the `x86_64` architecture.
@@ -52,6 +53,9 @@ pub unsafe fn setup() {
 
     // Setup the CPU identification
     cpu::cpuid::setup();
+
+    // Setup the TSC
+    tsc::setup();
 
     // Remap the PIC and disable it
     pic::remap_and_disable();

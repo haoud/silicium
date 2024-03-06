@@ -228,3 +228,23 @@ pub unsafe fn xrstor(buffer: *const u8) {
         in("edx") u32::MAX
     );
 }
+
+/// Read the Time Stamp Counter (TSC) from the CPU. The TSC is a 64-bit register
+/// that counts the number of cycles since the CPU was last reset.
+#[inline]
+#[must_use]
+pub fn rdtsc() -> u64 {
+    let low: u32;
+    let high: u32;
+    // SAFETY: This is safe because the rdtsc instruction always exists on
+    // x86_64 and should not cause any side effects that could lead to memory
+    // unsafety or UB.
+    unsafe {
+        core::arch::asm!(
+            "rdtsc",
+            out("eax") low,
+            out("edx") high
+        );
+    }
+    u64::from(high) << 32 | u64::from(low)
+}

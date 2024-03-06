@@ -9,6 +9,7 @@
 pub struct Register(u32);
 
 impl Register {
+    pub const MISC_ENABLE: Self = Self(0x0000_01A0);
     pub const EFER: Self = Self(0xC000_0080);
     pub const STAR: Self = Self(0xC000_0081);
     pub const LSTAR: Self = Self(0xC000_0082);
@@ -54,4 +55,24 @@ pub unsafe fn read(msr: Register) -> u64 {
     );
 
     u64::from(high) << 32 | u64::from(low)
+}
+
+/// Clear the given bits in the given MSR.
+///
+/// # Safety
+/// This function is unsafe because writing to an MSR can cause unexpected side effects and
+/// potentially violate memory safety. It can also cause undefined behavior or memory
+/// unsafety if the MSR is not supported by the CPU.
+pub unsafe fn clear_bits(msr: Register, bits: u64) {
+    write(msr, read(msr) & !bits);
+}
+
+/// Set the given bits in the given MSR.
+///
+/// # Safety
+/// This function is unsafe because writing to an MSR can cause unexpected side effects and
+/// potentially violate memory safety. It can also cause undefined behavior or memory
+/// unsafety if the MSR is not supported by the CPU.
+pub unsafe fn set_bits(msr: Register, bits: u64) {
+    write(msr, read(msr) | bits);
 }

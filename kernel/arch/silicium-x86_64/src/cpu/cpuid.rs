@@ -198,6 +198,7 @@ pub unsafe fn setup() {
     let vendor_bytes = vendor();
     let vendor = core::str::from_utf8(&vendor_bytes).unwrap_or("Unknown");
 
+    log::trace!("CPUID: supported features are {:?}", supported_features());
     log::trace!("CPUID: highest supported leaf is 0x{:08X}", leaf_max());
     log::trace!("CPUID: highest supported extended leaf is 0x{:08X}",leaf_extended_max());
     log::trace!("CPUID: vendor string is `{}`", vendor);

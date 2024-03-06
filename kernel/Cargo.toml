@@ -40,7 +40,7 @@ talc = { workspace = true }
 log = { workspace = true }
 
 [features]
-default = []
+default = ["panic_info", "logging"]
 
 # Enable panic messages at the cost of increased binary size, but useful for debugging
 panic_info = ["arch/panic_info"]
