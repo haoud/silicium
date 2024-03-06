@@ -26,7 +26,11 @@ impl Table {
     pub fn from_frame_mut(frame: Frame) -> *mut Self {
         // SAFETY: The mapping to the frame will remain valid for the lifetime
         // of the kernel
-        unsafe { physical::Mapped::new(frame).base().as_mut_ptr::<Self>() }
+        unsafe {
+            physical::AccessWindow::new(frame)
+                .base()
+                .as_mut_ptr::<Self>()
+        }
     }
 
     /// Returns a pointer to the page table from the given frame.
@@ -34,7 +38,7 @@ impl Table {
     pub fn from_frame(frame: Frame) -> *const Self {
         // SAFETY: The mapping to the frame will remain valid for the lifetime
         // of the kernel
-        unsafe { physical::Mapped::new(frame).base().as_ptr::<Self>() }
+        unsafe { physical::AccessWindow::new(frame).base().as_ptr::<Self>() }
     }
 }
 

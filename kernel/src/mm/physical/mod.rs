@@ -47,12 +47,14 @@ impl State {
             .iter()
             .filter(|entry| entry.kind == boot::mmap::Kind::Usable)
             .find(|entry| entry.length >= array_size + 4096)
+            .map(|entry| Frame::new(usize::from(entry.start)))
             .expect("No suitable memory region found for frame infos");
 
         // Initialize the frame info array with default values and create it from the
         // computed location and size
         let array = unsafe {
-            let base = arch::physical::map_leak(Frame::new(usize::from(array_location.start)));
+            let start = Physical::from(array_location);
+            let base = arch::physical::AccessWindow::leak_range(start, array_size);
             let ptr = base.as_mut_ptr::<frame::Info>();
             let len = array_size / core::mem::size_of::<frame::Info>();
 
@@ -69,10 +71,11 @@ impl State {
         // Initialize the frame info array with the given memory map and
         // update the statistics about the memory usage of the system.
         for entry in mmap {
-            let start = Self::frame_info_index(entry.start);
-            let end = Self::frame_info_index(entry.end());
-
-            for frame in array.iter_mut().take(end).skip(start) {
+            for frame in array
+                .iter_mut()
+                .take(Self::frame_info_index(entry.end()))
+                .skip(Self::frame_info_index(entry.start))
+            {
                 frame.flags &= !frame::Flags::POISONED;
                 poisoned -= 1;
 
@@ -111,8 +114,8 @@ impl State {
 
         // Mark the frame used by the array as used by the kernel. This is done to prevent the frame
         // used by the info array from being used for allocation
-        let start = Self::frame_info_index(array_location.start);
         let count = (array_size / usize::from(PAGE_SIZE)) + 1;
+        let start = array_location.index();
         for frame in array.iter_mut().take(start).skip(start + count) {
             frame.flags |= frame::Flags::KERNEL;
             frame.count = 1;

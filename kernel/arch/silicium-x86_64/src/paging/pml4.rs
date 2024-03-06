@@ -146,7 +146,7 @@ impl Pml4 {
         // SAFETY: This is safe because we can always access the current page
         // table using the HHDM region.
         unsafe {
-            physical::Mapped::new(cpu::cr3::read())
+            physical::AccessWindow::new(cpu::cr3::read())
                 .base()
                 .as_mut_ptr::<Self>()
         }
@@ -158,7 +158,7 @@ impl Pml4 {
         // SAFETY: This is safe because we can always access the current page
         // table using the HHDM region.
         unsafe {
-            physical::Mapped::new(cpu::cr3::read())
+            physical::AccessWindow::new(cpu::cr3::read())
                 .base()
                 .as_ptr::<Self>()
         }
@@ -254,10 +254,10 @@ pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level
             let dst_frame = boot::allocator::allocate_frame();
 
             // Copy the source table into the destination table
-            let dst = physical::Mapped::new(dst_frame)
+            let dst = physical::AccessWindow::new(dst_frame)
                 .base()
                 .as_mut_ptr::<page::Entry>();
-            let src = physical::Mapped::new(src_frame)
+            let src = physical::AccessWindow::new(src_frame)
                 .base()
                 .as_ptr::<page::Entry>();
             core::ptr::copy_nonoverlapping(src, dst, Table::COUNT);

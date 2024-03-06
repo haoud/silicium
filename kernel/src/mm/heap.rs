@@ -46,7 +46,7 @@ impl talc::OomHandler for OomHandler {
 
         // Convert the physical address to a virtual address
         let start = unsafe {
-            arch::physical::Mapped::new(frames)
+            arch::physical::AccessWindow::new(frames)
                 .base()
                 .as_mut_ptr::<u8>()
         };

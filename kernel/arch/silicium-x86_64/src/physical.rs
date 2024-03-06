@@ -6,22 +6,14 @@ use addr::{Frame, Physical, Virtual};
 /// is always `0xFFFF_8000_0000_0000`.
 const HHDM_START: Virtual = Virtual::new(0xFFFF_8000_0000_0000);
 
-/// A physical frame that can be accessed using a virtual address.
-///
-/// This type is used to allow reading and writing to a physical frame.
-/// On some architectures that have a memory management unit (MMU) with
-/// enough virtual address space, all physical memory can be mapped to
-/// virtual memory. In this case, translating a physical address to a
-/// virtual address is a simple addition or subtraction.
-///
-/// On other architectures, all the physical memory cannot be mapped to
-/// virtual memory. In this case, the `Mapped` type will be used to
-/// map a physical frame to a virtual address and unmap it when it is
-/// no longer needed.
+/// A window that allows reading and writing to a physical frame.
+/// On this architecture, all physical memory can be mapped to virtual memory,
+/// and therefore, the `AccessWindow` type can simply be implemented with
+/// a simple addition of the physical address to the [`HHDM_START`] address.
 #[derive(Default, Debug)]
-pub struct Mapped(Physical);
+pub struct AccessWindow(Physical);
 
-impl Mapped {
+impl AccessWindow {
     /// Map a physical frame to a virtual address
     ///
     /// # Safety
@@ -31,7 +23,51 @@ impl Mapped {
     /// could result in mutiple mutable aliasing and undefined behavior.
     #[must_use]
     pub unsafe fn new(frame: Frame) -> Self {
-        Mapped(Physical::from(frame))
+        Self(Physical::from(frame))
+    }
+
+    /// Map a range of physical memory to a range of virtual memory.
+    ///
+    /// # Safety
+    /// The caller must ensure that the physical memory will remain valid
+    /// for the lifetime of the `Mapped` object. The caller must also ensure
+    /// that the memory is not already mapped to a virtual address, because it
+    /// could break Rust's aliasing rules and result in undefined behavior.
+    #[must_use]
+    pub unsafe fn range(start: Physical, _len: usize) -> Self {
+        Self(start)
+    }
+
+    /// Map a physical frame to a virtual address and leak the mapping by
+    /// returning the virtual address.
+    ///
+    /// However, the caller can still reclaim the frame by calling manually
+    /// calling [`crate::paging::unmap`] on the returned virtual address.
+    ///
+    /// # Safety
+    /// The caller must ensure that the physical frame will remain valid
+    /// while it is mapped to the virtual address. The caller must also ensure
+    /// that the frame is not already mapped to another virtual address, because
+    /// this could break the Rust aliasing rules and result in undefined behavior.
+    #[must_use]
+    pub unsafe fn leak(frame: Frame) -> Virtual {
+        Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(frame))
+    }
+
+    /// Map a range of physical memory to a range of virtual memory and leak the
+    /// mapping by returning the virtual address.
+    ///
+    /// However, the caller can still reclaim the memory by calling manually
+    /// calling [`crate::paging::unmap`] on the returned virtual address.
+    ///
+    /// # Safety
+    /// The caller must ensure that the physical memory will remain valid
+    /// while it is mapped to the virtual address. The caller must also ensure
+    /// that the memory is not already mapped to another virtual address, because
+    /// this could break the Rust aliasing rules and result in undefined behavior.
+    #[must_use]
+    pub unsafe fn leak_range(start: Physical, _len: usize) -> Virtual {
+        Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(start))
     }
 
     /// Returns the base address of the virtual address where the physical frame
@@ -44,40 +80,4 @@ impl Mapped {
         // canonical address.
         unsafe { Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(self.0)) }
     }
-}
-
-/// Map a physical frame to a virtual address and leak the mapping, that will
-/// not automatically be unmapped. However, the caller can still manually unmap
-/// the frame using the [`super::paging::unmap`] function.
-///
-/// # Safety
-/// The caller must ensure that the physical frame will remain valid for the
-/// lifetime of the mapped virtual address. The caller must also ensure that
-/// the frame is not already mapped to a virtual address, because it could
-/// result in mutiple mutable aliasing and undefined behavior.
-#[must_use]
-pub unsafe fn map_leak(frame: Frame) -> Virtual {
-    // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in the
-    // `x86_64` architecture, the physical address is at most 52 bits. Therefore, the
-    // addition of the physical address to the HHDM_START will always result in a valid
-    // canonical address.
-    Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(frame))
-}
-
-/// See [`map_leak`] for more information. Since we map the entire physical memory
-/// to a fixed virtual address, we can use this function to map get a virtual address
-/// for any physical address, and not only for page-aligned physical addresses.
-///
-/// # Safety
-/// The caller must ensure that the physical frame will remain valid for the
-/// lifetime of the mapped virtual address. The caller must also ensure that
-/// the frame is not already mapped to a virtual address, because it could
-/// result in mutiple mutable aliasing and undefined behavior.
-#[must_use]
-pub(crate) unsafe fn map_leak_physical(phys: Physical) -> Virtual {
-    // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in the
-    // `x86_64` architecture, the physical address is at most 52 bits. Therefore, the
-    // addition of the physical address to the HHDM_START will always result in a valid
-    // canonical address.
-    Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(phys))
 }
