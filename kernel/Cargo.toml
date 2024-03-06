@@ -20,6 +20,7 @@ boot = { path = "crates/silicium-boot", package = "silicium-boot" }
 addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
 arrayvec = { version = "0.7.4", default-features = false }
+talc = { version = "4.3.1", features = ["counters"] }
 static_assertions = "1.1.0"
 bitfield = "0.14.0"
 bitflags = "2.4.2"
@@ -35,10 +36,11 @@ config = { workspace = true }
 addr = { workspace = true }
 boot = { workspace = true }
 spin = { workspace = true }
+talc = { workspace = true }
 log = { workspace = true }
 
 [features]
-default = ["panic_info", "logging"]
+default = []
 
 # Enable panic messages at the cost of increased binary size, but useful for debugging
 panic_info = ["arch/panic_info"]

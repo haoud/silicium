@@ -1,5 +1,6 @@
 use macros::init;
 
+pub mod heap;
 pub mod physical;
 
 /// Setup the memory management system

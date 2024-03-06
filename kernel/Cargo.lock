@@ -38,6 +38,7 @@ dependencies = [
  "silicium-hal",
  "silicium-macros",
  "silicium-spin",
+ "talc",
 ]
 
 [[package]]
@@ -227,6 +228,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "talc"
+version = "4.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5244db9f91c0b033fa05c16e349ccdb0a3225198a5a71dbeacd36696e08d940b"
+dependencies = [
+ "lock_api",
 ]
 
 [[package]]
