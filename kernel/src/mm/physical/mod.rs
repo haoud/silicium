@@ -3,8 +3,6 @@ use config::PAGE_SIZE;
 use macros::init;
 use spin::Spinlock;
 
-use self::allocator::Flags;
-
 pub mod allocator;
 pub mod frame;
 
@@ -165,19 +163,4 @@ impl State {
 #[init]
 pub unsafe fn setup(info: &boot::Info) {
     *STATE.lock() = State::new(info);
-
-    // Test the frame allocator
-    let frames = ALLOCATOR
-        .lock()
-        .allocate_range(32, Flags::KERNEL)
-        .expect("Failed to allocate frames");
-
-    log::debug!("Allocated frames: {:?}", frames);
-
-    let frames = ALLOCATOR
-        .lock()
-        .allocate_range(32, Flags::KERNEL)
-        .expect("Failed to allocate frames");
-
-    log::debug!("Allocated frames: {:?}", frames);
 }

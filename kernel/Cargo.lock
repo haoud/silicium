@@ -103,6 +103,7 @@ name = "silicium-addr"
 version = "0.1.0"
 dependencies = [
  "log",
+ "silicium-config",
 ]
 
 [[package]]

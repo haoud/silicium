@@ -17,3 +17,8 @@ const_assert!(TIMER_HZ == 10 || TIMER_HZ == 100 || TIMER_HZ == 250 || TIMER_HZ =
 /// The size of a page in bytes. The value is always 4096.
 pub const PAGE_SIZE: u16 = 4096;
 const_assert!(PAGE_SIZE == 4096);
+
+/// The shift value of a page. The value is always 12.
+pub const PAGE_SHIFT: u8 = 12;
+const_assert!(PAGE_SHIFT == 12);
+const_assert!((1 << PAGE_SHIFT) == PAGE_SIZE);

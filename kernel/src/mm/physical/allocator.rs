@@ -1,6 +1,5 @@
 use super::{frame, STATE};
 use addr::Frame;
-use config::PAGE_SIZE;
 
 pub struct Allocator;
 
@@ -54,7 +53,7 @@ impl Allocator {
             }
         });
 
-        Some(Frame::new(index * usize::from(PAGE_SIZE)))
+        Some(Frame::from_index(index))
     }
 
     /// Deallocates a frame.
@@ -74,7 +73,7 @@ impl Allocator {
     /// part of the system, and that the range of frames was not already deallocated.
     /// Failure to do so will cause undefined behavior.
     pub unsafe fn deallocate_range(&mut self, frame: Frame, count: usize) {
-        let index = usize::from(frame) / usize::from(PAGE_SIZE);
+        let index = frame.index();
 
         if let Some(frame_range) = STATE
             .lock()
@@ -119,7 +118,7 @@ impl Allocator {
         let mut state = STATE.lock();
         let frames = state.frames_info_mut();
 
-        let index = usize::from(frame) / usize::from(PAGE_SIZE);
+        let index = frame.index();
         for frame in frames[index..(index + count)].iter_mut() {
             frame.retain();
         }
