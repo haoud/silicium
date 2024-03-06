@@ -1,8 +1,9 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 #![feature(const_mut_refs)]
-
 use macros::init;
+
+extern crate alloc;
 
 pub mod mm;
 
