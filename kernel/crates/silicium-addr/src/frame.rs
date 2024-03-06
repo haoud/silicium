@@ -4,7 +4,7 @@ pub use crate::phys::Physical;
 /// around `Physical` that represents a frame in the `x86_64` architecture, and enforce
 /// that the address is page-aligned. On the `x86_64` architecture, the default page size
 /// is 4096 bytes, so a frame address must be a multiple of 4096.
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Frame(pub(crate) Physical);
 
@@ -86,5 +86,47 @@ impl From<Frame> for usize {
 impl From<Frame> for u64 {
     fn from(frame: Frame) -> u64 {
         frame.0 .0 as u64
+    }
+}
+
+impl core::fmt::Binary for Frame {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#b}", self.0)
+    }
+}
+
+impl core::fmt::Octal for Frame {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#o}", self.0)
+    }
+}
+
+impl core::fmt::LowerHex for Frame {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#x}", self.0)
+    }
+}
+
+impl core::fmt::UpperHex for Frame {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#X}", self.0)
+    }
+}
+
+impl core::fmt::Pointer for Frame {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#x}", self.0)
+    }
+}
+
+impl core::fmt::Debug for Frame {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Virtual({:#x})", self.0)
+    }
+}
+
+impl core::fmt::Display for Frame {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#x}", self.0)
     }
 }

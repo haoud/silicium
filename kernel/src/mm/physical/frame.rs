@@ -59,7 +59,8 @@ impl Info {
         self.count = self.count.saturating_add(1);
     }
 
-    /// Decrements the reference count of the frame.
+    /// Decrements the reference count of the frame. If the reference count reaches zero, the function
+    /// will return `true`, indicating that the frame can be freed.
     ///
     /// If the reference count is equal to the maximum value of a `u32`, this function will **not**
     /// decrement the reference count.
@@ -72,11 +73,12 @@ impl Info {
     /// # Panics
     /// Panics if the reference count is already zero, as this indicates a double free. This
     /// is a programming error and should be fixed as soon as possible.
-    pub fn release(&mut self) {
+    pub fn release(&mut self) -> bool {
         assert!(self.count > 0);
         if self.count != u32::MAX {
             self.count -= 1;
         }
+        self.count == 0
     }
 }
 

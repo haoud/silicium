@@ -93,15 +93,15 @@ impl Virtual {
     }
 }
 
-impl core::fmt::Debug for Virtual {
+impl core::fmt::Binary for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "Virtual({:#x})", self.0)
+        write!(f, "{:#b}", self.0)
     }
 }
 
-impl core::fmt::Pointer for Virtual {
+impl core::fmt::Octal for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:#x}", self.0)
+        write!(f, "{:#o}", self.0)
     }
 }
 
@@ -117,15 +117,21 @@ impl core::fmt::UpperHex for Virtual {
     }
 }
 
-impl core::fmt::Octal for Virtual {
+impl core::fmt::Pointer for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:#o}", self.0)
+        write!(f, "{:#x}", self.0)
     }
 }
 
-impl core::fmt::Binary for Virtual {
+impl core::fmt::Debug for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:#b}", self.0)
+        write!(f, "Virtual({:#x})", self.0)
+    }
+}
+
+impl core::fmt::Display for Virtual {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#x}", self.0)
     }
 }
 

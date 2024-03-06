@@ -1,7 +1,9 @@
+use crate::Frame;
+
 /// A physical address. This is a newtype around `usize` that represents a physical
 /// address in the `x86_64` architecture that enforces the maximum physical address
 /// supported by the architecture (52 bits wide, represented by [`Physical::MAX`]).
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Physical(pub(crate) usize);
 
@@ -74,5 +76,53 @@ impl From<Physical> for usize {
 impl From<Physical> for u64 {
     fn from(addr: Physical) -> u64 {
         addr.0 as u64
+    }
+}
+
+impl From<Frame> for Physical {
+    fn from(frame: Frame) -> Physical {
+        frame.0
+    }
+}
+
+impl core::fmt::Binary for Physical {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#b}", self.0)
+    }
+}
+
+impl core::fmt::Octal for Physical {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#o}", self.0)
+    }
+}
+
+impl core::fmt::LowerHex for Physical {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#x}", self.0)
+    }
+}
+
+impl core::fmt::UpperHex for Physical {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#X}", self.0)
+    }
+}
+
+impl core::fmt::Pointer for Physical {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#x}", self.0)
+    }
+}
+
+impl core::fmt::Debug for Physical {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Virtual({:#x})", self.0)
+    }
+}
+
+impl core::fmt::Display for Physical {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#x}", self.0)
     }
 }
