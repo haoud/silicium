@@ -1,7 +1,6 @@
 pub mod lang;
 pub mod log;
 
-pub use arch::cpu;
 pub use arch::irq;
 pub use arch::percpu;
 

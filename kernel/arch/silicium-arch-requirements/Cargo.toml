@@ -1,0 +1,13 @@
+[package]
+name = "silicium-arch-requirements"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bitflags = { workspace = true }
+macros = { workspace = true }
+addr = { workspace = true }
+log = { workspace = true }
+
+[lints]
+workspace = true

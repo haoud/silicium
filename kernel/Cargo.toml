@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = ["arch/silicium-hal", "arch/silicium-x86_64", "crates/*"]
+members = [ "arch/silicium-arch-requirements","arch/silicium-hal", "arch/silicium-x86_64", "crates/*"]
 
 [workspace.lints.clippy]
 undocumented_unsafe_blocks = "deny"

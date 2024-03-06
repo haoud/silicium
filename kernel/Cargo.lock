@@ -108,6 +108,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "silicium-arch-requirements"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "log",
+ "silicium-addr",
+ "silicium-macros",
+]
+
+[[package]]
 name = "silicium-boot"
 version = "0.1.0"
 dependencies = [
