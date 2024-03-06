@@ -108,7 +108,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "silicium-arch-requirements"
+name = "silicium-arch-example"
 version = "0.1.0"
 dependencies = [
  "bitflags",
