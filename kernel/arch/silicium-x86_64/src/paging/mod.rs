@@ -1,4 +1,3 @@
-use crate::boot;
 use addr::{Frame, Virtual};
 use macros::init;
 use pml4::{MissingEntry, Pml4};
@@ -57,7 +56,7 @@ pub unsafe fn setup() {
         .iter_mut()
         .filter(|entry| !entry.present())
         .for_each(|entry| {
-            let frame = boot::allocate_zeroed_frame();
+            let frame = boot::allocator::allocate_zeroed_frame();
             entry.add_flags(page::Flags::PRESENT | page::Flags::WRITABLE | page::Flags::GLOBAL);
             entry.set_address(frame);
         });

@@ -3,7 +3,7 @@ use super::{
     table::{self, Table},
     translate,
 };
-use crate::{boot, cpu};
+use crate::cpu;
 use addr::{Frame, Virtual};
 use core::pin::Pin;
 use macros::init;
@@ -241,7 +241,7 @@ pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level
             // Get the physical address of the source table and allocate a new
             // frame for the destination table
             let src_frame = from.address().unwrap_unchecked();
-            let dst_frame = boot::allocate_frame();
+            let dst_frame = boot::allocator::allocate_frame();
 
             // Copy the source table into the destination table
             let dst = Virtual::from(dst_frame).as_mut_ptr::<page::Entry>();

@@ -1,36 +1,23 @@
-use core::sync::atomic::{AtomicUsize, Ordering};
-
+use crate::mmap;
 use addr::{Frame, Physical, Virtual};
+use arrayvec::ArrayVec;
 use config::PAGE_SIZE;
+use core::sync::atomic::{AtomicUsize, Ordering};
 use macros::init;
-use spin::Spinlock;
 
 /// The request that will order the Limine bootloader to provide a memory map.
-static MMAP_REQUEST: Spinlock<Option<limine::request::MemoryMapRequest>> =
-    Spinlock::new(Some(limine::request::MemoryMapRequest::new()));
+static MMAP: spin::Spinlock<Option<ArrayVec<mmap::Entry, 32>>> = spin::Spinlock::new(None);
 
 /// The total amount of memory allocated by the boot allocator.
 static ALLOCATED: AtomicUsize = AtomicUsize::new(0);
 
-/// Initializes the kernel boot memory allocator by requesting a memory map from
-/// Limine.
-///
-/// TODO: Keep track of which memory regions are allocated to correctly implement
-/// memory usage statistics.
+/// Initializes the kernel boot memory allocator with the given memory map request.
 ///
 /// # Panics
 /// If Limine fails to provide a memory map, this function will panic.
 #[inline]
-pub fn setup() {
-    assert!(
-        MMAP_REQUEST
-            .lock()
-            .as_ref()
-            .unwrap()
-            .get_response()
-            .is_some(),
-        "Failed to get memory map from Limine"
-    );
+pub fn setup(mmap: ArrayVec<mmap::Entry, 32>) {
+    MMAP.lock().replace(mmap);
 }
 
 /// Disable the kernel boot memory allocator and return the memory map request. The memory map
@@ -41,31 +28,24 @@ pub fn setup() {
 ///
 /// # Panics
 /// This function will panic if the boot allocator has already been disabled.
-pub fn disable_allocator() -> limine::request::MemoryMapRequest {
-    let mut request = MMAP_REQUEST
+pub fn disable() -> ArrayVec<mmap::Entry, 32> {
+    let mut mmap = MMAP
         .lock()
         .take()
         .expect("Boot allocator has been disabled");
 
-    let mmap = request
-        .get_response_mut()
-        .expect("Failed to get memory map from Limine");
-
     // Align all usable memory regions to the page size
-    mmap.entries_mut()
-        .iter_mut()
-        .filter(|entry| entry.entry_type == limine::memory_map::EntryType::USABLE)
-        .filter(|entry| entry.base & !u64::from(PAGE_SIZE) != 0)
-        .for_each(|entry| {
-            let offset = u64::from(PAGE_SIZE) - (entry.base & (u64::from(PAGE_SIZE) - 1));
-            let length = entry.length;
-            let start = entry.base;
+    mmap.iter_mut()
+        .filter(|region| region.kind == mmap::Kind::Usable)
+        .filter(|region| !region.start.is_page_aligned())
+        .for_each(|region| {
+            let offset = usize::from(region.start) % usize::from(PAGE_SIZE);
+            let correction = usize::from(PAGE_SIZE) - offset;
 
-            entry.base = start + offset;
-            entry.length = length - offset;
+            region.start = Physical::new(usize::from(region.start) - correction);
+            region.length -= correction;
         });
-
-    request
+    mmap
 }
 
 /// Returns the total amount of memory allocated by the boot allocator.
@@ -212,12 +192,10 @@ pub unsafe fn allocate_zeroed_frame() -> Frame {
 #[init]
 #[must_use]
 pub unsafe fn allocate_align_physical(size: usize, align: usize) -> Physical {
-    let mut mmap_request = MMAP_REQUEST.lock();
-    let response = mmap_request
+    let mut mmap = MMAP.lock();
+    let mmap = mmap
         .as_mut()
-        .expect("Boot allocator has been disabled")
-        .get_response_mut()
-        .expect("Failed to get memory map from Limine");
+        .expect("Boot allocator has not been initialized");
 
     // Check if the alignment is a power of two
     assert!(
@@ -226,16 +204,15 @@ pub unsafe fn allocate_align_physical(size: usize, align: usize) -> Physical {
     );
 
     // Search for a free region in the memory map
-    let region = response
-        .entries_mut()
+    let region = mmap
         .iter_mut()
-        .filter(|region| region.entry_type == limine::memory_map::EntryType::USABLE)
-        .find(|region| region.length >= (size + align) as u64)
+        .filter(|region| region.kind == mmap::Kind::Usable)
+        .find(|region| region.length >= size + align)
         .expect("Failed to find a free region in the memory map");
 
     // Get the base address of the region that will be used for the allocation
     // and align it to the requested alignment
-    let address = usize::try_from(region.base).unwrap();
+    let address = usize::from(region.start);
 
     // Calculate the offset to add to the base address to align
     // it to the requested alignment using bitwise operations
@@ -243,8 +220,8 @@ pub unsafe fn allocate_align_physical(size: usize, align: usize) -> Physical {
 
     // Update the region's length and base address to reflect the allocation
     // and return the address of the allocated memory
-    region.length -= (size + offset) as u64;
-    region.base += (size + offset) as u64;
+    region.start = Physical::new(address + offset + size);
+    region.length -= offset + size;
 
     ALLOCATED.fetch_add(size + offset, Ordering::Relaxed);
     Physical::new_unchecked(address + offset)

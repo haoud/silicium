@@ -3,11 +3,16 @@ use config::PAGE_SIZE;
 use macros::init;
 use spin::Spinlock;
 
+pub mod allocator;
 pub mod frame;
+
+/// The global allocator for the physical memory manager. This is used to allocate and deallocate
+/// contiguous physical memory regions.
+pub static ALLOCATOR: Spinlock<allocator::Allocator> = Spinlock::new(allocator::Allocator::new());
 
 /// The global state of the physical memory manager. This is used to track the state of each frame
 /// in the system.
-static STATE: Spinlock<State> = Spinlock::new(State::uninitialized());
+pub static STATE: Spinlock<State> = Spinlock::new(State::uninitialized());
 
 /// The state of the physical memory manager. This is used to track the state of each frame in the
 /// system. It contains an array of `frame::Info` that is used to track the state of each frame in

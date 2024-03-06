@@ -103,6 +103,7 @@ name = "silicium-addr"
 version = "0.1.0"
 dependencies = [
  "log",
+ "silicium-config",
 ]
 
 [[package]]
@@ -112,6 +113,9 @@ dependencies = [
  "arrayvec",
  "limine",
  "silicium-addr",
+ "silicium-config",
+ "silicium-macros",
+ "silicium-spin",
 ]
 
 [[package]]

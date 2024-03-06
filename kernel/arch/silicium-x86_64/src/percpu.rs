@@ -1,4 +1,4 @@
-use crate::{boot, msr};
+use crate::msr;
 use core::cell::UnsafeCell;
 use core::ops::{Deref, DerefMut};
 use macros::init;
@@ -262,7 +262,7 @@ pub unsafe fn setup(lapic_id: u64) {
 
     // Allocate a per-CPU section for the current code and copy original per-cpu
     // section to the allocated one
-    let percpu = boot::allocate(percpu_length);
+    let percpu = boot::allocator::allocate(percpu_length);
     core::ptr::copy_nonoverlapping(percpu_start as *const u8, percpu, percpu_length);
 
     // Set the GS base to the allocated per-CPU section. We set the GS_BASE MSR and

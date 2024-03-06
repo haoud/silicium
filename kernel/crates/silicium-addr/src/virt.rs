@@ -73,13 +73,6 @@ impl Virtual {
         Self::new_unchecked(ptr as usize)
     }
 
-    /// If the address is page-aligned, returns `true`. Otherwise, returns `false`.
-    /// For reference, the default page size on the `x86_64` architecture is 4096 bytes.
-    #[must_use]
-    pub const fn is_page_aligned(&self) -> bool {
-        (self.0 & 0xFFF) == 0
-    }
-
     /// Returns the address as a mutable pointer to the specified type.
     #[must_use]
     pub const fn as_mut_ptr<T>(self) -> *mut T {
@@ -91,57 +84,35 @@ impl Virtual {
     pub const fn as_ptr<T>(self) -> *const T {
         self.0 as *const T
     }
-}
 
-impl core::fmt::Debug for Virtual {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "Virtual({:#x})", self.0)
+    /// If the address is page-aligned, returns `true`. Otherwise, returns `false`.
+    /// For reference, the default page size on the `x86_64` architecture is 4096 bytes.
+    #[must_use]
+    pub const fn is_page_aligned(&self) -> bool {
+        (self.0 & 0xFFF) == 0
+    }
+
+    /// Align the address to the previous page aligned address. If the address is already
+    /// page-aligned, the same address is returned.
+    #[must_use]
+    pub const fn page_align_down(&self) -> Self {
+        Self((self.0 + 0xFFF) & !0xFFF)
     }
 }
 
-impl core::fmt::Pointer for Virtual {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:#x}", self.0)
-    }
-}
-
-impl core::fmt::LowerHex for Virtual {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:#x}", self.0)
-    }
-}
-
-impl core::fmt::UpperHex for Virtual {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:#X}", self.0)
-    }
-}
-
-impl core::fmt::Octal for Virtual {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:#o}", self.0)
-    }
-}
-
-impl core::fmt::Binary for Virtual {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:#b}", self.0)
-    }
-}
-
-impl From<Virtual> for usize {
+impl const From<Virtual> for usize {
     fn from(addr: Virtual) -> usize {
         addr.0
     }
 }
 
-impl From<Virtual> for u64 {
+impl const From<Virtual> for u64 {
     fn from(addr: Virtual) -> u64 {
         addr.0 as u64
     }
 }
 
-impl From<Physical> for Virtual {
+impl const From<Physical> for Virtual {
     fn from(addr: Physical) -> Self {
         // SAFETY: This is safe because the HHDM region is always mapped to the high half
         // of the virtual address space, and the physical address is always valid and
@@ -151,7 +122,7 @@ impl From<Physical> for Virtual {
     }
 }
 
-impl From<Frame> for Virtual {
+impl const From<Frame> for Virtual {
     fn from(frame: Frame) -> Self {
         // SAFETY: This is safe because the HHDM region is always mapped to the high half
         // of the virtual address space, and the physical address is always valid and
@@ -159,5 +130,47 @@ impl From<Frame> for Virtual {
         // always in the kernel address space.
         //log::debug!("frame: {:#x}", usize::from(frame.0));
         unsafe { Self::new_unchecked(frame.0 .0 + HHDM_START.0) }
+    }
+}
+
+impl const core::fmt::Binary for Virtual {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#b}", self.0)
+    }
+}
+
+impl const core::fmt::Octal for Virtual {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#o}", self.0)
+    }
+}
+
+impl const core::fmt::LowerHex for Virtual {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#x}", self.0)
+    }
+}
+
+impl const core::fmt::UpperHex for Virtual {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#X}", self.0)
+    }
+}
+
+impl const core::fmt::Pointer for Virtual {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#x}", self.0)
+    }
+}
+
+impl const core::fmt::Debug for Virtual {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Virtual({:#x})", self.0)
+    }
+}
+
+impl const core::fmt::Display for Virtual {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:#x}", self.0)
     }
 }

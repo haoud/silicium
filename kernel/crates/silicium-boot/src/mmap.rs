@@ -1,4 +1,5 @@
 use addr::Physical;
+use arrayvec::ArrayVec;
 
 /// A memory map entry
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -85,4 +86,19 @@ impl From<limine::memory_map::EntryType> for Kind {
             _ => Self::Reserved,
         }
     }
+}
+
+/// # Panics
+/// Panics if the memory map has more than 32 entries and cannot fit into an
+/// [`ArrayVec`].
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
+pub fn from_limine(mmap: &[&limine::memory_map::Entry]) -> ArrayVec<Entry, 32> {
+    mmap.iter()
+        .map(|entry| Entry {
+            start: Physical::new(entry.base as usize),
+            length: entry.length as usize,
+            kind: Kind::from(entry.entry_type),
+        })
+        .collect::<ArrayVec<Entry, 32>>()
 }
