@@ -34,14 +34,6 @@ impl Mapped {
         Mapped(Physical::from(frame))
     }
 
-    /// Map a physical address to a virtual address. Since we are using the
-    /// HHDM region, we can create an [`Mapped`] object from any physical
-    /// address.
-    #[must_use]
-    pub(crate) const unsafe fn from_physical(phys: Physical) -> Self {
-        Mapped(phys)
-    }
-
     /// Returns the base address of the virtual address where the physical frame
     /// is mapped.
     #[must_use]
@@ -52,4 +44,40 @@ impl Mapped {
         // canonical address.
         unsafe { Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(self.0)) }
     }
+}
+
+/// Map a physical frame to a virtual address and leak the mapping, that will
+/// not automatically be unmapped. However, the caller can still manually unmap
+/// the frame using the [`super::paging::unmap`] function.
+///
+/// # Safety
+/// The caller must ensure that the physical frame will remain valid for the
+/// lifetime of the mapped virtual address. The caller must also ensure that
+/// the frame is not already mapped to a virtual address, because it could
+/// result in mutiple mutable aliasing and undefined behavior.
+#[must_use]
+pub unsafe fn map_leak(frame: Frame) -> Virtual {
+    // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in the
+    // `x86_64` architecture, the physical address is at most 52 bits. Therefore, the
+    // addition of the physical address to the HHDM_START will always result in a valid
+    // canonical address.
+    Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(frame))
+}
+
+/// See [`map_leak`] for more information. Since we map the entire physical memory
+/// to a fixed virtual address, we can use this function to map get a virtual address
+/// for any physical address, and not only for page-aligned physical addresses.
+///
+/// # Safety
+/// The caller must ensure that the physical frame will remain valid for the
+/// lifetime of the mapped virtual address. The caller must also ensure that
+/// the frame is not already mapped to a virtual address, because it could
+/// result in mutiple mutable aliasing and undefined behavior.
+#[must_use]
+pub(crate) unsafe fn map_leak_physical(phys: Physical) -> Virtual {
+    // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in the
+    // `x86_64` architecture, the physical address is at most 52 bits. Therefore, the
+    // addition of the physical address to the HHDM_START will always result in a valid
+    // canonical address.
+    Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(phys))
 }

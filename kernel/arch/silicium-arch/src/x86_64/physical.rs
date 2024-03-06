@@ -1,1 +1,1 @@
-pub use arch::physical::Mapped;
+pub use arch::physical::{map_leak, Mapped};

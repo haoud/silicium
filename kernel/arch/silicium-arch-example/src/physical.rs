@@ -43,3 +43,17 @@ impl Drop for Mapped {
         unimplemented!()
     }
 }
+
+/// Map a physical frame to a virtual address and leak the mapping, that will
+/// not automatically be unmapped. However, the caller can still manually unmap
+/// the frame using the [`super::paging::unmap`] function.
+///
+/// # Safety
+/// The caller must ensure that the physical frame will remain valid for the
+/// lifetime of the mapped virtual address. The caller must also ensure that
+/// the frame is not already mapped to a virtual address, because it could
+/// result in mutiple mutable aliasing and undefined behavior.
+#[must_use]
+pub unsafe fn map_leak(_frame: Frame) -> Virtual {
+    unimplemented!()
+}
