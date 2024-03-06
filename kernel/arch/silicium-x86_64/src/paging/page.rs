@@ -71,22 +71,22 @@ bitflags::bitflags! {
     }
 }
 
-impl From<hal_api::paging::MapFlags> for Flags {
-    fn from(_flags: hal_api::paging::MapFlags) -> Self {
+impl From<hal::paging::MapFlags> for Flags {
+    fn from(_flags: hal::paging::MapFlags) -> Self {
         Self::empty()
     }
 }
 
-impl From<hal_api::paging::MapRights> for Flags {
-    fn from(rights: hal_api::paging::MapRights) -> Self {
+impl From<hal::paging::MapRights> for Flags {
+    fn from(rights: hal::paging::MapRights) -> Self {
         let mut flags = Flags::empty();
-        if rights.contains(hal_api::paging::MapRights::USER) {
+        if rights.contains(hal::paging::MapRights::USER) {
             flags |= Flags::USER;
         }
-        if rights.contains(hal_api::paging::MapRights::WRITE) {
+        if rights.contains(hal::paging::MapRights::WRITE) {
             flags |= Flags::WRITABLE;
         }
-        if !rights.contains(hal_api::paging::MapRights::EXECUTE) {
+        if !rights.contains(hal::paging::MapRights::EXECUTE) {
             flags |= Flags::NO_EXECUTE;
         }
         flags

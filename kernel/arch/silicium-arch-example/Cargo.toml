@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 bitflags = { workspace = true }
-hal-api = { workspace = true }
 macros = { workspace = true }
 addr = { workspace = true }
+hal = { workspace = true }
 log = { workspace = true }
 
 [lints]

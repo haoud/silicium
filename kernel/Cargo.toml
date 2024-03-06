@@ -6,7 +6,7 @@ edition = "2021"
 [workspace]
 members = [
     "arch/silicium-arch-example",
-    "arch/silicium-hal",
+    "arch/silicium-arch",
     "arch/silicium-x86_64",
     "crates/*",
 ]
@@ -19,12 +19,12 @@ pedantic = "deny"
 all = "deny"
 
 [workspace.dependencies]
-hal-api = { path = "crates/silicium-hal-api", package = "silicium-hal-api" }
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
 boot = { path = "crates/silicium-boot", package = "silicium-boot" }
 addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
+hal = { path = "crates/silicium-hal", package = "silicium-hal" }
 arrayvec = { version = "0.7.4", default-features = false }
 talc = { version = "4.3.1", features = ["counters"] }
 static_assertions = "1.1.0"
@@ -35,7 +35,7 @@ limine = "0.2"
 log = "0.4.20"
 
 [dependencies]
-arch = { path = "arch/silicium-hal", package = "silicium-hal" }
+arch = { path = "arch/silicium-arch", package = "silicium-arch" }
 bitflags = { workspace = true }
 macros = { workspace = true }
 config = { workspace = true }

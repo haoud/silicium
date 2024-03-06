@@ -33,9 +33,9 @@ dependencies = [
  "bitflags",
  "log",
  "silicium-addr",
+ "silicium-arch",
  "silicium-boot",
  "silicium-config",
- "silicium-hal",
  "silicium-macros",
  "silicium-spin",
  "talc",
@@ -108,13 +108,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "silicium-arch"
+version = "0.1.0"
+dependencies = [
+ "arrayvec",
+ "bitflags",
+ "limine",
+ "log",
+ "macros",
+ "silicium-addr",
+ "silicium-boot",
+ "silicium-hal",
+ "silicium-spin",
+ "silicium-x86_64",
+]
+
+[[package]]
 name = "silicium-arch-example"
 version = "0.1.0"
 dependencies = [
  "bitflags",
  "log",
  "silicium-addr",
- "silicium-hal-api",
+ "silicium-hal",
  "silicium-macros",
 ]
 
@@ -139,22 +155,6 @@ dependencies = [
 
 [[package]]
 name = "silicium-hal"
-version = "0.1.0"
-dependencies = [
- "arrayvec",
- "bitflags",
- "limine",
- "log",
- "macros",
- "silicium-addr",
- "silicium-boot",
- "silicium-hal-api",
- "silicium-spin",
- "silicium-x86_64",
-]
-
-[[package]]
-name = "silicium-hal-api"
 version = "0.1.0"
 dependencies = [
  "bitflags",
@@ -188,7 +188,7 @@ dependencies = [
  "silicium-addr",
  "silicium-boot",
  "silicium-config",
- "silicium-hal-api",
+ "silicium-hal",
  "silicium-macros",
  "silicium-spin",
  "tailcall",

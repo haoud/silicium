@@ -1,5 +1,5 @@
 use addr::{Frame, Virtual};
-use hal_api::paging::{MapError, MapFlags, MapRights, UnmapError};
+use hal::paging::{MapError, MapFlags, MapRights, UnmapError};
 
 /// A page table is a data structure used by a virtual memory system in an
 /// operating system to store the mapping between virtual addresses and physical
