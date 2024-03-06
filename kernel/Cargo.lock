@@ -114,6 +114,7 @@ dependencies = [
  "bitflags",
  "log",
  "silicium-addr",
+ "silicium-hal-api",
  "silicium-macros",
 ]
 
@@ -147,8 +148,16 @@ dependencies = [
  "macros",
  "silicium-addr",
  "silicium-boot",
+ "silicium-hal-api",
  "silicium-spin",
  "silicium-x86_64",
+]
+
+[[package]]
+name = "silicium-hal-api"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
 ]
 
 [[package]]
@@ -179,6 +188,7 @@ dependencies = [
  "silicium-addr",
  "silicium-boot",
  "silicium-config",
+ "silicium-hal-api",
  "silicium-macros",
  "silicium-spin",
  "tailcall",

@@ -1,4 +1,5 @@
 use addr::{Frame, Virtual};
+use hal_api::paging::{MapError, MapFlags, MapRights, UnmapError};
 
 /// A page table is a data structure used by a virtual memory system in an
 /// operating system to store the mapping between virtual addresses and physical
@@ -31,36 +32,6 @@ impl PageTable {
     /// while still in use.
     pub unsafe fn load_current(&mut self) {
         unimplemented!()
-    }
-}
-
-bitflags::bitflags! {
-    /// Flags that can be used when mapping a virtual address to a physical
-    /// frame.
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct MapFlags: u64 {
-
-    }
-
-    /// Flags that can be used when mapping a virtual address to a physical
-    /// frame. On some architectures, some flags may not be supported and
-    /// some rights may be implied by others or being always set.
-    ///
-    /// For example, on x86_64, the `READ` flag is always implied if the
-    /// page is present
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct MapRights: u64 {
-        /// Allow the user to access the memory.
-        const USER = 1 << 0;
-
-        /// Allow the memory to be read from.
-        const READ = 1 << 1;
-
-        /// Allow the memory to be written to.
-        const WRITE = 1 << 2;
-
-        /// Allow the memory to be executed.
-        const EXECUTE = 1 << 3;
     }
 }
 
@@ -108,21 +79,4 @@ pub unsafe fn unmap(_table: &mut PageTable, _addr: Virtual) -> Result<Frame, Unm
 /// the address if it is mapped, or `None` if it is not.
 pub fn translate(_table: &mut PageTable, _addr: Virtual) -> Option<Frame> {
     unimplemented!()
-}
-
-/// Errors that can be returned when trying to map an address.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum MapError {
-    /// The address is already mapped to a frame.
-    AlreadyMapped,
-
-    /// The kernel ran out of memory while trying to allocate a new table.
-    OutOfMemory,
-}
-
-/// Errors that can be returned when trying to unmap an address.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum UnmapError {
-    /// The address is not mapped to a frame.
-    NotMapped,
 }

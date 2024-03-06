@@ -8,6 +8,7 @@ arch-macros = { path = "macros", package = "macros" }
 bitfield = { workspace = true }
 bitflags = { workspace = true }
 tailcall = { workspace = true }
+hal-api = { workspace = true }
 limine = { workspace = true }
 macros = { workspace = true }
 config = { workspace = true }

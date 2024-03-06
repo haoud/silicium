@@ -1,5 +1,6 @@
 use addr::{Frame, Virtual};
 use arch::paging::{self, page, pml4::Pml4};
+use hal_api::paging::{MapError, MapFlags, MapRights, UnmapError};
 
 /// A page table is a data structure used by a virtual memory system in an
 /// operating system to store the mapping between virtual addresses and physical
@@ -38,58 +39,6 @@ impl PageTable {
 impl Default for PageTable {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-bitflags::bitflags! {
-    /// Flags that can be used when mapping a virtual address to a physical
-    /// frame.
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct MapFlags: u64 {
-
-    }
-
-    /// Flags that can be used when mapping a virtual address to a physical
-    /// frame. On some architectures, some flags may not be supported and
-    /// some rights may be implied by others or being always set.
-    ///
-    /// For example, on x86_64, the `READ` flag is always implied if the
-    /// page is present
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub struct MapRights: u64 {
-        /// Allow the user to access the memory.
-        const USER = 1 << 0;
-
-        /// Allow the memory to be read from.
-        const READ = 1 << 1;
-
-        /// Allow the memory to be written to.
-        const WRITE = 1 << 2;
-
-        /// Allow the memory to be executed.
-        const EXECUTE = 1 << 3;
-    }
-}
-
-impl From<MapFlags> for page::Flags {
-    fn from(_flags: MapFlags) -> Self {
-        Self::empty()
-    }
-}
-
-impl From<MapRights> for page::Flags {
-    fn from(rights: MapRights) -> Self {
-        let mut flags = page::Flags::empty();
-        if rights.contains(MapRights::USER) {
-            flags |= page::Flags::USER;
-        }
-        if rights.contains(MapRights::WRITE) {
-            flags |= page::Flags::WRITABLE;
-        }
-        if !rights.contains(MapRights::EXECUTE) {
-            flags |= page::Flags::NO_EXECUTE;
-        }
-        flags
     }
 }
 
@@ -145,21 +94,4 @@ pub fn translate(table: &mut PageTable, addr: Virtual) -> Option<Frame> {
     // SAFETY: This is safe since we can assume that the page table is valid and
     // correctly formed if the [`map`] and [`unmap`] functions are used correctly.
     unsafe { paging::translate(&mut table.0, addr) }
-}
-
-/// Errors that can be returned when trying to map an address.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum MapError {
-    /// The address is already mapped to a frame.
-    AlreadyMapped,
-
-    /// The kernel ran out of memory while trying to allocate a new table.
-    OutOfMemory,
-}
-
-/// Errors that can be returned when trying to unmap an address.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum UnmapError {
-    /// The address is not mapped to a frame.
-    NotMapped,
 }

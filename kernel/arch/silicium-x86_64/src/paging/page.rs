@@ -71,6 +71,28 @@ bitflags::bitflags! {
     }
 }
 
+impl From<hal_api::paging::MapFlags> for Flags {
+    fn from(_flags: hal_api::paging::MapFlags) -> Self {
+        Self::empty()
+    }
+}
+
+impl From<hal_api::paging::MapRights> for Flags {
+    fn from(rights: hal_api::paging::MapRights) -> Self {
+        let mut flags = Flags::empty();
+        if rights.contains(hal_api::paging::MapRights::USER) {
+            flags |= Flags::USER;
+        }
+        if rights.contains(hal_api::paging::MapRights::WRITE) {
+            flags |= Flags::WRITABLE;
+        }
+        if !rights.contains(hal_api::paging::MapRights::EXECUTE) {
+            flags |= Flags::NO_EXECUTE;
+        }
+        flags
+    }
+}
+
 /// Represents a page entry
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]

@@ -19,6 +19,7 @@ pedantic = "deny"
 all = "deny"
 
 [workspace.dependencies]
+hal-api = { path = "crates/silicium-hal-api", package = "silicium-hal-api" }
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
 boot = { path = "crates/silicium-boot", package = "silicium-boot" }
