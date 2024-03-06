@@ -94,8 +94,7 @@ impl From<limine::memory_map::EntryType> for Kind {
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
 pub fn from_limine(mmap: &[&limine::memory_map::Entry]) -> ArrayVec<Entry, 32> {
-    mmap
-        .iter()
+    mmap.iter()
         .map(|entry| Entry {
             start: Physical::new(entry.base as usize),
             length: entry.length as usize,
