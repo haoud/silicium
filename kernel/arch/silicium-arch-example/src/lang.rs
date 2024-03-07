@@ -12,6 +12,7 @@
 /// panic and then check for the flag during subsequent panics. If the flag is set,
 /// the function should halt the CPU instead of trying to handle the panic.
 #[panic_handler]
+#[cfg(not(test))]
 pub fn panic(_: &core::panic::PanicInfo) -> ! {
     loop {}
 }
