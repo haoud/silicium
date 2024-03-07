@@ -1,6 +1,4 @@
 use super::page;
-use crate::physical;
-use addr::Frame;
 use core::ops::{Deref, DerefMut};
 
 /// A page table, which is a collection of page table entries. A page table
@@ -19,26 +17,6 @@ impl Table {
     #[must_use]
     pub const fn empty() -> Self {
         Self([page::Entry::empty(); Self::COUNT])
-    }
-
-    /// Returns a mutable pointer to the page table from the given frame.
-    #[must_use]
-    pub fn from_frame_mut(frame: Frame) -> *mut Self {
-        // SAFETY: The mapping to the frame will remain valid for the lifetime
-        // of the kernel
-        unsafe {
-            physical::AccessWindow::new(frame)
-                .base()
-                .as_mut_ptr::<Self>()
-        }
-    }
-
-    /// Returns a pointer to the page table from the given frame.
-    #[must_use]
-    pub fn from_frame(frame: Frame) -> *const Self {
-        // SAFETY: The mapping to the frame will remain valid for the lifetime
-        // of the kernel
-        unsafe { physical::AccessWindow::new(frame).base().as_ptr::<Self>() }
     }
 }
 

@@ -1,160 +1,120 @@
-use core::ops::{Deref, DerefMut};
-
 use addr::{Frame, Physical, Virtual};
+use zerocopy::FromBytes;
 
-/// A window that allows reading and writing to a physical frame.
+/// Obtain an mutable reference to the object located at the given physical address
+/// during the execution of the given closure.
 ///
-/// On some architectures that have a memory management unit (MMU) with
-/// enough virtual address space, all physical memory can be mapped to
-/// virtual memory. In this case, the `AccessWindow` type can simply be
-/// implemented with arithmetic operations on the physical address.
+/// # Safety
+/// The caller must ensure that the address is properly aligned to the type `T`, and
+/// that the address is not aliased anywhere in the kernel. Failure to do so will
+/// result in undefined behavior !
+#[inline]
+#[allow(clippy::needless_pass_by_value)]
+pub unsafe fn access_mut<T, Object: FromBytes>(
+    _phys: impl Into<Physical>,
+    _f: impl FnOnce(&mut Object) -> T,
+) -> T {
+    unimplemented!()
+}
+
+/// Obtain a reference to the object located at the given physical address during
+/// the execution of the given closure.
 ///
-/// On other architectures, all the physical memory cannot be mapped to
-/// virtual memory. In this case, this type will need to temporarily map
-/// the physical memory to virtual memory in order to access it.
-#[derive(Default, Debug)]
-pub struct AccessWindow {}
-
-impl AccessWindow {
-    /// Map a physical frame to a virtual address.
-    ///
-    /// # Safety
-    /// Several conditions must be met to use this function safely:
-    /// - The physical frame should not be used by the kernel.
-    /// - The physical frame should not be already mapped to another virtual
-    /// address.
-    /// - The physical frame must remain valid until the `Mapped` object is
-    /// dropped.
-    #[must_use]
-    pub unsafe fn new(_frame: Frame) -> Self {
-        unimplemented!()
-    }
-
-    /// Map a range of physical memory to a range of virtual memory.
-    ///
-    /// # Safety
-    /// The caller must be **extremely** careful when using this function,
-    /// because it requires multiples conditions to work safely:
-    /// - The physical memory range should not be used by the kernel.
-    /// - The physical memory range should not be already mapped to another
-    /// virtual address.
-    /// - The physical memory range must remain valid until the `Mapped` object
-    /// is dropped.
-    ///
-    /// Due to how the mapping works on many architecture, it may be possible to
-    /// access physical memory that is located outside of the range because the
-    /// minimal granularity of the mapping. Therefore, the caller must **not**
-    /// access memory outside of the specified range. Doing so will break the
-    /// guarantees of the function and result in undefined behavior.
-    #[must_use]
-    pub unsafe fn range(_start: Physical, _len: usize) -> Self {
-        unimplemented!()
-    }
-
-    /// Map a physical frame to a virtual address and leak the mapping by
-    /// returning the virtual address.
-    ///
-    /// However, the caller can still reclaim the frame by calling manually
-    /// calling [`crate::paging::unmap`] on the returned virtual address.
-    ///
-    /// # Safety
-    /// Several conditions must be met to use this function safely:
-    /// - The physical frame should not be used by the kernel.
-    /// - The physical frame should not be already mapped to another virtual
-    /// address.
-    /// - The physical frame must remain valid until the `Mapped` object is
-    /// dropped.
-    #[must_use]
-    pub unsafe fn leak(_frame: Frame) -> Virtual {
-        unimplemented!()
-    }
-
-    /// Map a range of physical memory to a range of virtual memory and leak the
-    /// mapping by returning the virtual address.
-    ///
-    /// However, the caller can still reclaim the memory by calling manually
-    /// calling [`crate::paging::unmap`] on the returned virtual address.
-    ///
-    /// # Safety
-    /// The caller must be **extremely** careful when using this function,
-    /// because it requires multiples conditions to work safely:
-    /// - The physical memory range should not be used by the kernel.
-    /// - The physical memory range should not be already mapped to another
-    /// virtual address.
-    /// - The physical memory range must remain valid until the `Mapped` object
-    /// is dropped.
-    ///
-    /// Due to how the mapping works on many architecture, it may be possible to
-    /// access physical memory that is located outside of the range because the
-    /// minimal granularity of the mapping. Therefore, the caller must **not**
-    /// access memory outside of the specified range. Doing so will break the
-    /// guarantees of the function and result in undefined behavior.
-    #[must_use]
-    pub unsafe fn leak_range(_start: Physical, _len: usize) -> Virtual {
-        unimplemented!()
-    }
-
-    /// Returns the base address of the virtual address where the physical frame
-    /// is mapped.
-    #[must_use]
-    pub fn base(&self) -> Virtual {
-        unimplemented!()
-    }
+/// # Safety
+/// The caller must ensure that the address is properly aligned to the type `T`, and
+/// that the address is not mutably aliased in the kernel. Failure to do so will
+/// result in undefined behavior !
+#[inline]
+#[allow(clippy::needless_pass_by_value)]
+pub unsafe fn access<T, Object: FromBytes>(
+    _phys: impl Into<Physical>,
+    _f: impl FnOnce(&Object) -> T,
+) -> T {
+    unimplemented!()
 }
 
-/// Unmap the physical frame from the virtual address when the `Mapped` object
-/// is dropped.
-impl Drop for AccessWindow {
-    fn drop(&mut self) {
-        unimplemented!()
-    }
+/// Create a static mutable reference to the object located at the given physical
+/// address.
+///
+/// This function can be extremely useful during the boot process, when the
+/// kernel needs to allocate memory early on that will remain used for the
+/// entire lifetime of the kernel.
+///
+/// # Safety
+/// - The physical memory range should be valid and free to use.
+/// - The physical memory start address should be properly aligned to the type `T`.
+/// - After this function call, the physical memory range can only be referenced
+/// through the returned reference. If the reference is lost, the physical
+/// range will be leaked.
+#[inline]
+#[must_use]
+#[allow(clippy::needless_pass_by_value)]
+pub unsafe fn leak<T: FromBytes>(_start: impl Into<Physical>) -> &'static mut T {
+    unimplemented!()
 }
 
-/// A window over a physical memory range that allows reading and writing to an
-/// object of type `T`.
-#[derive(Debug)]
-pub struct Window<T: Sized> {
-    _ptr: *mut T,
+/// Create a static mutable reference to the slice located at the given physical
+/// address with `count` elements.
+///
+/// # Safety
+/// - The physical memory range should be valid and free to use.
+/// - The physical memory start address should be properly aligned to the type `T`.
+/// - After this function call, the physical memory range can only be referenced
+/// through the returned reference. If the reference is lost, the physical
+/// range will be leaked.
+#[inline]
+#[must_use]
+#[allow(clippy::needless_pass_by_value)]
+pub unsafe fn leak_slice<T: FromBytes>(
+    _start: impl Into<Physical>,
+    _count: usize,
+) -> &'static mut [T] {
+    unimplemented!()
 }
 
-impl<T> Window<T> {
-    /// Create a new window over the given physical memory range. The start
-    /// address of the range is given by `phys` and the length of the range is
-    /// specified by the size of the type `T`.
-    ///
-    /// # Safety
-    /// This function requires the following conditions to be met to be used
-    /// safely:
-    /// - The physical memory range should not be used or mapped by the kernel.
-    /// - The physical memory range must remain valid until the `Window` object
-    /// is dropped.
-    /// - The physical memory range given must be large enough to contain the
-    /// object of type `T`.
-    /// - The physical memory range must be properly aligned for the type `T`.
-    /// - The physical memory range must be properly initialized before creating
-    /// the `Window` object.
-    /// - The physical memory must contain a valid object of type `T`.
-    #[must_use]
-    pub unsafe fn create(_phys: Physical) -> Self {
-        unimplemented!()
-    }
+/// Initialize an object at the given physical address with `obj` and create a
+/// static mutable reference to it.
+///
+/// # Safety
+/// - The physical memory range should be valid and free to use.
+/// - The physical memory start address should be properly aligned to the type `T`.
+/// - After this function call, the physical memory range can only be referenced
+/// through the returned reference. If the reference is lost, the physical
+/// range will be leaked and should never be used again. Failure to do so will
+/// result in undefined behavior !
+#[inline]
+#[must_use]
+#[allow(clippy::needless_pass_by_value)]
+pub unsafe fn init_and_leak<T>(_start: impl Into<Physical>, _obj: T) -> &'static mut T {
+    unimplemented!()
 }
 
-impl<T> Deref for Window<T> {
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
-        unimplemented!()
-    }
+/// Initialize a slice at the given physical address with `obj` for each `count`
+/// elements, and create a static mutable reference to it.
+///
+/// # Safety
+/// - The physical memory range should be valid and free to use.
+/// - The physical memory start address should be properly aligned to the type `T`.
+/// - After this function call, the physical memory range can only be referenced
+/// through the returned reference. If the reference is lost, the physical memory
+/// range will be leaked and should never be used again. Failure to do so will
+/// result in undefined behavior !
+#[inline]
+#[must_use]
+#[allow(clippy::needless_pass_by_value)]
+pub unsafe fn init_and_leak_slice<T: Copy>(
+    _start: impl Into<Physical>,
+    _count: usize,
+    _obj: T,
+) -> &'static mut [T] {
+    unimplemented!()
 }
 
-impl<T> DerefMut for Window<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        unimplemented!()
-    }
-}
-
-impl<T> Drop for Window<T> {
-    fn drop(&mut self) {
-        unimplemented!()
-    }
+/// Map a physical frame to a virtual address during the execution of the given
+/// closure. The caller is responsible for ensuring that the virtual address will
+/// be correctly used and that it will not break Rust's aliasing and mutability
+/// rules.
+#[inline]
+pub fn map<T>(_frame: Frame, _f: impl FnOnce(Virtual) -> T) -> T {
+    unimplemented!()
 }

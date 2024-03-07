@@ -1,6 +1,5 @@
-use core::ops::{Deref, DerefMut};
-
 use addr::{Frame, Physical, Virtual};
+use zerocopy::FromBytes;
 
 /// The start of the HHDM region. Since the kernel does not use the 5 level paging, the
 /// HHDM region starts at `0xFFFF_8000_0000_0000`. In theory, we should use the value
@@ -8,161 +7,136 @@ use addr::{Frame, Physical, Virtual};
 /// is always `0xFFFF_8000_0000_0000`.
 const HHDM_START: Virtual = Virtual::new(0xFFFF_8000_0000_0000);
 
-/// A window that allows reading and writing to a physical frame.
-/// On this architecture, all physical memory can be mapped to virtual memory,
-/// and therefore, the `AccessWindow` type can simply be implemented with
-/// a simple addition of the physical address to the [`HHDM_START`] address.
-#[derive(Default, Debug)]
-pub struct AccessWindow(Physical);
-
-impl AccessWindow {
-    /// Map a physical frame to a virtual address.
-    ///
-    /// # Safety
-    /// Several conditions must be met to use this function safely:
-    /// - The physical frame should not be used by the kernel.
-    /// - The physical frame should not be already mapped to another virtual
-    /// address.
-    /// - The physical frame must remain valid until the `Mapped` object is
-    /// dropped.
-    #[must_use]
-    pub unsafe fn new(frame: Frame) -> Self {
-        Self(Physical::from(frame))
-    }
-
-    /// Map a range of physical memory to a range of virtual memory.
-    ///
-    /// # Safety
-    /// The caller must be **extremely** careful when using this function,
-    /// because it requires multiples conditions to work safely:
-    /// - The physical memory range should not be used by the kernel.
-    /// - The physical memory range should not be already mapped to another
-    /// virtual address.
-    /// - The physical memory range must remain valid until the `Mapped` object
-    /// is dropped.
-    ///
-    /// Due to how the mapping works on many architecture, it may be possible to
-    /// access physical memory that is located outside of the range because the
-    /// minimal granularity of the mapping. Therefore, the caller must **not**
-    /// access memory outside of the specified range. Doing so will break the
-    /// guarantees of the function and result in undefined behavior.
-    #[must_use]
-    pub unsafe fn range(start: Physical, _len: usize) -> Self {
-        Self(start)
-    }
-
-    /// Map a physical frame to a virtual address and leak the mapping by
-    /// returning the virtual address.
-    ///
-    /// However, the caller can still reclaim the frame by calling manually
-    /// calling [`crate::paging::unmap`] on the returned virtual address.
-    ///
-    /// # Safety
-    /// Several conditions must be met to use this function safely:
-    /// - The physical frame should not be used by the kernel.
-    /// - The physical frame should not be already mapped to another virtual
-    /// address.
-    /// - The physical frame must remain valid until the `Mapped` object is
-    /// dropped.
-    #[must_use]
-    pub unsafe fn leak(frame: Frame) -> Virtual {
-        Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(frame))
-    }
-
-    /// Map a range of physical memory to a range of virtual memory and leak the
-    /// mapping by returning the virtual address.
-    ///
-    /// However, the caller can still reclaim the memory by calling manually
-    /// calling [`crate::paging::unmap`] on the returned virtual address.
-    ///
-    /// # Safety
-    /// The caller must be **extremely** careful when using this function,
-    /// because it requires multiples conditions to work safely:
-    /// - The physical memory range should not be used by the kernel.
-    /// - The physical memory range should not be already mapped to another
-    /// virtual address.
-    /// - The physical memory range must remain valid until the `Mapped` object
-    /// is dropped.
-    ///
-    /// Due to how the mapping works on many architecture, it may be possible to
-    /// access physical memory that is located outside of the range because the
-    /// minimal granularity of the mapping. Therefore, the caller must **not**
-    /// access memory outside of the specified range. Doing so will break the
-    /// guarantees of the function and result in undefined behavior.
-    #[must_use]
-    pub unsafe fn leak_range(start: Physical, _len: usize) -> Virtual {
-        // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in the
-        // `x86_64` architecture, the physical address is at most 52 bits. Therefore, the
-        // addition of the physical address to the HHDM_START will always result in a valid
-        // canonical address.
-        unsafe { Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(start)) }
-    }
-
-    /// Returns the base address of the virtual address where the physical frame
-    /// is mapped.
-    #[must_use]
-    pub fn base(&self) -> Virtual {
-        // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in the
-        // `x86_64` architecture, the physical address is at most 52 bits. Therefore, the
-        // addition of the physical address to the HHDM_START will always result in a valid
-        // canonical address.
-        unsafe { Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(self.0)) }
-    }
+/// Obtain an mutable reference to the object located at the given physical address
+/// during the execution of the given closure.
+///
+/// # Safety
+/// The caller must ensure that the address is properly aligned to the type `T`, and
+/// that the address is not aliased anywhere in the kernel. Failure to do so will
+/// result in undefined behavior !
+#[inline]
+pub unsafe fn access_mut<T, Object: FromBytes>(
+    phys: impl Into<Physical>,
+    f: impl FnOnce(&mut Object) -> T,
+) -> T {
+    f(&mut *translate(phys).as_mut_ptr())
 }
 
-/// A window over a physical memory range that allows reading and writing to an
-/// object of type `T`.
-#[derive(Debug)]
-pub struct Window<T: Sized> {
-    ptr: *mut T,
+/// Obtain a reference to the object located at the given physical address during
+/// the execution of the given closure.
+///
+/// # Safety
+/// The caller must ensure that the address is properly aligned to the type `T`, and
+/// that the address is not mutably aliased in the kernel. Failure to do so will
+/// result in undefined behavior !
+#[inline]
+pub unsafe fn access<T, Object: FromBytes>(
+    phys: impl Into<Physical>,
+    f: impl FnOnce(&Object) -> T,
+) -> T {
+    f(&*translate(phys).as_ptr())
 }
 
-impl<T> Window<T> {
-    /// Create a new window over the given physical memory range. The start
-    /// address of the range is given by `phys` and the length of the range is
-    /// specified by the size of the type `T`.
-    ///
-    /// ***Please, please, read the safety section before using this function. There
-    /// are many conditions that must be met to use this function safely, and
-    /// failing to meet them all will result in undefined behavior that will
-    /// break the kernel in an horrible way !***
-    ///
-    /// # Safety
-    /// This function requires the following conditions to be met to be used
-    /// safely:
-    /// - The physical memory range should not be used or mapped by the kernel.
-    /// - The physical memory range must remain valid until the `Window` object
-    /// is dropped.
-    /// - The physical memory range given must be large enough to contain the
-    /// object of type `T`.
-    /// - The physical memory range must be properly aligned for the type `T`.
-    /// - The physical memory range must be properly initialized before creating
-    /// the `Window` object.
-    /// - The physical memory must contain a valid object of type `T`.
-    #[must_use]
-    pub unsafe fn create(phys: Physical) -> Self {
-        // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in the
-        // `x86_64` architecture, the physical address is at most 52 bits. Therefore, the
-        // addition of the physical address to the HHDM_START will always result in a valid
-        // canonical address.
-        let ptr = (usize::from(HHDM_START) + usize::from(phys)) as *mut T;
-        Self { ptr }
-    }
+/// Create a static mutable reference to the object located at the given physical
+/// address.
+///
+/// This function can be extremely useful during the boot process, when the
+/// kernel needs to allocate memory early on that will remain used for the
+/// entire lifetime of the kernel.
+///
+/// # Safety
+/// - The physical memory range should be valid and free to use.
+/// - The physical memory start address should be properly aligned to the type `T`.
+/// - After this function call, the physical memory range can only be referenced
+/// through the returned reference. If the reference is lost, the physical
+/// range will be leaked.
+#[inline]
+#[must_use]
+pub unsafe fn leak<T: FromBytes>(start: impl Into<Physical>) -> &'static mut T {
+    &mut *translate(start).as_mut_ptr()
 }
 
-impl<T> Deref for Window<T> {
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
-        // SAFETY: This is safe since the pointer is valid and should points
-        // to a valid object of type `T`, properly initialized and aligned.
-        unsafe { &*self.ptr }
-    }
+/// Create a static mutable reference to the slice located at the given physical
+/// address with `count` elements.
+///
+/// # Safety
+/// - The physical memory range should be valid and free to use.
+/// - The physical memory start address should be properly aligned to the type `T`.
+/// - After this function call, the physical memory range can only be referenced
+/// through the returned reference. If the reference is lost, the physical
+/// range will be leaked.
+#[inline]
+#[must_use]
+pub unsafe fn leak_slice<T: FromBytes>(
+    start: impl Into<Physical>,
+    count: usize,
+) -> &'static mut [T] {
+    core::slice::from_raw_parts_mut(translate(start).as_mut_ptr(), count)
 }
 
-impl<T> DerefMut for Window<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        // SAFETY: This is safe since the pointer is valid and should points
-        // to a valid object of type `T`, properly initialized and aligned.
-        unsafe { &mut *self.ptr }
+/// Initialize an object at the given physical address with `obj` and create a
+/// static mutable reference to it.
+///
+/// # Safety
+/// - The physical memory range should be valid and free to use.
+/// - The physical memory start address should be properly aligned to the type `T`.
+/// - After this function call, the physical memory range can only be referenced
+/// through the returned reference. If the reference is lost, the physical
+/// range will be leaked and should never be used again. Failure to do so will
+/// result in undefined behavior !
+#[inline]
+#[must_use]
+pub unsafe fn init_and_leak<T>(start: impl Into<Physical>, obj: T) -> &'static mut T {
+    let ptr = translate(start).as_mut_ptr::<T>();
+    ptr.write(obj);
+    &mut *ptr
+}
+
+/// Initialize a slice at the given physical address with `obj` for each `count`
+/// elements, and create a static mutable reference to it.
+///
+/// # Safety
+/// - The physical memory range should be valid and free to use.
+/// - The physical memory start address should be properly aligned to the type `T`.
+/// - After this function call, the physical memory range can only be referenced
+/// through the returned reference. If the reference is lost, the physical memory
+/// range will be leaked and should never be used again. Failure to do so will
+/// result in undefined behavior !
+#[inline]
+#[must_use]
+pub unsafe fn init_and_leak_slice<T: Copy>(
+    start: impl Into<Physical>,
+    count: usize,
+    obj: T,
+) -> &'static mut [T] {
+    let ptr = translate(start).as_mut_ptr::<T>();
+    for i in 0..count {
+        ptr.add(i).write(obj);
     }
+    core::slice::from_raw_parts_mut(ptr, count)
+}
+
+/// Map a physical frame to a virtual address during the execution of the given
+/// closure. The caller is responsible for ensuring that the virtual address will
+/// be correctly used and that it will not break Rust's aliasing and mutability
+/// rules.
+#[inline]
+pub fn map<T>(frame: Frame, f: impl FnOnce(Virtual) -> T) -> T {
+    f(translate(frame))
+}
+
+/// Translate a physical address to a virtual address. On this architecture, the
+/// translation is very simple since the kernel uses a direct mapping of all the
+/// physical memory, mapped to an fixed virtual address.
+///
+/// However, the caller must ensure to correctly use the returned virtual address
+/// and to no break Rust's aliasing and mutability rules.
+#[inline]
+#[must_use]
+pub(crate) fn translate(phys: impl Into<Physical>) -> Virtual {
+    // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in the
+    // `x86_64` architecture, the physical address is at most 52 bits. Therefore, the
+    // addition of the physical address to the HHDM_START will always result in a valid
+    // canonical address.
+    unsafe { Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(phys.into())) }
 }

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bitflags = { workspace = true }
+zerocopy = { workspace = true }
 macros = { workspace = true }
 addr = { workspace = true }
 hal = { workspace = true }

@@ -28,6 +28,7 @@ hal = { path = "crates/silicium-hal", package = "silicium-hal" }
 arrayvec = { version = "0.7.4", default-features = false }
 talc = { version = "4.3.1", features = ["counters"] }
 static_assertions = "1.1.0"
+zerocopy = "0.7.32"
 bitfield = "0.14.0"
 bitflags = "2.4.2"
 tailcall = "1.0.1"

@@ -121,7 +121,7 @@ impl Pml4 {
             };
 
             // Get the next table and continue the translation
-            let table = &mut *Table::from_frame_mut(frame);
+            let table = &mut *physical::translate(frame).as_mut_ptr::<Table>();
             Self::fetch_entry(&mut table[..], addr, next, behavior)
         } else {
             Ok(entry)
@@ -153,30 +153,6 @@ impl Pml4 {
 
         // Load the page table into the CR3 register
         cpu::cr3::write(self.frame.unwrap_unchecked());
-    }
-
-    /// Returns a mutable pointer to the current page table.
-    #[must_use]
-    pub fn get_current_mut() -> *mut Self {
-        // SAFETY: This is safe because we can always access the current page
-        // table using the HHDM region.
-        unsafe {
-            physical::AccessWindow::new(cpu::cr3::read())
-                .base()
-                .as_mut_ptr::<Self>()
-        }
-    }
-
-    /// Returns a pointer to the current page table.
-    #[must_use]
-    pub fn get_current() -> *const Self {
-        // SAFETY: This is safe because we can always access the current page
-        // table using the HHDM region.
-        unsafe {
-            physical::AccessWindow::new(cpu::cr3::read())
-                .base()
-                .as_ptr::<Self>()
-        }
     }
 
     /// Returns a mutable slice of the page table entries. The slice contains all
@@ -275,12 +251,8 @@ pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level
             let dst_frame = boot::allocator::allocate_frame();
 
             // Copy the source table into the destination table
-            let dst = physical::AccessWindow::new(dst_frame)
-                .base()
-                .as_mut_ptr::<page::Entry>();
-            let src = physical::AccessWindow::new(src_frame)
-                .base()
-                .as_ptr::<page::Entry>();
+            let dst = physical::translate(dst_frame).as_mut_ptr::<page::Entry>();
+            let src = physical::translate(src_frame).as_ptr::<page::Entry>();
             core::ptr::copy_nonoverlapping(src, dst, Table::COUNT);
 
             // Update the destination entry with the new frame address
@@ -288,8 +260,8 @@ pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level
             to.set_address(dst_frame);
 
             // Recursively copy the next level
-            let to = Table::from_frame_mut(dst_frame);
-            let from = Table::from_frame(src_frame);
+            let to = &mut *physical::translate(dst_frame).as_mut_ptr::<Table>();
+            let from = &*physical::translate(src_frame).as_ptr::<Table>();
             recursive_copy(&mut (*to)[..], &(*from)[..], next);
         }
     }

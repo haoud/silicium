@@ -31,7 +31,7 @@ bitflags! {
 /// Information about a frame. It contains the flags set on the frame
 /// and the reference count (only meaningful if the frame is regular
 /// and not free).
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Info {
     pub(super) flags: Flags,
     pub(super) count: u32,

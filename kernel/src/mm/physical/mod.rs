@@ -50,16 +50,17 @@ impl State {
             .map(|entry| Frame::new(usize::from(entry.start)))
             .expect("No suitable memory region found for frame infos");
 
+        let array_count = array_size / core::mem::size_of::<frame::Info>();
+
+        log::trace!("Physical: Frame info array location: {:?}", array_location);
+        log::trace!("Physical: Frame info array size: {} KiB", array_size / 1024);
+
         // Initialize the frame info array with default values and create it from the
         // computed location and size
+        // SAFETY: This is sae because the memory region is valid and free to use,
+        // and is properly aligned to the type `frame::Info`.
         let array = unsafe {
-            let start = Physical::from(array_location);
-            let base = arch::physical::AccessWindow::leak_range(start, array_size);
-            let ptr = base.as_mut_ptr::<frame::Info>();
-            let len = array_size / core::mem::size_of::<frame::Info>();
-
-            (0..len).for_each(|i| ptr.add(i).write(frame::Info::new()));
-            core::slice::from_raw_parts_mut(ptr, len)
+            arch::physical::init_and_leak_slice(array_location, array_count, frame::Info::default())
         };
 
         let mut poisoned = array.len();

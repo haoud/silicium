@@ -14,9 +14,9 @@ use macros::init;
 #[must_use]
 pub unsafe fn boot_allocate(size: usize) -> *mut u8 {
     let start = boot::allocator::allocate_align_physical(size, 16);
-    let base = physical::AccessWindow::leak_range(start, size);
-    assert!(!base.as_mut_ptr::<u8>().is_null());
-    base.as_mut_ptr::<u8>()
+    assert!(usize::from(start) != 0);
+
+    physical::translate(start).as_mut_ptr::<u8>()
 }
 
 /// Allocate a zeroed frame using the boot allocator.
@@ -31,9 +31,9 @@ pub unsafe fn boot_allocate(size: usize) -> *mut u8 {
 #[must_use]
 pub unsafe fn boot_zeroed_frame() -> Frame {
     let frame = boot::allocator::allocate_frame();
-    let base = physical::AccessWindow::leak(frame);
-
-    assert!(!base.as_mut_ptr::<u8>().is_null());
-    base.as_mut_ptr::<u8>().write_bytes(0, 4096);
-    frame
+    assert!(usize::from(frame) != 0);
+    physical::map(frame, |virt| {
+        virt.as_mut_ptr::<u8>().write_bytes(0, 4096);
+        frame
+    })
 }
