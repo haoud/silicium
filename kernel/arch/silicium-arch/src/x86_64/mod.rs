@@ -1,4 +1,5 @@
 pub mod irq;
+#[cfg(not(test))]
 pub mod lang;
 pub mod log;
 pub mod paging;

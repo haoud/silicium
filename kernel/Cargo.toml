@@ -21,6 +21,7 @@ all = "deny"
 [workspace.dependencies]
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
+arch = { path = "arch/silicium-arch", package = "silicium-arch" }
 boot = { path = "crates/silicium-boot", package = "silicium-boot" }
 addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
@@ -36,11 +37,11 @@ limine = "0.2"
 log = "0.4.20"
 
 [dependencies]
-arch = { path = "arch/silicium-arch", package = "silicium-arch" }
 bitflags = { workspace = true }
 macros = { workspace = true }
 config = { workspace = true }
 addr = { workspace = true }
+arch = { workspace = true }
 boot = { workspace = true }
 spin = { workspace = true }
 talc = { workspace = true }
