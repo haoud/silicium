@@ -8,8 +8,8 @@ use spin::Spinlock;
 /// memory allocator (not yet implemented).
 ///
 /// TODO: Maybe integrate the virtual memory allocator with the heap allocator ?
-#[cfg(not(test))]
 #[global_allocator]
+#[cfg(not(test))]
 static ALLOCATOR: talc::Talck<Spinlock<()>, OomHandler> =
     talc::Talck::new(talc::Talc::new(OomHandler {}));
 
