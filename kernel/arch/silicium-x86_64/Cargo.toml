@@ -8,6 +8,7 @@ arch-macros = { path = "macros", package = "macros" }
 bitfield = { workspace = true }
 bitflags = { workspace = true }
 tailcall = { workspace = true }
+zerocopy = { workspace = true }
 limine = { workspace = true }
 macros = { workspace = true }
 config = { workspace = true }
@@ -15,6 +16,7 @@ addr = { workspace = true }
 boot = { workspace = true }
 spin = { workspace = true }
 log = { workspace = true }
+hal = { workspace = true }
 
 [lints]
 workspace = true

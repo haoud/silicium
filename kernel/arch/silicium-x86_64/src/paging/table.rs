@@ -1,5 +1,4 @@
 use super::page;
-use addr::{Frame, Virtual};
 use core::ops::{Deref, DerefMut};
 
 /// A page table, which is a collection of page table entries. A page table
@@ -19,25 +18,7 @@ impl Table {
     pub const fn empty() -> Self {
         Self([page::Entry::empty(); Self::COUNT])
     }
-
-    /// Returns a mutable pointer to the page table from the given frame.
-    #[must_use]
-    pub fn from_frame_mut(frame: Frame) -> *mut Self {
-        let virt = Virtual::from(frame);
-        virt.as_mut_ptr::<Self>()
-    }
-
-    /// Returns a pointer to the page table from the given frame.
-    #[must_use]
-    pub fn from_frame(frame: Frame) -> *const Self {
-        let virt = Virtual::from(frame);
-        virt.as_ptr::<Self>()
-    }
 }
-
-/// The page table is not `Unpin` because it when it is loaded into the CR3
-/// register, it is not allowed to move in memory.
-impl !Unpin for Table {}
 
 impl Deref for Table {
     type Target = [page::Entry; Table::COUNT];

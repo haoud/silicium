@@ -70,8 +70,8 @@ impl Frame {
     /// Panics if the given index is larger than the maximum supported frame index on the
     /// `x86_64` architecture, which is represented by [`Frame::MAX_INDEX`].
     #[must_use]
-    pub fn from_index(index: usize) -> Self {
-        Self::new(index << usize::from(PAGE_SHIFT))
+    pub const fn from_index(index: usize) -> Self {
+        Self::new(index << PAGE_SHIFT)
     }
 
     /// Creates a new `Frame` from the given pointer.

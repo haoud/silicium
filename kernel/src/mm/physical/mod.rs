@@ -1,4 +1,4 @@
-use addr::{Physical, Virtual};
+use addr::{Frame, Physical};
 use config::PAGE_SIZE;
 use macros::init;
 use spin::Spinlock;
@@ -46,17 +46,21 @@ impl State {
         let array_location = mmap
             .iter()
             .filter(|entry| entry.kind == boot::mmap::Kind::Usable)
-            .find(|entry| entry.length >= array_size)
+            .find(|entry| entry.length >= array_size + 4096)
+            .map(|entry| Frame::new(usize::from(entry.start)))
             .expect("No suitable memory region found for frame infos");
+
+        let array_count = array_size / core::mem::size_of::<frame::Info>();
+
+        log::trace!("Physical: Frame info array location: {:?}", array_location);
+        log::trace!("Physical: Frame info array size: {} KiB", array_size / 1024);
 
         // Initialize the frame info array with default values and create it from the
         // computed location and size
+        // SAFETY: This is sae because the memory region is valid and free to use,
+        // and is properly aligned to the type `frame::Info`.
         let array = unsafe {
-            let ptr = Virtual::from(array_location.start).as_mut_ptr::<frame::Info>();
-            let len = array_size / core::mem::size_of::<frame::Info>();
-
-            (0..len).for_each(|i| ptr.add(i).write(frame::Info::new()));
-            core::slice::from_raw_parts_mut(ptr, len)
+            arch::physical::init_and_leak_slice(array_location, array_count, frame::Info::default())
         };
 
         let mut poisoned = array.len();
@@ -68,10 +72,11 @@ impl State {
         // Initialize the frame info array with the given memory map and
         // update the statistics about the memory usage of the system.
         for entry in mmap {
-            let start = Self::frame_info_index(entry.start);
-            let end = Self::frame_info_index(entry.end());
-
-            for frame in array.iter_mut().take(end).skip(start) {
+            for frame in array
+                .iter_mut()
+                .take(Self::frame_info_index(entry.end()))
+                .skip(Self::frame_info_index(entry.start))
+            {
                 frame.flags &= !frame::Flags::POISONED;
                 poisoned -= 1;
 
@@ -110,8 +115,8 @@ impl State {
 
         // Mark the frame used by the array as used by the kernel. This is done to prevent the frame
         // used by the info array from being used for allocation
-        let start = Self::frame_info_index(array_location.start);
         let count = (array_size / usize::from(PAGE_SIZE)) + 1;
+        let start = array_location.index();
         for frame in array.iter_mut().take(start).skip(start + count) {
             frame.flags |= frame::Flags::KERNEL;
             frame.count = 1;

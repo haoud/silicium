@@ -2,6 +2,8 @@ use addr::{Frame, Virtual};
 use macros::init;
 use pml4::{MissingEntry, Pml4};
 
+use crate::{bump, cpu, physical};
+
 pub mod page;
 pub mod pml4;
 pub mod table;
@@ -31,7 +33,7 @@ pub unsafe fn setup() {
     // in bootloader reclaimable memory and we will free this memory
     // after the kernel initialization. This allow us to set the `GLOBAL`
     // flags in all kernel entries, improving performances
-    let current = &*Pml4::get_current_mut();
+    let current = &*physical::translate(cpu::cr3::read()).as_mut_ptr::<Pml4>();
     pml4::recursive_copy(
         KERNEL_PML4.kernel_space_mut(),
         current.kernel_space(),
@@ -56,7 +58,7 @@ pub unsafe fn setup() {
         .iter_mut()
         .filter(|entry| !entry.present())
         .for_each(|entry| {
-            let frame = boot::allocator::allocate_zeroed_frame();
+            let frame = bump::boot_zeroed_frame();
             entry.add_flags(page::Flags::PRESENT | page::Flags::WRITABLE | page::Flags::GLOBAL);
             entry.set_address(frame);
         });

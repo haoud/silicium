@@ -1,11 +1,10 @@
 use super::{
     page,
     table::{self, Table},
-    translate,
+    translate, KERNEL_PML4,
 };
-use crate::cpu;
+use crate::{cpu, physical};
 use addr::{Frame, Virtual};
-use core::pin::Pin;
 use macros::init;
 use tailcall::tailcall;
 
@@ -19,7 +18,7 @@ use tailcall::tailcall;
 #[derive(Debug)]
 pub struct Pml4 {
     /// The page map level 4 table
-    table: Pin<Table>,
+    table: Table,
 
     /// The physical address of the page table. This is used to load the page table
     /// into the CR3 register. If this is `None`, the physical address of the page
@@ -28,6 +27,22 @@ pub struct Pml4 {
 }
 
 impl Pml4 {
+    /// Create a new root page table, with an empty user space and with the global
+    /// kernel space. The kernel space is copied from the kernel PML4 table.
+    /// Unlike the [`empty`] function, the returned page table is valid and can be
+    /// loaded into the CR3 register without triple faulting.
+    #[must_use]
+    pub fn new() -> Self {
+        // SAFETY: This is safe because the kernel PML4 is never modified
+        // after the kernel initialization. We also doesn't create multiple
+        // mutable references to the kernel PML4.
+        let kernel_space = unsafe { KERNEL_PML4.kernel_space() };
+
+        let mut pml4 = Self::empty();
+        pml4.kernel_space_mut().copy_from_slice(kernel_space);
+        pml4
+    }
+
     /// Create a new empty root page table, with all entries set to empty. Loading
     /// this page table into the CR3 register will result in a page fault that will
     /// lead to a double and triple fault because there is no translation for any
@@ -35,7 +50,7 @@ impl Pml4 {
     #[must_use]
     pub const fn empty() -> Self {
         Self {
-            table: Pin::new(Table::empty()),
+            table: Table::empty(),
             frame: None,
         }
     }
@@ -106,7 +121,7 @@ impl Pml4 {
             };
 
             // Get the next table and continue the translation
-            let table = &mut *Table::from_frame_mut(frame);
+            let table = &mut *physical::translate(frame).as_mut_ptr::<Table>();
             Self::fetch_entry(&mut table[..], addr, next, behavior)
         } else {
             Ok(entry)
@@ -138,20 +153,6 @@ impl Pml4 {
 
         // Load the page table into the CR3 register
         cpu::cr3::write(self.frame.unwrap_unchecked());
-    }
-
-    /// Returns a mutable pointer to the current page table.
-    #[must_use]
-    pub fn get_current_mut() -> *mut Self {
-        let current = Virtual::from(cpu::cr3::read());
-        current.as_mut_ptr::<Self>()
-    }
-
-    /// Returns a pointer to the current page table.
-    #[must_use]
-    pub fn get_current() -> *const Self {
-        let current = Virtual::from(cpu::cr3::read());
-        current.as_ptr::<Self>()
     }
 
     /// Returns a mutable slice of the page table entries. The slice contains all
@@ -205,6 +206,12 @@ impl Pml4 {
     }
 }
 
+impl Default for Pml4 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Recursively copy all the entries from the source table to the destination table.
 /// The destination table should be empty because if the destination table or its
 /// children already contains page entries, they are simply overwritten and the old
@@ -244,8 +251,8 @@ pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level
             let dst_frame = boot::allocator::allocate_frame();
 
             // Copy the source table into the destination table
-            let dst = Virtual::from(dst_frame).as_mut_ptr::<page::Entry>();
-            let src = Virtual::from(src_frame).as_ptr::<page::Entry>();
+            let dst = physical::translate(dst_frame).as_mut_ptr::<page::Entry>();
+            let src = physical::translate(src_frame).as_ptr::<page::Entry>();
             core::ptr::copy_nonoverlapping(src, dst, Table::COUNT);
 
             // Update the destination entry with the new frame address
@@ -253,8 +260,8 @@ pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level
             to.set_address(dst_frame);
 
             // Recursively copy the next level
-            let to = Table::from_frame_mut(dst_frame);
-            let from = Table::from_frame(src_frame);
+            let to = &mut *physical::translate(dst_frame).as_mut_ptr::<Table>();
+            let from = &*physical::translate(src_frame).as_ptr::<Table>();
             recursive_copy(&mut (*to)[..], &(*from)[..], next);
         }
     }

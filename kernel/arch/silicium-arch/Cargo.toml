@@ -1,5 +1,5 @@
 [package]
-name = "silicium-hal"
+name = "silicium-arch"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,10 +9,12 @@ arch = { path = "../silicium-x86_64", package = "silicium-x86_64" }
 
 [dependencies]
 arrayvec = { workspace = true }
+bitflags = { workspace = true }
 limine = { workspace = true }
 addr = { workspace = true }
 boot = { workspace = true }
 spin = { workspace = true }
+hal = { workspace = true }
 log = { workspace = true }
 
 [features]
@@ -22,4 +24,3 @@ logging = []
 
 [lints]
 workspace = true
-

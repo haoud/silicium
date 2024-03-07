@@ -1,5 +1,4 @@
 use super::physical::{self, allocator::Flags};
-use addr::Virtual;
 use config::PAGE_SHIFT;
 use spin::Spinlock;
 
@@ -46,8 +45,9 @@ impl talc::OomHandler for OomHandler {
             .ok_or(())?;
 
         // Convert the physical address to a virtual address
-        let start = Virtual::from(frames).as_mut_ptr::<u8>();
-        let end = unsafe { start.byte_add(Self::ALLOCATION_SIZE) };
+        let memory = unsafe { arch::physical::leak_slice::<u8>(frames, Self::ALLOCATION_SIZE) };
+        let end = unsafe { memory.as_mut_ptr().byte_add(Self::ALLOCATION_SIZE) };
+        let start = memory.as_mut_ptr();
 
         // SAFETY: The given span is valid, does not overlapp with any other span, is not
         // in use anywhere else in the system and is valid for reads and writes.

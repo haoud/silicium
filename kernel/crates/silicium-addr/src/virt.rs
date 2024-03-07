@@ -1,12 +1,3 @@
-use super::Physical;
-use crate::Frame;
-
-/// The start of the HHDM region. Since the kernel does not use the 5 level paging, the
-/// HHDM region starts at `0xFFFF_8000_0000_0000`. In theory, we should use the value
-/// given by Limine in the HHDM response but with the current implementation, the value
-/// is always `0xFFFF_8000_0000_0000`.
-const HHDM_START: Virtual = Virtual::new(0xFFFF_8000_0000_0000);
-
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Virtual(pub(crate) usize);
@@ -109,27 +100,6 @@ impl const From<Virtual> for usize {
 impl const From<Virtual> for u64 {
     fn from(addr: Virtual) -> u64 {
         addr.0 as u64
-    }
-}
-
-impl const From<Physical> for Virtual {
-    fn from(addr: Physical) -> Self {
-        // SAFETY: This is safe because the HHDM region is always mapped to the high half
-        // of the virtual address space, and the physical address is always valid and
-        // never greater than the maximum physical address. So the resulting virtual is
-        // always in the kernel address space.
-        unsafe { Self::new_unchecked(addr.0 + HHDM_START.0) }
-    }
-}
-
-impl const From<Frame> for Virtual {
-    fn from(frame: Frame) -> Self {
-        // SAFETY: This is safe because the HHDM region is always mapped to the high half
-        // of the virtual address space, and the physical address is always valid and
-        // never greater than the maximum physical address. So the resulting virtual is
-        // always in the kernel address space.
-        //log::debug!("frame: {:#x}", usize::from(frame.0));
-        unsafe { Self::new_unchecked(frame.0 .0 + HHDM_START.0) }
     }
 }
 
