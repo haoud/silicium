@@ -11,8 +11,8 @@
 /// In most cases, this means that the function should set a flag during the first
 /// panic and then check for the flag during subsequent panics. If the flag is set,
 /// the function should halt the CPU instead of trying to handle the panic.
-#[cfg(not(test))]
-#[panic_handler]
 pub fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {}
+    loop {
+        core::hint::spin_loop();
+    }
 }

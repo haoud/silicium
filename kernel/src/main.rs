@@ -1,10 +1,11 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 #![feature(const_mut_refs)]
-use macros::init;
 
 extern crate alloc;
 
+#[cfg(not(test))]
+pub mod lang;
 pub mod mm;
 
 /// The entry point for the kernel. This function call the architecture specific setup
@@ -13,9 +14,9 @@ pub mod mm;
 /// # Safety
 /// This function is marked as unsafe because it must be called only once at the start
 /// of the kernel. Failing to do so will result in undefined behavior.
-#[cfg(not(test))]
 #[no_mangle]
-#[init]
+#[macros::init]
+#[cfg(not(test))]
 pub unsafe extern "C" fn _start() -> ! {
     // Call the architecture specific setup function
     let info = arch::setup();

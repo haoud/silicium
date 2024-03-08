@@ -1,20 +1,20 @@
 .PHONY: build						\
 	unit-tests 						\
 	build-kernel 					\
-	build-servers 				\
-	build-userspace				\
+	build-servers 					\
+	build-userspace					\
 	build-book						\
 	build-docs						\
 	check-clippy					\
 	check-format					\
-	unit-tests-kernel 		\
-	unit-tests-servers 		\
-	unit-tests-userspace 	\
-	integration-tests			\
-	run-i686						 	\
+	unit-tests-kernel 				\
+	unit-tests-servers 				\
+	unit-tests-userspace 			\
+	integration-tests				\
+	run-i686						\
 	run-x86_64 						\
 	run-aarch64 					\
-	clean									\
+	clean							\
 	help
 
 run: run-x86_64
@@ -54,7 +54,7 @@ check-format:
 
 
 unit-tests-kernel:
-	# cd kernel && cargo test --release --target=x86_64-unknown-linux-gnu -Z build-std
+	cd kernel && cargo test --release --target=x86_64-unknown-linux-gnu -Z build-std
 
 unit-tests-servers:
 	

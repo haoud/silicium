@@ -1,7 +1,6 @@
 use arch::{apic, cpu, irq, smp};
 
 #[cfg(feature = "panic_info")]
-#[panic_handler]
 pub fn panic(info: &core::panic::PanicInfo) -> ! {
     use arch::apic::local::{IpiDestination, IpiPriority};
 
@@ -30,7 +29,6 @@ pub fn panic(info: &core::panic::PanicInfo) -> ! {
 }
 
 #[cfg(not(feature = "panic_info"))]
-#[panic_handler]
 pub fn panic(_: &core::panic::PanicInfo) -> ! {
     use arch::apic::local::{IpiDestination, IpiPriority};
 

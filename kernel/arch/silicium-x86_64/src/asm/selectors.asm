@@ -4,7 +4,7 @@
 # This function is put in the .init section because it should only be called
 # once per core at the beginning of the kernel.
 .global reload_selectors
-.section .init
+.section .init.reload_selectors
 reload_selectors:
   mov rax, 0x10
   mov ds, ax    # Load the kernel data segment
