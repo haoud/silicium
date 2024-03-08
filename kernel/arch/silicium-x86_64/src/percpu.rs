@@ -313,3 +313,15 @@ pub unsafe fn get_percpu_section() -> usize {
     core::arch::asm!("mov {}, gs:0", out(reg) percpu);
     percpu
 }
+
+/// Set the kernel stack pointer that will be used when the user code will trigger an
+/// system call.
+///
+/// # Safety
+/// The caller must ensure that the given stack pointer is a valid stack pointer and
+/// points to a valid stack that is big enough to be used as a kernel stack. The
+/// stack must remain valid while this stack pointer is used as the kernel stack.
+/// ***Please remember when passing the rsp argument that the stack grows downwards !***
+pub unsafe fn set_kernel_stack(rsp: *mut usize) {
+    core::arch::asm!("mov gs:16, {}", in(reg) rsp as u64);
+}

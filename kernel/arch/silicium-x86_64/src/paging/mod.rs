@@ -13,7 +13,7 @@ pub mod tlb;
 /// during the kernel initialization and is never modified after that. It allows us to
 /// free the memory used by the bootloader and to create new PML4 extremely fast by
 /// simply copying the kernel space of this PML4 into the new one.
-static mut KERNEL_PML4: Pml4 = Pml4::empty();
+pub static mut KERNEL_PML4: Pml4 = Pml4::empty();
 
 /// Setup the kernel paging environment. This function recursively
 /// copy the current PML4 and his subtables into the `KERNEL_PML4`
