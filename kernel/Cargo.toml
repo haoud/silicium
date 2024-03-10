@@ -5,7 +5,6 @@ edition = "2021"
 
 [workspace]
 members = [
-    "arch/*",
     "crates/*",
 ]
 
@@ -20,7 +19,6 @@ all = "warn"
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
 align = { path = "crates/silicium-align", package = "silicium-align" }
-arch = { path = "arch/silicium-arch", package = "silicium-arch" }
 boot = { path = "crates/silicium-boot", package = "silicium-boot" }
 addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
@@ -37,14 +35,19 @@ limine = "0.2"
 log = "0.4.20"
 
 [dependencies]
+bitfield = { workspace = true }
 bitflags = { workspace = true }
+tailcall = { workspace = true }
+zerocopy = { workspace = true }
+limine = { workspace = true }
 macros = { workspace = true }
 config = { workspace = true }
+align = { workspace = true }
 addr = { workspace = true }
-arch = { workspace = true }
 boot = { workspace = true }
 spin = { workspace = true }
 talc = { workspace = true }
+time = { workspace = true }
 hal = { workspace = true }
 log = { workspace = true }
 
@@ -52,10 +55,10 @@ log = { workspace = true }
 default = ["panic_info", "logging"]
 
 # Enable panic messages at the cost of increased binary size, but useful for debugging
-panic_info = ["arch/panic_info"]
+panic_info = []
 
 # Enable logging at the cost of reduced performance and increased binary size
-logging = ["arch/logging"]
+logging = []
 
 [profile.release]
 codegen-units = 1

@@ -1,4 +1,4 @@
-use super::{Nanosecond, Nanosecond32};
+use crate::unit::{Nanosecond, Nanosecond32};
 
 /// Represents a duration in seconds
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

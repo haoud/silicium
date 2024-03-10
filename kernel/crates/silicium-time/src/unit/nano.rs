@@ -1,4 +1,4 @@
-use super::{Overflow, Second, Second32};
+use crate::unit::{Overflow, Second, Second32};
 
 /// Represents a duration in nanoseconds
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

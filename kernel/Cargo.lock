@@ -36,16 +36,21 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 name = "kernel"
 version = "0.1.0"
 dependencies = [
+ "bitfield",
  "bitflags",
+ "limine",
  "log",
  "silicium-addr",
- "silicium-arch",
+ "silicium-align",
  "silicium-boot",
  "silicium-config",
  "silicium-hal",
  "silicium-macros",
  "silicium-spin",
+ "silicium-time",
+ "tailcall",
  "talc",
+ "zerocopy",
 ]
 
 [[package]]
@@ -72,15 +77,6 @@ name = "log"
 version = "0.4.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
-
-[[package]]
-name = "macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.52",
-]
 
 [[package]]
 name = "proc-macro2"
@@ -117,34 +113,6 @@ dependencies = [
 [[package]]
 name = "silicium-align"
 version = "0.1.0"
-
-[[package]]
-name = "silicium-arch"
-version = "0.1.0"
-dependencies = [
- "arrayvec",
- "bitflags",
- "limine",
- "log",
- "macros",
- "silicium-addr",
- "silicium-boot",
- "silicium-hal",
- "silicium-spin",
- "silicium-x86_64",
-]
-
-[[package]]
-name = "silicium-arch-example"
-version = "0.1.0"
-dependencies = [
- "bitflags",
- "log",
- "silicium-addr",
- "silicium-hal",
- "silicium-macros",
- "zerocopy",
-]
 
 [[package]]
 name = "silicium-boot"
@@ -191,27 +159,6 @@ dependencies = [
 [[package]]
 name = "silicium-time"
 version = "0.1.0"
-
-[[package]]
-name = "silicium-x86_64"
-version = "0.1.0"
-dependencies = [
- "bitfield",
- "bitflags",
- "limine",
- "log",
- "macros",
- "silicium-addr",
- "silicium-align",
- "silicium-boot",
- "silicium-config",
- "silicium-hal",
- "silicium-macros",
- "silicium-spin",
- "silicium-time",
- "tailcall",
- "zerocopy",
-]
 
 [[package]]
 name = "spin"

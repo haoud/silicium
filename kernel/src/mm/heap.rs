@@ -1,4 +1,7 @@
-use super::physical::{self, allocator::Flags};
+use crate::{
+    arch,
+    mm::physical::{self, allocator::Flags},
+};
 use config::PAGE_SHIFT;
 use spin::Spinlock;
 
