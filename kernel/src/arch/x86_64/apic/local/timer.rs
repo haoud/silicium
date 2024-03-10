@@ -85,7 +85,7 @@ pub unsafe fn setup() {
     // - Set the IRQ vector to 32, periodic mode
     // - Set the divide configuration to 0011 (divide by 16)
     // - Set the initial count to the computed value
-    apic::local::write(Register::LVT_TIMER, u32::from(IRQ_VECTOR));
+    apic::local::write(Register::LVT_TIMER, u32::from(IRQ_VECTOR) | 0x20000);
     apic::local::write(Register::DIVIDE_CONFIGURATION, 0b0011);
     apic::local::write(Register::INITIAL_COUNT, counter);
 }
@@ -124,9 +124,9 @@ pub fn handle_irq(_: &mut InterruptFrame) {
     // keep track of the time
     if smp::is_bsp() {
         JIFFIES.fetch_add(1, Ordering::Relaxed);
-        log::debug!("APIC: Jiffies: {}", JIFFIES.load(Ordering::Relaxed));
     }
 
     // TODO: Call the scheduler
+    crate::scheduler::tick();
     // TODO: Handle timers
 }

@@ -251,13 +251,49 @@ impl Default for Registers {
     }
 }
 
+// ##########################################################################
+
+#[derive(Debug)]
+pub struct SwitchContext {
+    prev: *mut Registers,
+    next: *const Registers,
+}
+
+impl SwitchContext {
+    /// Creates a new switch context with the given previous and next threads.
+    #[must_use]
+    const fn new(prev: &Thread, next: &Thread) -> Self {
+        Self {
+            prev: prev.kstack.registers(),
+            next: next.kstack.registers(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct JumpContext {
+    regs: *const Registers,
+}
+
+impl JumpContext {
+    /// Creates a new jump context with the given thread.
+    #[must_use]
+    const fn new(thread: &Thread) -> Self {
+        Self {
+            regs: thread.kstack.registers(),
+        }
+    }
+}
+
 /// Prepare the thread to be switched to. This function should be called before
 /// calling the `perform_switch` function.
 /// It will change the kernel stack and the page map level 4 table to the one
 /// associated with the thread.
-pub fn prepare_switch(_prev: &mut Thread, next: &mut Thread) {
+#[must_use]
+pub fn prepare_switch(prev: &mut Thread, next: &mut Thread) -> SwitchContext {
     next.change_kernel_stack();
     next.change_pml4();
+    SwitchContext::new(prev, next)
 }
 
 /// # Important
@@ -270,17 +306,17 @@ pub fn prepare_switch(_prev: &mut Thread, next: &mut Thread) {
 /// The caller must ensure that switching threads is safe and that will not result
 /// in undefined behavior or memory unsafety. The caller must also ensure that the
 /// given registers pointers are valid.
-pub unsafe fn perform_switch(prev: *mut Registers, next: *const Registers) {
-    thread_switch(prev, next);
+pub unsafe fn perform_switch(switch: SwitchContext) {
+    thread_switch(switch.prev, switch.next);
 }
 
-/// Prepare the thread to be jumped to. This function should be called before
-/// calling the `perform_jump` function.
-/// It will change the kernel stack and the page map level 4 table to the one
-/// associated with the thread.
-pub fn prepare_jump(thread: &mut Thread) {
+/// Prepare the thread to be jumped to and return the registers pointer to be
+/// used by the `perform_jump` function.
+#[must_use]
+pub fn prepare_jump(thread: &mut Thread) -> JumpContext {
     thread.change_kernel_stack();
     thread.change_pml4();
+    JumpContext::new(thread)
 }
 
 /// # Important
@@ -293,6 +329,6 @@ pub fn prepare_jump(thread: &mut Thread) {
 /// The caller must ensure that jumping to the given registers is safe and that
 /// will not result in undefined behavior or memory unsafety. The caller must also
 /// ensure that the given registers pointer are valid.
-pub unsafe fn perform_jump(regs: *const Registers) {
-    thread_jump(regs);
+pub unsafe fn perform_jump(jump: JumpContext) -> ! {
+    thread_jump(jump.regs);
 }

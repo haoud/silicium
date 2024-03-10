@@ -1,4 +1,7 @@
-use crate::arch::x86_64::{apic, cpu, gdt, idt, paging, percpu, simd, tss};
+use crate::{
+    arch::x86_64::{apic, gdt, idt, paging, percpu, simd, tss},
+    scheduler,
+};
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use macros::init;
 
@@ -91,7 +94,5 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     CPU_COUNT.fetch_add(1, Ordering::SeqCst);
 
     log::info!("AP {} correctly booted", info.lapic_id);
-    // TODO: Call the scheduler and idle the APs until they
-    // have something to do
-    cpu::halt();
+    scheduler::enter()
 }
