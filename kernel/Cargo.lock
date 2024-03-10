@@ -46,6 +46,7 @@ dependencies = [
  "silicium-config",
  "silicium-hal",
  "silicium-macros",
+ "silicium-seqlock",
  "silicium-spin",
  "silicium-time",
  "tailcall",
@@ -152,6 +153,9 @@ dependencies = [
 [[package]]
 name = "silicium-seqlock"
 version = "0.1.0"
+dependencies = [
+ "silicium-spin",
+]
 
 [[package]]
 name = "silicium-spin"

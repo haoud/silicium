@@ -28,10 +28,12 @@ use core::{
     mem::MaybeUninit,
     sync::atomic::{AtomicUsize, Ordering},
 };
+use spin::Spinlock;
 
 /// A sequential lock
 pub struct SeqLock<T> {
     data: UnsafeCell<T>,
+    spin: Spinlock<()>,
     seq: AtomicUsize,
 }
 
@@ -50,12 +52,18 @@ impl<T: Copy> SeqLock<T> {
         Self {
             data: UnsafeCell::new(data),
             seq: AtomicUsize::new(0),
+            spin: Spinlock::new(()),
         }
     }
 
-    /// Write data to the `SeqLock`. This function is extremely fast, and will
-    /// complete in a few instructions without spinning.
+    /// Write data to the `SeqLock`. This will acquire a lock to ensure that the write
+    /// is not interleaved with other writes, and will use the sequence number to ensure
+    /// that reads wait for the write to complete.
     pub fn write(&self, data: T) {
+        // Acquire a lock to ensure that we have an exclusive write access to the data
+        // to avoid multiple writes to the data at the same time.
+        let _lock = self.spin.lock();
+
         // Increment the sequence number to indicate that the data is being written. The
         // sequence number will become odd, and the reader will wait for it to become even
         // before reading the data.
@@ -135,6 +143,7 @@ impl<T: Copy + core::fmt::Debug> core::fmt::Debug for SeqLock<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("SeqLock")
             .field("data", &self.read())
+            .field("spin", &self.spin)
             .field("seq", &self.seq)
             .finish()
     }

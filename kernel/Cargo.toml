@@ -16,6 +16,7 @@ pedantic = "warn"
 all = "warn"
 
 [workspace.dependencies]
+seqlock = { path = "crates/silicium-seqlock", package = "silicium-seqlock" }
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
 align = { path = "crates/silicium-align", package = "silicium-align" }
@@ -24,6 +25,7 @@ addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
 time = { path = "crates/silicium-time", package = "silicium-time" }
 hal = { path = "crates/silicium-hal", package = "silicium-hal" }
+
 arrayvec = { version = "0.7.4", default-features = false }
 talc = { version = "4.3.1", features = ["counters"] }
 static_assertions = "1.1.0"
@@ -39,6 +41,7 @@ bitfield = { workspace = true }
 bitflags = { workspace = true }
 tailcall = { workspace = true }
 zerocopy = { workspace = true }
+seqlock = { workspace = true }
 limine = { workspace = true }
 macros = { workspace = true }
 config = { workspace = true }
