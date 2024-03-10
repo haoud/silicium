@@ -1,4 +1,4 @@
-use crate::unit::{Nanosecond, Nanosecond32};
+use crate::unit::{Millisecond, Millisecond32, Nanosecond, Nanosecond32};
 
 /// Represents a duration in seconds
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -8,6 +8,12 @@ impl Second {
     #[must_use]
     pub const fn new(value: u64) -> Self {
         Self(value)
+    }
+}
+
+impl From<Millisecond> for Second {
+    fn from(milli: Millisecond) -> Self {
+        Self(milli.0 / 1_000)
     }
 }
 
@@ -25,6 +31,12 @@ impl Second32 {
     #[must_use]
     pub const fn new(value: u32) -> Self {
         Self(value)
+    }
+}
+
+impl From<Millisecond32> for Second32 {
+    fn from(milli: Millisecond32) -> Self {
+        Self(milli.0 / 1_000)
     }
 }
 
