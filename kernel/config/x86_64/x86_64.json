@@ -8,7 +8,7 @@
     "os": "none",
     "executables": true,
     "linker-flavor": "ld.lld",
-    "linker": "rust-lld",
+    "linker": "lld",
     "pre-link-args": {
         "ld.lld": ["-Tconfig/x86_64/link.ld"]
     },
