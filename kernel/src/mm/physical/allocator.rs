@@ -1,4 +1,4 @@
-use super::{frame, STATE};
+use crate::mm::physical::{frame, STATE};
 use addr::Frame;
 
 pub struct Allocator;

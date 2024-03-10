@@ -1,3 +1,4 @@
+use crate::arch;
 use addr::{Frame, Physical};
 use config::PAGE_SIZE;
 use macros::init;

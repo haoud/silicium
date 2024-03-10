@@ -1,11 +1,13 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
+#![feature(panic_info_message)]
 #![feature(const_mut_refs)]
+#![feature(negative_impls)]
+#![feature(new_uninit)]
 
 extern crate alloc;
 
-#[cfg(not(test))]
-pub mod lang;
+pub mod arch;
 pub mod mm;
 
 /// The entry point for the kernel. This function call the architecture specific setup
