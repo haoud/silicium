@@ -6,26 +6,3 @@ pub mod x86_64;
 
 #[cfg(target_arch = "x86_64")]
 pub use x86_64::*;
-
-/// # Safety
-pub unsafe fn test() {
-    let mut thread = arch::thread::Thread::kernel(hello);
-    let register = thread.kstack().registers();
-    arch::thread::prepare_jump(&mut thread);
-    arch::thread::perform_jump(register);
-}
-
-fn hello() -> ! {
-    let mut i = 0;
-    // SAFETY: This is safe
-    unsafe {
-        arch::irq::enable();
-    }
-    loop {
-        arch::irq::wait();
-        i += 1;
-        if i % 1000 == 100 {
-            ::log::info!("Hello, world!");
-        }
-    }
-}
