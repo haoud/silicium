@@ -5,7 +5,7 @@ use macros::init;
 /// The Task State Segment (TSS) for the current CPU core. It is initialized to an
 /// uninitialized TSS and should be initialized before being used.
 #[per_cpu]
-static TSS: TaskStateSegment = TaskStateSegment::uninitialized();
+static mut TSS: TaskStateSegment = TaskStateSegment::uninitialized();
 
 /// The selector used to load the TSS in the current CPU core.
 pub const LTR_SELECTOR: u16 = 0x30;
@@ -37,8 +37,8 @@ pub struct TaskStateSegment {
 }
 
 impl TaskStateSegment {
-    /// Creates a new Task State Segment (TSS) with uninitialized fields and without
-    /// any I/O port permissions.
+    /// Creates a new Task State Segment (TSS) with uninitialized fields and
+    /// without any I/O port permissions.
     #[must_use]
     pub const fn uninitialized() -> Self {
         Self {
@@ -72,4 +72,20 @@ impl TaskStateSegment {
 pub unsafe fn setup() {
     gdt::load_tss(TSS.local().as_ptr());
     opcode::ltr(LTR_SELECTOR);
+}
+
+/// Sets the kernel stack pointer (RSP0) in the TSS for the current CPU core.
+/// This stack will be used when an exception occurs while running in user
+/// mode. Since we cannot handle exceptions in user mode, the CPU will switch
+/// to the kernel stack to handle the exception if needed. If we was already
+/// running in kernel mode, the stack pointer will not be changed and the
+/// handler will simply use the current stack.
+///
+/// # Safety
+/// The caller must ensure that the given stack pointer is a valid stack pointer and
+/// points to a valid stack that is big enough to be used as a kernel stack. The
+/// stack must remain valid while this stack pointer is used as the kernel stack.
+/// ***Please remember when passing the rsp argument that the stack grows downwards !***
+pub unsafe fn set_kernel_stack(rsp: *mut usize) {
+    TSS.local_mut().rsp0 = rsp as u64;
 }

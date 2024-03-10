@@ -1,7 +1,9 @@
 #![cfg_attr(not(test), no_std)]
 #![feature(negative_impls)]
+#![feature(new_uninit)]
+#![feature(never_type)]
 
-use macros::init;
+extern crate alloc;
 
 pub mod apic;
 pub mod bump;
@@ -21,6 +23,7 @@ pub mod pit;
 pub mod serial;
 pub mod simd;
 pub mod smp;
+pub mod thread;
 pub mod tsc;
 pub mod tss;
 
@@ -31,7 +34,7 @@ pub mod tss;
 /// initialization of the kernel. Before calling this function, the boot memory
 /// allocator must be initialized to allow this function to dynamically allocate
 /// memory.
-#[init]
+#[macros::init]
 pub unsafe fn setup() {
     // Initialized the per-cpu variable for this core
     percpu::setup(0);

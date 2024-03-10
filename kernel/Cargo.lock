@@ -115,6 +115,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "silicium-align"
+version = "0.1.0"
+
+[[package]]
 name = "silicium-arch"
 version = "0.1.0"
 dependencies = [
@@ -194,6 +198,7 @@ dependencies = [
  "log",
  "macros",
  "silicium-addr",
+ "silicium-align",
  "silicium-boot",
  "silicium-config",
  "silicium-hal",

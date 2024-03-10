@@ -12,6 +12,7 @@ zerocopy = { workspace = true }
 limine = { workspace = true }
 macros = { workspace = true }
 config = { workspace = true }
+align = { workspace = true }
 addr = { workspace = true }
 boot = { workspace = true }
 spin = { workspace = true }
