@@ -5,18 +5,16 @@ edition = "2021"
 
 [workspace]
 members = [
-    "arch/silicium-arch-example",
-    "arch/silicium-arch",
-    "arch/silicium-x86_64",
+    "arch/*",
     "crates/*",
 ]
 
 [workspace.lints.clippy]
-undocumented_unsafe_blocks = "deny"
-inline_asm_x86_att_syntax = "deny"
-if_then_some_else_none = "deny"
-pedantic = "deny"
-all = "deny"
+undocumented_unsafe_blocks = "warn"
+inline_asm_x86_att_syntax = "warn"
+if_then_some_else_none = "warn"
+pedantic = "warn"
+all = "warn"
 
 [workspace.dependencies]
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }

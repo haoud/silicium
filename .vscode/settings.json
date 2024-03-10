@@ -4,9 +4,14 @@
     "rust-analyzer.cargo.target": "x86_64-unknown-none",
     "rust-analyzer.check.features": "all",
     "rust-analyzer.check.command": "clippy",
-    "editor.formatOnSave": true,
     "rust-analyzer.cargo.unsetTest": [
         "core",
         "kernel"
     ],
+    "[rust]": {
+        "editor.formatOnSave": true,
+    },
+    "[toml]": {
+        "editor.formatOnSave": false,
+    },
 }
