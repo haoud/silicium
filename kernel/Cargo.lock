@@ -189,6 +189,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "silicium-time"
+version = "0.1.0"
+
+[[package]]
 name = "silicium-x86_64"
 version = "0.1.0"
 dependencies = [
@@ -204,6 +208,7 @@ dependencies = [
  "silicium-hal",
  "silicium-macros",
  "silicium-spin",
+ "silicium-time",
  "tailcall",
  "zerocopy",
 ]

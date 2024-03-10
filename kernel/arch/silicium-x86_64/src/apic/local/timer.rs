@@ -2,14 +2,14 @@ use crate::{
     apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
     pit,
 };
-use core::sync::atomic::{AtomicU32, Ordering};
 use macros::init;
+use time::{frequency::Hertz32, unit::Nanosecond32};
 
 /// The IRQ vector used by the Local APIC timer interrupt
 pub const IRQ_VECTOR: u8 = IOAPIC_IRQ_BASE;
 
 /// The internal frequency of the Local APIC timer, in Hz
-static INTERNAL_FREQUENCY: AtomicU32 = AtomicU32::new(0);
+static mut INTERNAL_FREQUENCY: Hertz32 = Hertz32::new(0);
 
 /// Initialize the Local APIC timer interrupt for the current core. This
 /// function will setup the Local APIC timer to raise an IRQ at the specified
@@ -39,8 +39,8 @@ pub unsafe fn calibrate() {
     // Get the current count and calculate the frequency and the counter
     // to get the desired frequency ([`config::TIMER_HZ`])
     let elapsed = u32::MAX - apic::local::read(Register::CURRENT_COUNT);
+    let counter = (elapsed * 100) / u32::from(config::TIMER_HZ);
     let frequency = elapsed * 100;
-    let counter = frequency / u32::from(config::TIMER_HZ);
     let granularity = 1_000_000_000 / frequency;
 
     // Verify that the frequency is correct
@@ -52,7 +52,7 @@ pub unsafe fn calibrate() {
     log::debug!("APIC: Internal frequency is {} MHz", frequency / 1_000_000);
     log::debug!("APIC: Timer configured at {} Hz", config::TIMER_HZ);
     log::debug!("APIC: Internal timer granularity is {} ns", granularity);
-    INTERNAL_FREQUENCY.store(frequency, Ordering::Relaxed);
+    INTERNAL_FREQUENCY = Hertz32::new(frequency);
 
     // Configure the Local APIC timer with the calculated counter
     apic::local::write(Register::INITIAL_COUNT, counter);
@@ -89,9 +89,9 @@ pub unsafe fn setup() {
 /// The caller must ensure that raising an IRQ is safe and that the IRQ
 /// vector is correctly configured in the IDT and will not lead to UB or
 /// memory unsafety.
-pub unsafe fn prepare_irq_in(ns: u32) {
-    let frequency = INTERNAL_FREQUENCY.load(Ordering::Relaxed);
-    let granularity = 1_000_000_000 / frequency;
+pub unsafe fn prepare_irq_in(ns: Nanosecond32) {
+    let granularity = 1_000_000_000 / INTERNAL_FREQUENCY.0;
+    let ns = ns.0;
 
     if ns < granularity {
         log::warn!("APIC: Cannot prepare an IRQ in {ns} ns, granularity is {granularity} ns");

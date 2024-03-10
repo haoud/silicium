@@ -24,6 +24,7 @@ arch = { path = "arch/silicium-arch", package = "silicium-arch" }
 boot = { path = "crates/silicium-boot", package = "silicium-boot" }
 addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
+time = { path = "crates/silicium-time", package = "silicium-time" }
 hal = { path = "crates/silicium-hal", package = "silicium-hal" }
 arrayvec = { version = "0.7.4", default-features = false }
 talc = { version = "4.3.1", features = ["counters"] }

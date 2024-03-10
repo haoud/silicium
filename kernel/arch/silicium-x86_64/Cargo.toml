@@ -16,6 +16,7 @@ align = { workspace = true }
 addr = { workspace = true }
 boot = { workspace = true }
 spin = { workspace = true }
+time = { workspace = true }
 log = { workspace = true }
 hal = { workspace = true }
 
