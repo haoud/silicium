@@ -4,6 +4,7 @@ pub mod paging;
 pub mod percpu;
 pub mod physical;
 pub mod thread;
+pub mod time;
 
 #[cfg(not(test))]
 pub mod lang;

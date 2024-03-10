@@ -1,15 +1,21 @@
 use crate::arch::x86_64::{
     apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
-    pit,
+    cpu::InterruptFrame,
+    pit, smp,
 };
+use core::sync::atomic::{AtomicU64, Ordering};
 use macros::init;
+use seqlock::SeqLock;
 use time::{frequency::Hertz32, unit::Nanosecond32};
 
 /// The IRQ vector used by the Local APIC timer interrupt
 pub const IRQ_VECTOR: u8 = IOAPIC_IRQ_BASE;
 
 /// The internal frequency of the Local APIC timer, in Hz
-static mut INTERNAL_FREQUENCY: Hertz32 = Hertz32::new(0);
+pub static INTERNAL_FREQUENCY: SeqLock<Hertz32> = SeqLock::new(Hertz32::new(0));
+
+/// The number of jiffies since the kernel has started
+pub static JIFFIES: AtomicU64 = AtomicU64::new(0);
 
 /// Initialize the Local APIC timer interrupt for the current core. This
 /// function will setup the Local APIC timer to raise an IRQ at the specified
@@ -52,7 +58,7 @@ pub unsafe fn calibrate() {
     log::debug!("APIC: Internal frequency is {} MHz", frequency / 1_000_000);
     log::debug!("APIC: Timer configured at {} Hz", config::TIMER_HZ);
     log::debug!("APIC: Internal timer granularity is {} ns", granularity);
-    INTERNAL_FREQUENCY = Hertz32::new(frequency);
+    INTERNAL_FREQUENCY.write(Hertz32::new(frequency));
 
     // Configure the Local APIC timer with the calculated counter
     apic::local::write(Register::INITIAL_COUNT, counter);
@@ -66,17 +72,22 @@ pub unsafe fn calibrate() {
 /// # Safety
 /// The caller must ensure to only call this function once per core during
 /// the initialization of the kernel, expect for the boot CPU which should
-/// call [`calibrate`] instead.
+/// call [`calibrate`] instead. This function should also be called after
+/// calibrating the Local APIC timer frequency with [`calibrate`].
 #[init]
 pub unsafe fn setup() {
+    let counter = INTERNAL_FREQUENCY.read().0 / u32::from(config::TIMER_HZ);
+
     // Enable the IRQ vector
     apic::io::enable_irq(IRQ_VECTOR);
 
     // Configure the Local APIC timer, respectivelly:
-    // - Set the IRQ vector to 32, operate in one-shot mode
+    // - Set the IRQ vector to 32, periodic mode
     // - Set the divide configuration to 0011 (divide by 16)
+    // - Set the initial count to the computed value
     apic::local::write(Register::LVT_TIMER, u32::from(IRQ_VECTOR));
     apic::local::write(Register::DIVIDE_CONFIGURATION, 0b0011);
+    apic::local::write(Register::INITIAL_COUNT, counter);
 }
 
 /// Prepare an IRQ to be raised in `ns` nanoseconds.
@@ -90,7 +101,7 @@ pub unsafe fn setup() {
 /// vector is correctly configured in the IDT and will not lead to UB or
 /// memory unsafety.
 pub unsafe fn prepare_irq_in(ns: Nanosecond32) {
-    let granularity = 1_000_000_000 / INTERNAL_FREQUENCY.0;
+    let granularity = 1_000_000_000 / INTERNAL_FREQUENCY.read().0;
     let ns = ns.0;
 
     if ns < granularity {
@@ -99,4 +110,23 @@ pub unsafe fn prepare_irq_in(ns: Nanosecond32) {
     }
 
     apic::local::write(Register::INITIAL_COUNT, ns / granularity);
+}
+
+/// Check if the given IRQ is used by the Local APIC timer.
+#[must_use]
+pub const fn own_irq(irq: u8) -> bool {
+    irq == IRQ_VECTOR
+}
+
+/// Handle the Local APIC timer interrupt.
+pub fn handle_irq(_: &mut InterruptFrame) {
+    // The boot CPU is the only one that increments the jiffies counter to
+    // keep track of the time
+    if smp::is_bsp() {
+        JIFFIES.fetch_add(1, Ordering::Relaxed);
+        log::debug!("APIC: Jiffies: {}", JIFFIES.load(Ordering::Relaxed));
+    }
+
+    // TODO: Call the scheduler
+    // TODO: Handle timers
 }

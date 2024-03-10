@@ -167,6 +167,9 @@ pub extern "C" fn irq_handler(frame: &mut InterruptFrame) {
         exception::handle(id, frame);
     } else if apic::io::is_irq(id) {
         apic::local::end_of_interrupt();
+        if apic::local::timer::own_irq(id) {
+            apic::local::timer::handle_irq(frame);
+        }
     } else {
         log::warn!("Unhandled interrupt: {:?}", id);
     }
