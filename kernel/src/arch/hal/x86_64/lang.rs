@@ -32,7 +32,7 @@ pub fn panic(info: &core::panic::PanicInfo) -> ! {
 #[cfg(not(feature = "panic_info"))]
 #[panic_handler]
 pub fn panic(_: &core::panic::PanicInfo) -> ! {
-    use arch::apic::local::{IpiDestination, IpiPriority};
+    use crate::arch::x86_64::apic::local::{IpiDestination, IpiPriority};
 
     irq::disable();
     if smp::ap_booted() {
