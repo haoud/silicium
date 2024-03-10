@@ -69,8 +69,8 @@ pub unsafe fn setup() {
     apic::local::setup();
     apic::io::setup();
 
-    // Setup the APIC timer only on the boot CPU
-    apic::local::timer::setup();
+    // Calibrate the APIC timer only on the boot CPU
+    apic::local::timer::calibrate();
 
     // Start the APs
     smp::setup();

@@ -79,6 +79,7 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     tss::setup();
     simd::setup();
     apic::local::setup();
+    apic::local::timer::setup();
     paging::load_kernel_pml4();
 
     CPU_COUNT.fetch_add(1, Ordering::SeqCst);
