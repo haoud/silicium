@@ -58,6 +58,12 @@ pub fn core_count() -> usize {
     CPU_COUNT.load(Ordering::Relaxed)
 }
 
+/// Check if the current core is the BSP
+#[must_use]
+pub fn is_bsp() -> bool {
+    core_id() == 0
+}
+
 /// Get the current core id
 #[must_use]
 pub fn core_id() -> u64 {

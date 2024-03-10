@@ -3,6 +3,7 @@ pub mod log;
 pub mod paging;
 pub mod percpu;
 pub mod physical;
+pub mod thread;
 
 #[cfg(not(test))]
 pub mod lang;

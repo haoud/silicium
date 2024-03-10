@@ -150,6 +150,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "silicium-seqlock"
+version = "0.1.0"
+
+[[package]]
 name = "silicium-spin"
 version = "0.1.0"
 dependencies = [
