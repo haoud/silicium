@@ -41,6 +41,9 @@ pub struct Thread {
 
     /// The kernel stack for this thread.
     kstack: KernelStack,
+
+    /// The state of the thread.
+    state: State,
 }
 
 impl Thread {
@@ -49,7 +52,16 @@ impl Thread {
     pub fn kernel(f: fn() -> !) -> Self {
         let mut kstack = KernelStack::new();
         kstack.write_kernel_trampoline(f as usize);
-        Self { kstack, pml4: None }
+        Self {
+            state: State::Created,
+            pml4: None,
+            kstack,
+        }
+    }
+
+    /// Changes the state of the thread to the given one.
+    pub fn set_state(&mut self, state: State) {
+        self.state = state;
     }
 
     /// Returns a reference to the page map level 4 table for this thread. If this
@@ -63,6 +75,12 @@ impl Thread {
     #[must_use]
     pub fn kstack(&self) -> &KernelStack {
         &self.kstack
+    }
+
+    /// Returns the state of the thread.
+    #[must_use]
+    pub fn state(&self) -> State {
+        self.state
     }
 
     /// Change the kernel stack that will be used by the thread by the given one.
@@ -187,7 +205,7 @@ impl KernelStack {
 
     /// Returns a mutable pointer to the registers for this kernel stack.
     #[must_use]
-    pub const fn registers(&self) -> *mut Registers {
+    const fn registers(&self) -> *mut Registers {
         core::ptr::from_ref(&self.registers).cast_mut()
     }
 }
@@ -251,8 +269,46 @@ impl Default for Registers {
     }
 }
 
-// ##########################################################################
+/// The state of a thread.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum State {
+    /// The thread has been created but is not yet ready to run.
+    Created,
 
+    /// The thread is ready to run and is waiting to be scheduled by the kernel.
+    Ready,
+
+    /// The thread is currently running on the CPU.
+    Running,
+
+    /// The thread is currently sleeping and is waiting for a specific event to
+    /// occur before being woken up. If an signal is sent to the thread, it will
+    /// be woken up and will return to the `Ready` state, even if the event it
+    /// was waiting for did not occur.
+    Sleeping,
+
+    /// The thread is currently waiting for an event to occur. If the event occurs,
+    /// the thread will return to the `Ready` state, otherwise it will remain in
+    /// this state until the event occurs. This state is similar to the `Sleeping`
+    /// state, but the thread cannot be woken up by a signal.
+    Waiting,
+
+    /// The thread has exited and is waiting to be joined by another thread. This
+    /// variant contains the exit code of the thread.
+    Exited(u32),
+
+    /// The thread has been terminated by an signal and is waiting to be joined
+    /// by another thread. This variant is similar to the `Exited` variant, but
+    /// contains the signal that terminated the thread instead of the exit code.
+    Terminated(u32),
+}
+
+/// The context to switch to another thread. This structure is used to save the
+/// registers of the current thread and to restore the registers of the next
+/// thread when switching to it.
+///
+/// It must be acquired by calling the `prepare_switch` function before calling
+/// the `perform_switch` function with the returned value.
 #[derive(Debug)]
 pub struct SwitchContext {
     prev: *mut Registers,
@@ -270,6 +326,10 @@ impl SwitchContext {
     }
 }
 
+/// The context to jump to another thread. This structure is used restore the
+/// registers of the thread when jumping to it. When this structure is used
+/// in conjunction with the `perform_jump` function, it will *not* save the
+/// current registers, that will be lost forever.
 #[derive(Debug)]
 pub struct JumpContext {
     regs: *const Registers,
@@ -285,10 +345,12 @@ impl JumpContext {
     }
 }
 
-/// Prepare the thread to be switched to. This function should be called before
-/// calling the `perform_switch` function.
-/// It will change the kernel stack and the page map level 4 table to the one
-/// associated with the thread.
+/// Prepare the thread to be switched to, and return a `SwitchContext` that
+/// should be used with the `perform_switch` function to actually switch to
+/// the next thread.
+///
+/// This function will change the kernel stack and the page map level 4 table
+/// to the one associated with the next thread.
 #[must_use]
 pub fn prepare_switch(prev: &mut Thread, next: &mut Thread) -> SwitchContext {
     next.change_kernel_stack();
@@ -296,6 +358,11 @@ pub fn prepare_switch(prev: &mut Thread, next: &mut Thread) -> SwitchContext {
     SwitchContext::new(prev, next)
 }
 
+/// Perform the actual switch to the next thread. This function will save the
+/// registers of the current thread and restore the registers of the next thread.
+/// The `SwitchContext` must be created by calling the `prepare_switch` function
+/// before calling this function.
+///
 /// # Important
 /// When calling this function, the caller **must** ensure that no lock is held by
 /// the current thread. This is because the thread will be suspended and if another
@@ -305,13 +372,16 @@ pub fn prepare_switch(prev: &mut Thread, next: &mut Thread) -> SwitchContext {
 /// # Safety
 /// The caller must ensure that switching threads is safe and that will not result
 /// in undefined behavior or memory unsafety. The caller must also ensure that the
-/// given registers pointers are valid.
+/// given registers pointers are valid and contain valid registers.
 pub unsafe fn perform_switch(switch: SwitchContext) {
     thread_switch(switch.prev, switch.next);
 }
 
-/// Prepare the thread to be jumped to and return the registers pointer to be
-/// used by the `perform_jump` function.
+/// Prepare the thread to be jumped to, and return a `JumpContext` that should
+/// be used with the `perform_jump` function to actually jump to the next thread.
+///
+/// This function will change the kernel stack and the page map level 4 table to
+/// the one associated with the thread.
 #[must_use]
 pub fn prepare_jump(thread: &mut Thread) -> JumpContext {
     thread.change_kernel_stack();
@@ -319,6 +389,11 @@ pub fn prepare_jump(thread: &mut Thread) -> JumpContext {
     JumpContext::new(thread)
 }
 
+/// Perform the actual jump to the next thread. This function will restore the
+/// registers of the thread and jump to the entry point of the thread. The
+/// `JumpContext` must be created by calling the `prepare_jump` function before
+/// calling this function.
+///
 /// # Important
 /// When calling this function, the caller **must** ensure that no lock is held by
 /// the current thread. This is because the thread will be suspended and if another

@@ -48,7 +48,7 @@ pub unsafe extern "C" fn _start() -> ! {
 fn a() -> ! {
     loop {
         crate::arch::irq::without(|| {
-            log::debug!("a");
+            crate::arch::log::write("a");
         });
         crate::arch::irq::wait();
     }
@@ -57,7 +57,7 @@ fn a() -> ! {
 fn b() -> ! {
     loop {
         crate::arch::irq::without(|| {
-            log::debug!("b");
+            crate::arch::log::write("b");
         });
         crate::arch::irq::wait();
     }
@@ -66,7 +66,7 @@ fn b() -> ! {
 fn c() -> ! {
     loop {
         crate::arch::irq::without(|| {
-            log::debug!("c");
+            crate::arch::log::write("c");
         });
         crate::arch::irq::wait();
     }
@@ -75,7 +75,7 @@ fn c() -> ! {
 fn d() -> ! {
     loop {
         crate::arch::irq::without(|| {
-            log::debug!("d");
+            crate::arch::log::write("d");
         });
         crate::arch::irq::wait();
     }
@@ -84,7 +84,7 @@ fn d() -> ! {
 fn e() -> ! {
     loop {
         crate::arch::irq::without(|| {
-            log::debug!("e");
+            crate::arch::log::write("e");
         });
         crate::arch::irq::wait();
     }

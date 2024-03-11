@@ -37,7 +37,7 @@ impl log::Log for Logger {
                     log::Level::Debug => "\x1B[1m\x1b[34m[#]\x1b[0m",
                     log::Level::Trace => "\x1B[1m\x1b[35m[~]\x1b[0m",
                 };
-                _ = write!(serial, "{} {}", "", record.args());
+                _ = writeln!(serial, "{} {}", level, record.args());
             }
         }
     }
