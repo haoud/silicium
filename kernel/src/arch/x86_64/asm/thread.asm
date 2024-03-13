@@ -21,8 +21,9 @@
 # 
 # This function does not return any value.
 thread_switch:
-    # Save the caller's address into RAX
-    mov rax, [rsp]
+    # Load into RAX the address where we want to execute when the current 
+    # thread will be resumed
+    lea rax, thread_return
 
     # Save RFLAGS into RAX
     pushfq
@@ -42,15 +43,15 @@ thread_switch:
 
     # Load registers that was previously saved from 
     # the new thread's register context
-    mov rdx, [rdi]          # Restore RFLAGS
-    mov rbp, [rdi + 8]      # Restore RBP
-    mov rbx, [rdi + 16]     # Restore RBX
-    mov r12, [rdi + 24]     # Restore R12
-    mov r13, [rdi + 32]     # Restore R13
-    mov r14, [rdi + 40]     # Restore R14
-    mov r15, [rdi + 48]     # Restore R15
-    mov rsp, [rdi + 56]     # Restore RSP
-    mov rax, [rdi + 64]     # Restore RIP
+    mov rdx, [rsi]          # Restore RFLAGS
+    mov rbp, [rsi + 8]      # Restore RBP
+    mov rbx, [rsi + 16]     # Restore RBX
+    mov r12, [rsi + 24]     # Restore R12
+    mov r13, [rsi + 32]     # Restore R13
+    mov r14, [rsi + 40]     # Restore R14
+    mov r15, [rsi + 48]     # Restore R15
+    mov rsp, [rsi + 56]     # Restore RSP
+    mov rax, [rsi + 64]     # Restore RIP
 
     # Restore RFLAGS from RAX and resume the thread
     push rdx
@@ -58,8 +59,17 @@ thread_switch:
     
     # Remove the return address from the stack and jump to the
     # caller's address stored in RAX
-    add rsp, 8
     jmp rax
+
+# Execute the ret instruction
+# 
+# This function does nothing from a caller's point of view, but it is very
+# useful to resume a thread that was previously suspended by the thread_switch.
+# The thread will land here and return to the caller's address pushed on the
+# stack by the thread_switch function, and continue normally as if it was
+# never suspended.
+thread_return:
+    ret
 
 # Jump to a new thread. This function restore the given thread's state and
 # resume it without saving the current thread's state.

@@ -46,6 +46,7 @@ dependencies = [
  "silicium-config",
  "silicium-hal",
  "silicium-macros",
+ "silicium-seqlock",
  "silicium-spin",
  "silicium-time",
  "tailcall",
@@ -147,6 +148,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.52",
+]
+
+[[package]]
+name = "silicium-seqlock"
+version = "0.1.0"
+dependencies = [
+ "silicium-spin",
 ]
 
 [[package]]

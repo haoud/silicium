@@ -1,4 +1,7 @@
-use crate::arch::x86_64::{apic, cpu, gdt, idt, paging, percpu, simd, tss};
+use crate::{
+    arch::x86_64::{apic, gdt, idt, paging, percpu, simd, tss},
+    scheduler,
+};
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use macros::init;
 
@@ -58,6 +61,12 @@ pub fn core_count() -> usize {
     CPU_COUNT.load(Ordering::Relaxed)
 }
 
+/// Check if the current core is the BSP
+#[must_use]
+pub fn is_bsp() -> bool {
+    core_id() == 0
+}
+
 /// Get the current core id
 #[must_use]
 pub fn core_id() -> u64 {
@@ -85,5 +94,5 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     CPU_COUNT.fetch_add(1, Ordering::SeqCst);
 
     log::info!("AP {} correctly booted", info.lapic_id);
-    cpu::halt();
+    scheduler::enter()
 }
