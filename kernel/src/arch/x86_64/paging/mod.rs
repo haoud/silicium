@@ -131,7 +131,7 @@ pub unsafe fn unmap(pml4: &mut Pml4, addr: Virtual) -> Result<Frame, UnmapError>
 
     if let Some(frame) = entry.address() {
         entry.clear();
-        tlb::invalidate(addr);
+        tlb::shootdown(addr);
         Ok(frame)
     } else {
         log::warn!("Attempt to unmap an already unmapped address: {:#x}", addr);

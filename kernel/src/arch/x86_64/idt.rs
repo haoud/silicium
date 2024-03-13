@@ -1,6 +1,8 @@
 use crate::arch::x86_64::{apic, cpu::InterruptFrame, exception, opcode};
 use macros::init;
 
+use super::paging;
+
 core::arch::global_asm!(include_str!("asm/interrupt.asm"));
 
 extern "C" {
@@ -170,6 +172,8 @@ pub extern "C" fn irq_handler(frame: &mut InterruptFrame) {
         if apic::local::timer::own_irq(id) {
             apic::local::timer::handle_irq(frame);
         }
+    } else if paging::tlb::own_irq(id) {
+        paging::tlb::flush();
     } else {
         log::warn!("Unhandled interrupt: {:?}", id);
     }
