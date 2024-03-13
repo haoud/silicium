@@ -1,5 +1,6 @@
 pub mod apic;
 pub mod bump;
+pub mod cmos;
 pub mod cpu;
 pub mod exception;
 pub mod gdt;
