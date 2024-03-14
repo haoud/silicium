@@ -18,13 +18,14 @@ all = "warn"
 [workspace.dependencies]
 seqlock = { path = "crates/silicium-seqlock", package = "silicium-seqlock" }
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
+bitmap = { path = "crates/silicium-bitmap", package = "silicium-bitmap" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
 align = { path = "crates/silicium-align", package = "silicium-align" }
-boot = { path = "crates/silicium-boot", package = "silicium-boot" }
 addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
 time = { path = "crates/silicium-time", package = "silicium-time" }
 hal = { path = "crates/silicium-hal", package = "silicium-hal" }
+id = { path = "crates/silicium-id", package = "silicium-id" }
 
 arrayvec = { version = "0.7.4", default-features = false }
 talc = { version = "4.3.1", features = ["counters"] }
@@ -33,10 +34,12 @@ zerocopy = "0.7.32"
 bitfield = "0.14.0"
 bitflags = "2.4.2"
 tailcall = "1.0.1"
+cfg-if = "1.0.0"
 limine = "0.2"
 log = "0.4.20"
 
 [dependencies]
+arrayvec = { workspace = true }
 bitfield = { workspace = true }
 bitflags = { workspace = true }
 tailcall = { workspace = true }
@@ -44,23 +47,33 @@ zerocopy = { workspace = true }
 seqlock = { workspace = true }
 limine = { workspace = true }
 macros = { workspace = true }
+bitmap = { workspace = true }
+cfg-if = { workspace = true }
 config = { workspace = true }
 align = { workspace = true }
 addr = { workspace = true }
-boot = { workspace = true }
 spin = { workspace = true }
 talc = { workspace = true }
 time = { workspace = true }
 hal = { workspace = true }
 log = { workspace = true }
+id = { workspace = true }
 
 [features]
-default = ["panic_info", "logging"]
+default = ["enforce_atomicity", "panic_info", "logging"]
 
-# Enable panic messages at the cost of increased binary size, but useful for debugging
+# Enforce the atomicity of operations during runtime at the cost of
+# reduced performance. This is useful for debugging, but should not
+# be enabled in production as it would not be as useful since this
+# kind of bug should be caught during development and testing.
+enforce_atomicity = []
+
+# Enable panic messages at the cost of increased binary size, 
+# but useful for debugging
 panic_info = []
 
-# Enable logging at the cost of reduced performance and increased binary size
+# Enable logging at the cost of reduced performance and increased
+# binary size, but useful for debugging.
 logging = []
 
 [profile.release]

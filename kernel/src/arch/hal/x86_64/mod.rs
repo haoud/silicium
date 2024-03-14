@@ -1,3 +1,6 @@
+use crate::{arch, boot};
+
+pub mod date;
 pub mod irq;
 pub mod log;
 pub mod paging;
@@ -50,7 +53,7 @@ pub fn setup() -> boot::Info {
     // during boot and we initialized the boot allocator before
     // calling this function.
     unsafe {
-        crate::arch::x86_64::setup();
+        arch::x86_64::setup();
     }
 
     // Get the memory map from the bootloader and convert it to the

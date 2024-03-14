@@ -94,5 +94,11 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     CPU_COUNT.fetch_add(1, Ordering::SeqCst);
 
     log::info!("AP {} correctly booted", info.lapic_id);
+
+    // Wait for other APs to finish their setup
+    while !AP_BOOTED.load(Ordering::Relaxed) {
+        core::hint::spin_loop();
+    }
+
     scheduler::enter()
 }

@@ -33,18 +33,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
+name = "cfg-if"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
 name = "kernel"
 version = "0.1.0"
 dependencies = [
+ "arrayvec",
  "bitfield",
  "bitflags",
+ "cfg-if",
  "limine",
  "log",
  "silicium-addr",
  "silicium-align",
- "silicium-boot",
+ "silicium-bitmap",
  "silicium-config",
  "silicium-hal",
+ "silicium-id",
  "silicium-macros",
  "silicium-seqlock",
  "silicium-spin",
@@ -116,16 +125,8 @@ name = "silicium-align"
 version = "0.1.0"
 
 [[package]]
-name = "silicium-boot"
+name = "silicium-bitmap"
 version = "0.1.0"
-dependencies = [
- "arrayvec",
- "limine",
- "silicium-addr",
- "silicium-config",
- "silicium-macros",
- "silicium-spin",
-]
 
 [[package]]
 name = "silicium-config"
@@ -139,6 +140,13 @@ name = "silicium-hal"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+]
+
+[[package]]
+name = "silicium-id"
+version = "0.1.0"
+dependencies = [
+ "silicium-bitmap",
 ]
 
 [[package]]

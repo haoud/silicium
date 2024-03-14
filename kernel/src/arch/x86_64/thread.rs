@@ -3,7 +3,6 @@ use crate::arch::x86_64::{
     percpu, tss,
 };
 use align::Align16;
-use alloc::{boxed::Box, sync::Arc};
 use core::mem::MaybeUninit;
 use spin::Spinlock;
 

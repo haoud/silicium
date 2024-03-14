@@ -10,7 +10,7 @@ pub fn panic(info: &core::panic::PanicInfo) -> ! {
         // SAFETY: This is safe because we have ensured that the APs are booted, meaning
         // that they can safely receive IPIs without triple faulting.
         unsafe {
-            apic::local::send_ipi(IpiDestination::AllExcludingSelf, IpiPriority::Nmi, 0x00);
+            apic::local::send_ipi(IpiDestination::AllExcludingSelf, IpiPriority::Nmi, 0x02);
         }
     }
 

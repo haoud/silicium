@@ -1,11 +1,14 @@
-use crate::arch::x86_64::{
-    cpu,
-    paging::{
-        page,
-        table::{self, Table},
-        translate, KERNEL_PML4,
+use crate::{
+    arch::x86_64::{
+        cpu,
+        paging::{
+            page,
+            table::{self, Table},
+            translate, KERNEL_PML4,
+        },
+        physical,
     },
-    physical,
+    boot,
 };
 use addr::{Frame, Virtual};
 use macros::init;

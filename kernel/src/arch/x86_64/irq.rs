@@ -4,7 +4,7 @@ use crate::arch::x86_64::{
 };
 
 /// The state of the interrupts.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub struct State(bool);
 
 /// Enable interrupts on the current core.
@@ -53,6 +53,16 @@ pub fn enabled() -> bool {
 #[must_use]
 pub fn save() -> State {
     State(enabled())
+}
+
+/// Save the current state of the interrupts, disable them and return the saved
+/// state. This state can be restored later using the `restore` function.
+#[inline]
+#[must_use]
+pub fn save_and_disable() -> State {
+    let state = save();
+    disable();
+    state
 }
 
 /// Restore the previous state of the interrupts. If `enabled` is true, then

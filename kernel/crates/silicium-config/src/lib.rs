@@ -22,3 +22,25 @@ const_assert!(PAGE_SIZE == 4096);
 pub const PAGE_SHIFT: u8 = 12;
 const_assert!(PAGE_SHIFT == 12);
 const_assert!((1 << PAGE_SHIFT) == PAGE_SIZE);
+
+/// The maximum number of processes id that can be allocated, and by extension, the
+/// maximum number of processes that can be created. Diminishing this value can reduce
+/// the memory consumption of the kernel, but it will also limit the number of
+/// processes that can be created. By security, this value should be greatter or
+/// equal to 8.
+pub const MAX_PIDS: u32 = 1024;
+const_assert!(MAX_PIDS >= 8);
+
+/// The maximum number of threads id that can be allocated, and by extension, the
+/// maximum number of threads that can be created *per process*. Diminishing this
+/// value can reduce the memory consumption of the kernel, but it will also limit
+/// the number of threads that can be created per process.
+pub const MAX_TIDS: u32 = 128;
+const_assert!(MAX_TIDS > 0);
+
+/// The maximum number of kernel handle that can be allocated across all processes.
+/// Diminishing this value can reduce the memory consumption of the kernel, but it
+/// will also limit the number of handles that can be created. A too low value can
+/// prevent the system from working properly.
+pub const MAX_HANDLES: u32 = 1024;
+const_assert!(MAX_HANDLES >= 1024);
