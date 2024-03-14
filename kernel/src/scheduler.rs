@@ -2,7 +2,7 @@ use crate::arch::{
     self,
     thread::{State, Thread},
 };
-use alloc::{collections::VecDeque, sync::Arc};
+use alloc::collections::VecDeque;
 use core::num::Saturating;
 use macros::per_cpu;
 use spin::Spinlock;
