@@ -74,19 +74,17 @@ pub fn atomic(_: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     // Wrap the function body in a critical section by disabling
-    // interruptions and preemption
+    // interruptions, preemption and sleep
     let body = input_fn.block;
     input_fn.block = Box::new(syn::parse_quote!({
         crate::arch::hal::irq::without(|| {
             crate::preempt::without(|| {
-                #body
+                crate::sys::sleep::without(|| {
+                    #body
+                })
             })
         })
     }));
-
-    // TODO: Add the atomic counter if the feature is enabled
-    // to detect if the atomicity is violated with sleeping
-    // functions
 
     TokenStream::from(quote::quote!(
         #input_fn
@@ -97,7 +95,23 @@ pub fn atomic(_: TokenStream, item: TokenStream) -> TokenStream {
 /// and will panic if it is the case.
 #[proc_macro_attribute]
 pub fn may_sleep(_: TokenStream, item: TokenStream) -> TokenStream {
-    let input_fn = parse_macro_input!(item as ItemFn);
+    let mut input_fn = parse_macro_input!(item as ItemFn);
+
+    // Wrap the function body in a critical section by disabling
+    // interruptions and preemption
+    let body = input_fn.block;
+    input_fn.block = Box::new(syn::parse_quote!({
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "enforce_atomicity")] {
+                if !crate::sys::sleep::enabled() {
+                    panic!("#[may_sleep] function called in atomic context");
+                }
+            }
+        }
+
+        #body
+    }));
+
     TokenStream::from(quote::quote!(
         #input_fn
     ))

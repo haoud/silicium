@@ -108,7 +108,11 @@ pub fn handle(exception: u8, _frame: &mut InterruptFrame) {
             panic!("Unhandled debug exception");
         }
         NMI_VECTOR => {
-            panic!("Unhandled non-maskable interrupt");
+            // Fail silently. The NMI is used by the hardware to signal a
+            // hardware error, so we don't want to panic here since it
+            // could do more harm than good. The NMI is also used by the
+            // panic handler to stop other CPUs.
+            cpu::halt();
         }
         BP_VECTOR => {
             panic!("Unhandled breakpoint exception");

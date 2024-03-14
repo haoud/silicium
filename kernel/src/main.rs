@@ -18,6 +18,7 @@ pub mod mm;
 pub mod preempt;
 pub mod prelude;
 pub mod scheduler;
+pub mod sys;
 pub mod time;
 
 #[allow(unused_imports)]
