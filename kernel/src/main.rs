@@ -11,6 +11,7 @@
 extern crate alloc;
 
 pub mod arch;
+pub mod boot;
 pub mod mm;
 pub mod scheduler;
 pub mod time;

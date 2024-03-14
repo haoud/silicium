@@ -1,4 +1,4 @@
-use crate::arch::x86_64::physical;
+use crate::{arch::x86_64::physical, boot};
 use addr::Frame;
 use macros::init;
 

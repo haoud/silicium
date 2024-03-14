@@ -36,6 +36,7 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 name = "kernel"
 version = "0.1.0"
 dependencies = [
+ "arrayvec",
  "bitfield",
  "bitflags",
  "limine",
@@ -43,7 +44,6 @@ dependencies = [
  "silicium-addr",
  "silicium-align",
  "silicium-bitmap",
- "silicium-boot",
  "silicium-config",
  "silicium-hal",
  "silicium-id",
@@ -120,18 +120,6 @@ version = "0.1.0"
 [[package]]
 name = "silicium-bitmap"
 version = "0.1.0"
-
-[[package]]
-name = "silicium-boot"
-version = "0.1.0"
-dependencies = [
- "arrayvec",
- "limine",
- "silicium-addr",
- "silicium-config",
- "silicium-macros",
- "silicium-spin",
-]
 
 [[package]]
 name = "silicium-config"

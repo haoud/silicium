@@ -1,4 +1,4 @@
-use crate::mmap;
+use crate::boot::mmap;
 use addr::{Frame, Physical};
 use arrayvec::ArrayVec;
 use config::PAGE_SIZE;

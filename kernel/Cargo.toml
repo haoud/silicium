@@ -21,7 +21,6 @@ macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 bitmap = { path = "crates/silicium-bitmap", package = "silicium-bitmap" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
 align = { path = "crates/silicium-align", package = "silicium-align" }
-boot = { path = "crates/silicium-boot", package = "silicium-boot" }
 addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
 time = { path = "crates/silicium-time", package = "silicium-time" }
@@ -39,6 +38,7 @@ limine = "0.2"
 log = "0.4.20"
 
 [dependencies]
+arrayvec = { workspace = true }
 bitfield = { workspace = true }
 bitflags = { workspace = true }
 tailcall = { workspace = true }
@@ -50,7 +50,6 @@ bitmap = { workspace = true }
 config = { workspace = true }
 align = { workspace = true }
 addr = { workspace = true }
-boot = { workspace = true }
 spin = { workspace = true }
 talc = { workspace = true }
 time = { workspace = true }
