@@ -4,15 +4,18 @@
 #![feature(const_trait_impl)]
 #![feature(const_mut_refs)]
 #![feature(negative_impls)]
+#![feature(prelude_import)]
 #![feature(new_uninit)]
 #![feature(const_for)]
 #![feature(effects)]
+#![allow(internal_features)]
 
 extern crate alloc;
 
 pub mod arch;
 pub mod boot;
 pub mod mm;
+pub mod preempt;
 pub mod scheduler;
 pub mod time;
 

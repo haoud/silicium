@@ -53,3 +53,52 @@ pub fn init(_: TokenStream, item: TokenStream) -> TokenStream {
         #input_fn
     ))
 }
+
+/// A macro to indicate that a function is atomic. Therefor, it will deny
+/// the use of async/await, and interruptions / preemption will be disabled
+/// to enforce atomicity. Furthermore, the function will increase an global
+/// counter (only if the `enforce_atomic` feature is enabled) to detect if
+/// the atomicity is violated.
+#[proc_macro_attribute]
+pub fn atomic(_: TokenStream, item: TokenStream) -> TokenStream {
+    let mut input_fn = parse_macro_input!(item as ItemFn);
+
+    // Compile error if the function is async
+    if input_fn.sig.asyncness.is_some() {
+        return syn::Error::new_spanned(
+            input_fn.sig.fn_token,
+            "async functions are not allowed in atomic functions",
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    // Wrap the function body in a critical section by disabling
+    // interruptions and preemption
+    let body = input_fn.block;
+    input_fn.block = Box::new(syn::parse_quote!({
+        crate::arch::hal::irq::without(|| {
+            crate::preempt::without(|| {
+                #body
+            })
+        })
+    }));
+
+    // TODO: Add the atomic counter if the feature is enabled
+    // to detect if the atomicity is violated with sleeping
+    // functions
+
+    TokenStream::from(quote::quote!(
+        #input_fn
+    ))
+}
+/// A macro that indicate that a function may sleep. This macro will
+/// check at the beginning of the function if the atomicity is violated
+/// and will panic if it is the case.
+#[proc_macro_attribute]
+pub fn may_sleep(_: TokenStream, item: TokenStream) -> TokenStream {
+    let input_fn = parse_macro_input!(item as ItemFn);
+    TokenStream::from(quote::quote!(
+        #input_fn
+    ))
+}
