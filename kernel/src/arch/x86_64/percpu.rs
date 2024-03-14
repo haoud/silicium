@@ -5,6 +5,8 @@ use core::{
 };
 use macros::init;
 
+use super::irq;
+
 extern "C" {
     /// The start of the per-CPU section. This is a linker symbol that is used to
     /// get the start of the per-CPU section.
@@ -177,13 +179,15 @@ impl<T: Default> PerCpu<T> {
 /// to undefined behavior.
 #[derive(Debug)]
 pub struct PerCpuGuard<'a, T> {
+    irq_state: irq::State,
     inner: &'a T,
 }
 
 impl<'a, T> PerCpuGuard<'a, T> {
     /// Create a new per-CPU guard.
     unsafe fn new(inner: &'a T) -> Self {
-        Self { inner }
+        let irq_state = irq::save_and_disable();
+        Self { irq_state, inner }
     }
 
     /// Get a raw pointer to the per-CPU variable for the current CPU.
@@ -201,7 +205,9 @@ impl<'a, T> Deref for PerCpuGuard<'a, T> {
 }
 
 impl<'a, T> Drop for PerCpuGuard<'a, T> {
-    fn drop(&mut self) {}
+    fn drop(&mut self) {
+        irq::restore(core::mem::take(&mut self.irq_state));
+    }
 }
 
 /// A mutable guard that is used to access a per-CPU variable. This guard will disable
@@ -210,13 +216,15 @@ impl<'a, T> Drop for PerCpuGuard<'a, T> {
 /// while accessing the per-CPU variable, which could lead to undefined behavior.
 #[derive(Debug)]
 pub struct PerCpuGuardMut<'a, T> {
+    irq_state: irq::State,
     inner: &'a mut T,
 }
 
 impl<'a, T> PerCpuGuardMut<'a, T> {
     /// Create a new per-CPU mutable guard.
     unsafe fn new(inner: &'a mut T) -> Self {
-        Self { inner }
+        let irq_state = irq::save_and_disable();
+        Self { inner, irq_state }
     }
 
     /// Get a raw mutable pointer to the per-CPU variable for the current CPU.
@@ -246,7 +254,9 @@ impl<'a, T> DerefMut for PerCpuGuardMut<'a, T> {
 }
 
 impl<'a, T> Drop for PerCpuGuardMut<'a, T> {
-    fn drop(&mut self) {}
+    fn drop(&mut self) {
+        irq::restore(core::mem::take(&mut self.irq_state));
+    }
 }
 
 /// Setup the per-CPU section for the current CPU.

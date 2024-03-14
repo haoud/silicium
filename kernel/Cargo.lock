@@ -42,6 +42,7 @@ dependencies = [
  "log",
  "silicium-addr",
  "silicium-align",
+ "silicium-bitmap",
  "silicium-boot",
  "silicium-config",
  "silicium-hal",
@@ -113,6 +114,10 @@ dependencies = [
 
 [[package]]
 name = "silicium-align"
+version = "0.1.0"
+
+[[package]]
+name = "silicium-bitmap"
 version = "0.1.0"
 
 [[package]]

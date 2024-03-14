@@ -18,6 +18,7 @@ all = "warn"
 [workspace.dependencies]
 seqlock = { path = "crates/silicium-seqlock", package = "silicium-seqlock" }
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
+bitmap = { path = "crates/silicium-bitmap", package = "silicium-bitmap" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
 align = { path = "crates/silicium-align", package = "silicium-align" }
 boot = { path = "crates/silicium-boot", package = "silicium-boot" }
@@ -44,6 +45,7 @@ zerocopy = { workspace = true }
 seqlock = { workspace = true }
 limine = { workspace = true }
 macros = { workspace = true }
+bitmap = { workspace = true }
 config = { workspace = true }
 align = { workspace = true }
 addr = { workspace = true }
