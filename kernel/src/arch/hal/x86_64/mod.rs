@@ -1,3 +1,4 @@
+pub mod date;
 pub mod irq;
 pub mod log;
 pub mod paging;

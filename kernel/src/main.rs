@@ -1,15 +1,19 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 #![feature(panic_info_message)]
+#![feature(const_trait_impl)]
 #![feature(const_mut_refs)]
 #![feature(negative_impls)]
 #![feature(new_uninit)]
+#![feature(const_for)]
+#![feature(effects)]
 
 extern crate alloc;
 
 pub mod arch;
 pub mod mm;
 pub mod scheduler;
+pub mod time;
 
 /// The entry point for the kernel. This function call the architecture specific setup
 /// function, print a message to the console and then halts the CPU.
@@ -26,6 +30,9 @@ pub unsafe extern "C" fn _start() -> ! {
 
     // Setup the memory management system
     mm::setup(&info);
+
+    // Setup the time system
+    time::setup();
 
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
