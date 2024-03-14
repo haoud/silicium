@@ -1,0 +1,10 @@
+[package]
+name = "silicium-id"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bitmap = { workspace = true }
+
+[lints]
+workspace = true

@@ -186,6 +186,9 @@ impl<const N: usize> Bitmap<N> {
     /// This method is the same as `get_first_one`, but it will start
     /// from the given index and wrap around to the beginning of the
     /// bitmap if necessary.
+    ///
+    /// # Panics
+    /// Panics if the index is out of bounds
     #[must_use]
     pub const fn get_next_one(&mut self, start: usize) -> Option<usize> {
         assert!(start < N * core::mem::size_of::<usize>());

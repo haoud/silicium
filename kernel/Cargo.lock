@@ -46,6 +46,7 @@ dependencies = [
  "silicium-boot",
  "silicium-config",
  "silicium-hal",
+ "silicium-id",
  "silicium-macros",
  "silicium-seqlock",
  "silicium-spin",
@@ -144,6 +145,13 @@ name = "silicium-hal"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+]
+
+[[package]]
+name = "silicium-id"
+version = "0.1.0"
+dependencies = [
+ "silicium-bitmap",
 ]
 
 [[package]]

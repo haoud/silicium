@@ -26,6 +26,7 @@ addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
 time = { path = "crates/silicium-time", package = "silicium-time" }
 hal = { path = "crates/silicium-hal", package = "silicium-hal" }
+id = { path = "crates/silicium-id", package = "silicium-id" }
 
 arrayvec = { version = "0.7.4", default-features = false }
 talc = { version = "4.3.1", features = ["counters"] }
@@ -55,6 +56,7 @@ talc = { workspace = true }
 time = { workspace = true }
 hal = { workspace = true }
 log = { workspace = true }
+id = { workspace = true }
 
 [features]
 default = ["panic_info", "logging"]
