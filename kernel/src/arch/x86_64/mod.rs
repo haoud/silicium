@@ -17,7 +17,7 @@ pub mod pit;
 pub mod serial;
 pub mod simd;
 pub mod smp;
-pub mod thread;
+pub mod context;
 pub mod tsc;
 pub mod tss;
 

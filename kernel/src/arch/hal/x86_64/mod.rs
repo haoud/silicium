@@ -6,7 +6,7 @@ pub mod log;
 pub mod paging;
 pub mod percpu;
 pub mod physical;
-pub mod thread;
+pub mod context;
 pub mod time;
 
 #[cfg(not(test))]

@@ -1,6 +1,6 @@
-use crate::arch::{
-    self,
-    thread::{State, Thread},
+use crate::{
+    arch,
+    sys::thread::{State, Thread},
 };
 use alloc::collections::VecDeque;
 use core::num::Saturating;
@@ -86,8 +86,11 @@ impl Scheduler {
                 .expect("Cannot schedule without a task");
 
             let state = current.thread.lock().state();
-            let switch =
-                arch::thread::prepare_switch(&mut current.thread.lock(), &mut next.thread.lock());
+
+            let switch = arch::context::prepare_switch(
+                current.thread.lock().context_mut(),
+                next.thread.lock().context_mut(),
+            );
 
             match state {
                 State::Terminated(_) | State::Exited(_) => {
@@ -113,7 +116,7 @@ impl Scheduler {
             // saved previously are valid, and we does not have any locks held
             // (that could lead to a deadlock when switching tasks)
             unsafe {
-                arch::thread::perform_switch(switch);
+                arch::context::perform_switch(switch);
             }
         });
     }
@@ -189,14 +192,14 @@ pub fn tick() {
 /// start the first task on the core.
 pub fn enter() -> ! {
     let task = SCHEDULER.pop_or_idle();
-    let jump = arch::thread::prepare_jump(&mut task.thread.lock());
+    let jump = arch::context::prepare_jump(task.thread.lock().context_mut());
 
     set_current_task(task);
 
     // SAFETY: We assume that the task is valid, and we does not have any
     // locks held (that could lead to a deadlock when switching tasks)
     unsafe {
-        arch::thread::perform_jump(jump);
+        arch::context::perform_jump(jump);
     }
 }
 
