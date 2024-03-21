@@ -5,4 +5,6 @@
 //! number of dependencies and to have more control over the implementation.
 #![cfg_attr(not(test), no_std)]
 
-pub use spin::{Lazy, Mutex as Spinlock, Once, RwLock as RwSpinlock};
+pub mod lock;
+
+pub use lock::{Spinlock, SpinlockGuard, SpinlockIrqGuard};
