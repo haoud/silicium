@@ -16,7 +16,7 @@ pub fn get_jiffies() -> u64 {
 /// Returns the frequency of the jiffies in hertz, which is the number of
 /// jiffies per second.
 pub const fn jiffies_frequency() -> u64 {
-    u64::from(TIMER_HZ)
+    TIMER_HZ as u64
 }
 
 /// Returns the granularity of the jiffies in nanoseconds, which is the

@@ -178,11 +178,4 @@ pub extern "C" fn irq_handler(frame: &mut InterruptFrame) {
     } else {
         log::warn!("Unhandled interrupt: {:?}", id);
     }
-
-    test();
-}
-
-#[may_sleep]
-fn test() {
-    log::info!("Test");
 }
