@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-spin = "0.9.8"
+lock_api = "0.4.1"
 
 [lints]
 workspace = true

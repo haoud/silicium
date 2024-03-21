@@ -81,7 +81,7 @@ impl Date {
     /// the Unix time returned will be the Unix epoch (January 1st, 1970 at 00:00:00).
     /// If the year if greater than 2100, this function will also return the Unix epoch.
     #[must_use]
-    pub const fn to_unix_time(&self) -> Unix {
+    pub fn to_unix_time(&self) -> Unix {
         if self.year < 1970 || self.year > 2100 {
             return Unix::epoch();
         }
@@ -155,7 +155,7 @@ pub const fn days_in_month(year: u16, month: u8) -> u8 {
 /// Return the number of days elapsed from the beginning of the year to the given month.
 /// The month must be in the range 1..=12.
 #[must_use]
-pub const fn month_elsapsed_days(year: u16, month: u8) -> u16 {
+pub fn month_elsapsed_days(year: u16, month: u8) -> u16 {
     let mut days = 0;
     for m in 1..month {
         days += days_in_month(year, m) as u16;
@@ -179,7 +179,7 @@ pub const fn month_in_year(year: u16, days: u16) -> u8 {
 
 /// Converts a Unix time to a date.
 #[must_use]
-pub const fn unix_time_to_date(unix: Unix) -> Date {
+pub fn unix_time_to_date(unix: Unix) -> Date {
     let seconds = unix.0 .0;
 
     // Compute the number of days since January 1st, 1970 and Compute
