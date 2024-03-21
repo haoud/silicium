@@ -19,6 +19,12 @@ pub struct Generator<const N: usize> {
 }
 
 impl<const N: usize> Generator<N> {
+    /// The maximum number of identifiers that can be generated.
+    pub const MAX: usize = u32::MAX as usize;
+
+    /// Ensure that the number of identifiers is less than the maximum.
+    pub const ASSERT: () = assert!(N <= Self::MAX);
+
     /// Create a new generator with all identifiers available.
     #[must_use]
     pub const fn new() -> Self {
@@ -30,10 +36,11 @@ impl<const N: usize> Generator<N> {
 
     /// Generate a new identifier.
     #[must_use]
-    pub const fn generate(&mut self) -> Option<Identifier> {
+    #[allow(clippy::cast_possible_truncation)]
+    pub const fn generate(&mut self) -> Option<u32> {
         if let Some(id) = self.bitmap.get_next_one(self.last) {
             self.last = id;
-            Some(Identifier::new(id))
+            Some(id as u32)
         } else {
             None
         }
@@ -44,32 +51,14 @@ impl<const N: usize> Generator<N> {
     /// # Panics
     /// Panic if the identifier is out of range or if it is not in use.
     #[allow(clippy::needless_pass_by_value)]
-    pub const fn release(&mut self, id: Identifier) {
-        assert!(id.0 < N && self.bitmap.get(id.0));
-        self.bitmap.clear(id.0);
+    pub const fn release(&mut self, id: u32) {
+        assert!((id as usize) < N && self.bitmap.get(id as usize));
+        self.bitmap.clear(id as usize);
     }
 }
 
 impl<const N: usize> Default for Generator<N> {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-/// An identifier.
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Identifier(pub usize);
-
-impl Identifier {
-    /// Create a new identifier.
-    #[must_use]
-    pub const fn new(id: usize) -> Self {
-        Self(id)
-    }
-
-    /// Get the inner value of the identifier.
-    #[must_use]
-    pub const fn inner(&self) -> usize {
-        self.0
     }
 }
