@@ -147,6 +147,7 @@ name = "silicium-id"
 version = "0.1.0"
 dependencies = [
  "silicium-bitmap",
+ "static_assertions",
 ]
 
 [[package]]
