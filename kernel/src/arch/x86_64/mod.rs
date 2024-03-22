@@ -1,6 +1,7 @@
 pub mod apic;
 pub mod bump;
 pub mod cmos;
+pub mod context;
 pub mod cpu;
 pub mod exception;
 pub mod gdt;
@@ -17,7 +18,6 @@ pub mod pit;
 pub mod serial;
 pub mod simd;
 pub mod smp;
-pub mod context;
 pub mod tsc;
 pub mod tss;
 

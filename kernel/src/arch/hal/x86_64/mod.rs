@@ -1,12 +1,12 @@
 use crate::{arch, boot};
 
+pub mod context;
 pub mod date;
 pub mod irq;
 pub mod log;
 pub mod paging;
 pub mod percpu;
 pub mod physical;
-pub mod context;
 pub mod time;
 
 #[cfg(not(test))]
