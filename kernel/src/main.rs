@@ -14,6 +14,7 @@ extern crate alloc;
 
 pub mod arch;
 pub mod boot;
+pub mod future;
 pub mod mm;
 pub mod preempt;
 pub mod prelude;
@@ -47,9 +48,29 @@ pub unsafe extern "C" fn _start() -> ! {
     // Setup the scheduler
     scheduler::setup();
 
+    // Setup the async runtime
+    future::setup();
+
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
+    let mut executor = future::Executor::new();
+    executor.spawn(future::Task::new(test()));
+    executor.spawn(future::Task::new(another_test()));
+
+    arch::irq::enable();
+    loop {
+        executor.run_once();
+    }
+
     // Enter the scheduler
-    scheduler::enter();
+    // scheduler::enter();
+}
+
+async fn test() {
+    log::info!("Hello from async function");
+}
+
+async fn another_test() {
+    log::info!("Hello from another async function");
 }
