@@ -1,85 +1,44 @@
-use crate::arch::x86_64::{
-    paging::{pml4::Pml4, KERNEL_PML4},
-    percpu, tss,
-};
+use crate::arch::x86_64::{percpu, tss};
 use align::Align16;
 use core::mem::MaybeUninit;
-use spin::Spinlock;
 
-core::arch::global_asm!(include_str!("asm/thread.asm"));
+core::arch::global_asm!(include_str!("asm/context.asm"));
 
 extern "C" {
-    fn thread_switch(prev: *mut Registers, next: *const Registers);
-    fn thread_jump(regs: *const Registers) -> !;
-    fn thread_enter() -> !;
+    fn context_switch(prev: *mut Registers, next: *const Registers);
+    fn context_jump(regs: *const Registers) -> !;
+    fn context_enter() -> !;
 }
 
-/// A thread in the system. A thread is a unit of execution that can be scheduled
-/// by the kernel. Threads can be either kernel threads or user threads.
-///
-/// Each thread has:
-/// - A kernel stack, which is used when the thread is interrupted by the kernel
-///   when an interrupt occurs or during a system call. The kernel stack is also
-///   used when the thread is suspended by the kernel to save a part of its state.
-///
-/// User threads also have:
-/// - A page map level 4 table, which is used to map the virtual memory of the
-///   process to the physical memory. This allows each process to have its own
-///   address space. All threads of a process share the same page map level 4 table.
-///   Contrary to kernel threads, user threads cannot exist without an associated
-///   process.
-///
-/// Kernel threads do not have an associated pml4 table. This is because they all
-/// share the same address space and therefore the same pml4 table [`KERNEL_PML4`].
 #[derive(Debug)]
-pub struct Thread {
-    /// The page map level 4 table for this thread. If this thread is currently
-    /// an kernel thread, this will be `None` and the thread will use the kernel
-    /// page map level 4 table instead.
-    pml4: Option<Arc<Spinlock<Pml4>>>,
-
-    /// The kernel stack for this thread.
+pub struct Context {
+    /// The kernel stack for this context.
     kstack: KernelStack,
 
-    /// The state of the thread.
-    state: State,
+    /// The saved state of this context.
+    registers: Registers,
 }
 
-impl Thread {
+impl Context {
     /// Creates a new kernel thread with the given function as the entry point.
     #[must_use]
     pub fn kernel(f: fn() -> !) -> Self {
-        let mut kstack = KernelStack::new();
-        kstack.write_kernel_trampoline(f as usize);
-        Self {
-            state: State::Created,
-            pml4: None,
-            kstack,
-        }
-    }
+        let mut kstack = KernelStack::kernel(f as usize);
+        let registers = Registers::new(&mut kstack);
 
-    /// Changes the state of the thread to the given one.
-    pub fn set_state(&mut self, state: State) {
-        self.state = state;
-    }
-
-    /// Returns a reference to the page map level 4 table for this thread. If this
-    /// thread is a kernel thread, this will return always `None`.
-    #[must_use]
-    pub fn pml4(&self) -> Option<&Arc<Spinlock<Pml4>>> {
-        self.pml4.as_ref()
+        Self { registers, kstack }
     }
 
     /// Returns a reference to the kernel stack for this thread.
     #[must_use]
-    pub fn kstack(&self) -> &KernelStack {
+    pub const fn kstack(&self) -> &KernelStack {
         &self.kstack
     }
 
-    /// Returns the state of the thread.
+    /// Returns a mutable pointer to the registers for this kernel stack.
     #[must_use]
-    pub fn state(&self) -> State {
-        self.state
+    pub const fn registers(&self) -> *mut Registers {
+        core::ptr::from_ref(&self.registers).cast_mut()
     }
 
     /// Change the kernel stack that will be used by the thread by the given one.
@@ -98,20 +57,6 @@ impl Thread {
             tss::set_kernel_stack(self.kstack.bottom());
         }
     }
-
-    /// Changes the current page map level 4 table to the one associated with
-    /// this thread.
-    fn change_pml4(&self) {
-        // SAFETY: This is safe because all the page map level 4 table share
-        // the same address space, so we can safely change the current page map
-        // level 4 table to the one associated with this thread.
-        unsafe {
-            match self.pml4.as_ref() {
-                Some(pml4) => pml4.lock().set_current(),
-                None => KERNEL_PML4.set_current(),
-            }
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -119,11 +64,6 @@ pub struct KernelStack {
     /// The kernel stack. The data are uninitialized because the stack is
     /// dynamically initialized during the kernel runtime.
     data: Box<MaybeUninit<Align16<[u8; KernelStack::SIZE]>>>,
-
-    /// The registers saved in a separate structure to make the context
-    /// switching easier and the Rust code safer instead of putting this
-    /// directly in the stack.
-    registers: Registers,
 }
 
 impl KernelStack {
@@ -137,16 +77,15 @@ impl KernelStack {
 
     /// Creates a kernel stack, with an pointer to an `Registers` structure
     /// with the default values and the stack pointer set to the bottom of the
-    /// stack. This function also write the kernel trampoline after the bottom
-    /// of the stack, needed by the [`thread_enter`] function.
+    /// stack, and write the kernel trampoline at the bottom of the stack that
+    /// will allow the context to be resumed to the context entry point.
     #[must_use]
-    pub fn new() -> Self {
+    pub fn kernel(entry: usize) -> Self {
         let mut kstack = Self {
             data: Box::new_uninit(),
-            registers: Registers::new(),
         };
 
-        kstack.registers.rsp = kstack.bottom() as usize;
+        kstack.write_kernel_trampoline(entry);
         kstack
     }
 
@@ -201,18 +140,6 @@ impl KernelStack {
     pub fn top(&self) -> *mut usize {
         self.data.as_ptr().cast::<usize>().cast_mut()
     }
-
-    /// Returns a mutable pointer to the registers for this kernel stack.
-    #[must_use]
-    const fn registers(&self) -> *mut Registers {
-        core::ptr::from_ref(&self.registers).cast_mut()
-    }
-}
-
-impl Default for KernelStack {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 /// The state of a thread is saved in this structure when the thread is not
@@ -243,11 +170,11 @@ pub struct Registers {
 }
 
 impl Registers {
-    /// Creates a new set of registers with the default values. All registers are
-    /// set to 0 except the instruction pointer which is set to the address of the
-    /// `thread_enter` function, which is the entry point for all created threads.
+    /// Creates a new set of registers. All the registers are set to 0, except:
+    /// - `rsp` that is set to the given kernel stack bottom,
+    /// - `rip` that is set to the `context_enter` function.
     #[must_use]
-    pub fn new() -> Self {
+    pub fn new(kstack: &mut KernelStack) -> Self {
         Self {
             rflags: 0,
             rbp: 0,
@@ -256,55 +183,15 @@ impl Registers {
             r13: 0,
             r14: 0,
             r15: 0,
-            rsp: 0,
-            rip: thread_enter as usize,
+            rsp: kstack.bottom() as usize,
+            rip: context_enter as usize,
         }
     }
 }
 
-impl Default for Registers {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// The state of a thread.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum State {
-    /// The thread has been created but is not yet ready to run.
-    Created,
-
-    /// The thread is ready to run and is waiting to be scheduled by the kernel.
-    Ready,
-
-    /// The thread is currently running on the CPU.
-    Running,
-
-    /// The thread is currently sleeping and is waiting for a specific event to
-    /// occur before being woken up. If an signal is sent to the thread, it will
-    /// be woken up and will return to the `Ready` state, even if the event it
-    /// was waiting for did not occur.
-    Sleeping,
-
-    /// The thread is currently waiting for an event to occur. If the event occurs,
-    /// the thread will return to the `Ready` state, otherwise it will remain in
-    /// this state until the event occurs. This state is similar to the `Sleeping`
-    /// state, but the thread cannot be woken up by a signal.
-    Waiting,
-
-    /// The thread has exited and is waiting to be joined by another thread. This
-    /// variant contains the exit code of the thread.
-    Exited(u32),
-
-    /// The thread has been terminated by an signal and is waiting to be joined
-    /// by another thread. This variant is similar to the `Exited` variant, but
-    /// contains the signal that terminated the thread instead of the exit code.
-    Terminated(u32),
-}
-
-/// The context to switch to another thread. This structure is used to save the
-/// registers of the current thread and to restore the registers of the next
-/// thread when switching to it.
+/// The context to switch to another context. This structure is used to save the
+/// registers of the current context and to restore the registers of the next
+/// context when switching to it.
 ///
 /// It must be acquired by calling the `prepare_switch` function before calling
 /// the `perform_switch` function with the returned value.
@@ -315,18 +202,18 @@ pub struct SwitchContext {
 }
 
 impl SwitchContext {
-    /// Creates a new switch context with the given previous and next threads.
+    /// Creates a new switch context with the given previous and next context.
     #[must_use]
-    const fn new(prev: &Thread, next: &Thread) -> Self {
+    const fn new(prev: &Context, next: &Context) -> Self {
         Self {
-            prev: prev.kstack.registers(),
-            next: next.kstack.registers(),
+            prev: prev.registers(),
+            next: next.registers(),
         }
     }
 }
 
-/// The context to jump to another thread. This structure is used restore the
-/// registers of the thread when jumping to it. When this structure is used
+/// The context to jump to another context. This structure is used restore the
+/// registers of the context when jumping to it. When this structure is used
 /// in conjunction with the `perform_jump` function, it will *not* save the
 /// current registers, that will be lost forever.
 #[derive(Debug)]
@@ -335,11 +222,11 @@ pub struct JumpContext {
 }
 
 impl JumpContext {
-    /// Creates a new jump context with the given thread.
+    /// Creates a new jump context with the given context.
     #[must_use]
-    const fn new(thread: &Thread) -> Self {
+    const fn new(context: &Context) -> Self {
         Self {
-            regs: thread.kstack.registers(),
+            regs: context.registers(),
         }
     }
 }
@@ -351,9 +238,8 @@ impl JumpContext {
 /// This function will change the kernel stack and the page map level 4 table
 /// to the one associated with the next thread.
 #[must_use]
-pub fn prepare_switch(prev: &mut Thread, next: &mut Thread) -> SwitchContext {
+pub fn prepare_switch(prev: &mut Context, next: &mut Context) -> SwitchContext {
     next.change_kernel_stack();
-    next.change_pml4();
     SwitchContext::new(prev, next)
 }
 
@@ -373,7 +259,7 @@ pub fn prepare_switch(prev: &mut Thread, next: &mut Thread) -> SwitchContext {
 /// in undefined behavior or memory unsafety. The caller must also ensure that the
 /// given registers pointers are valid and contain valid registers.
 pub unsafe fn perform_switch(switch: SwitchContext) {
-    thread_switch(switch.prev, switch.next);
+    context_switch(switch.prev, switch.next);
 }
 
 /// Prepare the thread to be jumped to, and return a `JumpContext` that should
@@ -382,10 +268,9 @@ pub unsafe fn perform_switch(switch: SwitchContext) {
 /// This function will change the kernel stack and the page map level 4 table to
 /// the one associated with the thread.
 #[must_use]
-pub fn prepare_jump(thread: &mut Thread) -> JumpContext {
-    thread.change_kernel_stack();
-    thread.change_pml4();
-    JumpContext::new(thread)
+pub fn prepare_jump(context: &mut Context) -> JumpContext {
+    context.change_kernel_stack();
+    JumpContext::new(context)
 }
 
 /// Perform the actual jump to the next thread. This function will restore the
@@ -404,5 +289,5 @@ pub fn prepare_jump(thread: &mut Thread) -> JumpContext {
 /// will not result in undefined behavior or memory unsafety. The caller must also
 /// ensure that the given registers pointer are valid.
 pub unsafe fn perform_jump(jump: JumpContext) -> ! {
-    thread_jump(jump.regs);
+    context_jump(jump.regs);
 }

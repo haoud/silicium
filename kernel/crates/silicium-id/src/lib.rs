@@ -30,7 +30,7 @@ impl<const N: usize> Generator<N> {
     pub const fn new() -> Self {
         Self {
             bitmap: Bitmap::zeroes(),
-            last: 0,
+            last: N,
         }
     }
 
@@ -38,7 +38,7 @@ impl<const N: usize> Generator<N> {
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
     pub const fn generate(&mut self) -> Option<u32> {
-        if let Some(id) = self.bitmap.get_next_one(self.last) {
+        if let Some(id) = self.bitmap.get_next_zero(self.last) {
             self.last = id;
             Some(id as u32)
         } else {

@@ -1,15 +1,17 @@
-use crate::arch::{
-    self,
-    thread::{State, Thread},
+use crate::{
+    arch,
+    sys::{
+        process::{self, Process},
+        thread::{State, Thread},
+    },
 };
 use alloc::collections::VecDeque;
-use core::num::Saturating;
-use macros::per_cpu;
+use core::ops::{AddAssign, SubAssign};
 use spin::Spinlock;
 
 /// The current task running on the CPU. If this is `None`, then the CPU is idle.
 #[per_cpu]
-pub static CURRENT: Spinlock<Option<Task>> = Spinlock::new(None);
+pub static CURRENT: Spinlock<Option<Thread>> = Spinlock::new(None);
 
 /// The scheduler for the kernel
 pub static SCHEDULER: Scheduler = Scheduler::new();
@@ -22,7 +24,7 @@ pub const DEFAULT_QUANTUM: u64 = 50;
 #[derive(Debug)]
 pub struct Scheduler {
     /// The tasks that are ready to run
-    ready: Spinlock<VecDeque<Task>>,
+    ready: Spinlock<VecDeque<Thread>>,
 }
 
 impl Scheduler {
@@ -34,27 +36,27 @@ impl Scheduler {
         }
     }
 
-    /// Set the state of the current task to `Running` and enqueue it to the
-    /// ready queue. The task will be scheduled to run when all tasks enqueued
-    /// before it have been scheduled.
-    pub fn enqueue_ready(&self, task: Task) {
-        task.thread.lock().set_state(State::Ready);
+    /// Set the state of the task to `Ready` and enqueue it to the ready queue. The task
+    /// will be scheduled to run when all tasks enqueued before it have been scheduled.
+    pub fn enqueue_ready(&self, mut task: Thread) {
+        task.set_state(State::Ready);
         self.ready.lock().push_back(task);
     }
 
     /// Pop the next task that is ready to run and set its state to `Running`.
     /// If there are no tasks ready to run, then this function will return `None`.
     #[must_use]
-    pub fn pop(&self) -> Option<Task> {
-        self.ready.lock().pop_front().inspect(|task| {
-            task.thread.lock().set_state(State::Running);
+    pub fn pop(&self) -> Option<Thread> {
+        self.ready.lock().pop_front().map(|mut thread| {
+            thread.set_state(State::Running);
+            thread
         })
     }
 
     /// Pop the next task that is ready to run and set its state to `Running`.
     /// If there are no tasks ready to run, then this function will idle the CPU
     /// until a task is ready to run.
-    pub fn pop_or_idle(&self) -> Task {
+    pub fn pop_or_idle(&self) -> Thread {
         arch::irq::without(|| {
             loop {
                 if let Some(next) = self.pop() {
@@ -77,17 +79,16 @@ impl Scheduler {
     ///
     /// When the current thread will be resumed, it will return to the [`schedule_to`]
     /// function normally, as if it was never interrupted.
-    pub fn schedule_to(&self, next: Task) {
+    pub fn schedule_to(&self, mut next: Thread) {
         arch::irq::without(|| {
-            let current = CURRENT
+            let mut current = CURRENT
                 .local()
                 .lock()
                 .take()
                 .expect("Cannot schedule without a task");
 
-            let state = current.thread.lock().state();
-            let switch =
-                arch::thread::prepare_switch(&mut current.thread.lock(), &mut next.thread.lock());
+            let state = current.state();
+            let switch = arch::context::prepare_switch(current.context_mut(), next.context_mut());
 
             match state {
                 State::Terminated(_) | State::Exited(_) => {
@@ -96,6 +97,7 @@ impl Scheduler {
                 }
                 State::Sleeping | State::Waiting => {
                     // Nothing to do... This is not yet implemented
+                    // TODO: Put the task inside a queue to be woken up later
                 }
                 State::Running => {
                     // The task was running, so we should enqueue it back to the
@@ -107,13 +109,13 @@ impl Scheduler {
                 }
             }
 
-            set_current_task(next);
+            CURRENT.local().lock().replace(next);
 
             // SAFETY: This should be safe since we can assume that the registers
             // saved previously are valid, and we does not have any locks held
             // (that could lead to a deadlock when switching tasks)
             unsafe {
-                arch::thread::perform_switch(switch);
+                arch::context::perform_switch(switch);
             }
         });
     }
@@ -125,32 +127,15 @@ impl Default for Scheduler {
     }
 }
 
-/// A task that can be scheduled to run on the CPU
-#[derive(Debug)]
-pub struct Task {
-    /// The thread that the task is running
-    thread: Arc<Spinlock<Thread>>,
-
-    /// The time slice remaining for the task. If this is `0`, then the task
-    /// will be preempted if another task is ready to run.
-    remaning: Saturating<u64>,
-}
-
-impl Task {
-    /// Create a new task with the given thread and with the default
-    /// time slice
-    #[must_use]
-    pub fn new(thread: Thread) -> Self {
-        Self {
-            thread: Arc::new(Spinlock::new(thread)),
-            remaning: Saturating(DEFAULT_QUANTUM),
-        }
-    }
-
-    /// Restore the time slice for the task
-    pub fn restore_quantum(&mut self) {
-        self.remaning = Saturating(DEFAULT_QUANTUM);
-    }
+/// Setup the scheduler for the kernel. This function will create the kernel
+/// process, which will be the parent of all kernel threads.
+///
+/// # Safety
+/// This function is marked as unsafe because it must be called only once at the start
+/// of the kernel. Failing to do so will result in undefined behavior.
+#[init]
+pub unsafe fn setup() {
+    process::register(Process::new());
 }
 
 /// Decrease the time slice for the current task. If the time slice is `0`, then
@@ -162,19 +147,15 @@ pub fn tick() {
     let mut current = current.lock();
 
     // If there is no task running, then we have nothing to do
-    if let Some(task) = current.as_mut() {
-        // Decrease the time slice for the task and check if it is time to
-        // preempt the task
-        task.remaning -= 1;
-        if task.remaning.0 == 0 {
+    if let Some(thread) = current.as_mut() {
+        thread.quantum_mut().sub_assign(1);
+        if thread.quantum().0 == 0 {
             // If there is no other task ready to run, we can simply delay the
             // scheduling of the current task because there is nothing better to
             // do. The task will be scheduled when another task is will be ready
             // to run.
             if let Some(next) = SCHEDULER.pop() {
-                // Restore the time slice to allow the current task to run again
-                // when it will be resumed by the scheduler
-                task.restore_quantum();
+                thread.quantum_mut().add_assign(DEFAULT_QUANTUM);
                 core::mem::drop(current);
                 SCHEDULER.schedule_to(next);
             }
@@ -188,19 +169,20 @@ pub fn tick() {
 /// This function should only be used after the kernel has been initialized, to
 /// start the first task on the core.
 pub fn enter() -> ! {
-    let task = SCHEDULER.pop_or_idle();
-    let jump = arch::thread::prepare_jump(&mut task.thread.lock());
+    let mut thread = SCHEDULER.pop_or_idle();
+    let jump = arch::context::prepare_jump(thread.context_mut());
 
-    set_current_task(task);
+    // SAFETY: Loading the page table of the task should be safe since we can
+    // only assume that it was correctly initialized.
+    unsafe {
+        thread.process().page_table().lock().load_current();
+    }
+
+    CURRENT.local().lock().replace(thread);
 
     // SAFETY: We assume that the task is valid, and we does not have any
     // locks held (that could lead to a deadlock when switching tasks)
     unsafe {
-        arch::thread::perform_jump(jump);
+        arch::context::perform_jump(jump);
     }
-}
-
-/// Set the current task for the CPU and return the previous task
-pub fn set_current_task(task: Task) -> Option<Task> {
-    CURRENT.local().lock().replace(task)
 }

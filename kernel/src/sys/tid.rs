@@ -10,7 +10,7 @@ static TID_ALLOCATOR: Spinlock<id::Generator<TID_BITMAP_COUNT>> =
 
 /// A thread identifier. It can only be created by the `Tid::generate` method and
 /// is automatically released when it goes out of scope.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Tid(u32);
 
 impl Tid {
@@ -22,15 +22,23 @@ impl Tid {
         TID_ALLOCATOR.lock().generate().map(Self)
     }
 
+    /// Deallocates the thread identifier, allowing it to be reused.
+    pub fn deallocate(self) {
+        TID_ALLOCATOR.lock().release(self.0);
+    }
+
+    /// Creates a new thread identifier from a `u32`.
+    ///
+    /// # Panics
+    /// Panics if the `id` is greater than or equal to `MAX_TIDS`.
+    pub fn new(id: u32) -> Self {
+        assert!(id < MAX_TIDS);
+        Self(id)
+    }
+
     /// Returns the thread identifier as a `u32`.
     #[must_use]
     pub const fn as_u32(&self) -> u32 {
         self.0
-    }
-}
-
-impl Drop for Tid {
-    fn drop(&mut self) {
-        TID_ALLOCATOR.lock().release(self.0);
     }
 }

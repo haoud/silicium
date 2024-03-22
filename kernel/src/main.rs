@@ -44,6 +44,9 @@ pub unsafe extern "C" fn _start() -> ! {
     // Setup the time system
     time::setup();
 
+    // Setup the scheduler
+    scheduler::setup();
+
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
