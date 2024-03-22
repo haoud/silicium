@@ -1,5 +1,6 @@
-use super::tid::Tid;
-use crate::arch::context::Context;
+use super::{process::Process, tid::Tid};
+use crate::{arch::context::Context, scheduler};
+use core::num::Saturating;
 
 /// A thread.
 #[derive(Debug)]
@@ -7,36 +8,42 @@ pub struct Thread {
     /// The identifier of the thread
     tid: Tid,
 
-    /// The process that contains the thread
-    /// process: Weak<Spinlock<Process>>,
+    /// The state of the thread
+    state: State,
+
+    /// The time slice of the thread in ticks
+    quantum: Saturating<u64>,
 
     /// The context of the thread. This contains some architecture-specific data
     /// that is used to save and restore the state of the thread when it is scheduled.
     context: Context,
 
-    /// The state of the thread
-    state: State,
+    /// The process that the thread belongs to
+    process: Arc<Process>,
 }
 
 impl Thread {
     /// Create a new kernel thread that will run the given function
     #[must_use]
-    pub fn kernel(f: fn() -> !) -> Self {
+    pub fn kernel(process: Arc<Process>, f: fn() -> !) -> Self {
         let tid = Tid::generate().expect("Failed to generate a new thread ID");
+        let quantum = Saturating(scheduler::DEFAULT_QUANTUM);
         let context = Context::kernel(f);
         let state = State::Created;
 
         Self {
+            process,
             context,
+            quantum,
             state,
             tid,
         }
     }
 
-    /// Get the identifier of the thread
+    /// Get the process that the thread belongs to
     #[must_use]
-    pub const fn tid(&self) -> &Tid {
-        &self.tid
+    pub const fn process(&self) -> &Arc<Process> {
+        &self.process
     }
 
     /// Get a mutable reference to the context of the thread
@@ -51,15 +58,39 @@ impl Thread {
         &self.context
     }
 
+    /// Return a mutable reference to the time slice of the thread
+    #[must_use]
+    pub const fn quantum_mut(&mut self) -> &mut Saturating<u64> {
+        &mut self.quantum
+    }
+
+    /// Return a mutable reference to the time slice of the thread
+    #[must_use]
+    pub const fn quantum(&self) -> &Saturating<u64> {
+        &self.quantum
+    }
+
+    /// Set the state of the thread
+    pub fn set_state(&mut self, state: State) {
+        self.state = state;
+    }
+
     /// Get the state of the thread
     #[must_use]
     pub fn state(&self) -> State {
         self.state
     }
 
-    /// Set the state of the thread
-    pub fn set_state(&mut self, state: State) {
-        self.state = state;
+    /// Get the identifier of the thread
+    #[must_use]
+    pub const fn tid(&self) -> &Tid {
+        &self.tid
+    }
+}
+
+impl Drop for Thread {
+    fn drop(&mut self) {
+        self.tid.deallocate();
     }
 }
 
