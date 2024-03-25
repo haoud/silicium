@@ -1,7 +1,10 @@
-use crate::arch::x86_64::{
-    apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
-    cpu::InterruptFrame,
-    pit, smp,
+use crate::{
+    arch::x86_64::{
+        apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
+        cpu::InterruptFrame,
+        pit, smp,
+    },
+    scheduler,
 };
 use core::sync::atomic::{AtomicU64, Ordering};
 use macros::init;
@@ -13,6 +16,10 @@ pub const IRQ_VECTOR: u8 = IOAPIC_IRQ_BASE;
 
 /// The internal frequency of the Local APIC timer, in Hz
 pub static INTERNAL_FREQUENCY: SeqLock<Hertz32> = SeqLock::new(Hertz32::new(0));
+
+/// The internal counter value of the Local APIC timer to raise an IRQ
+/// at the specified frequency ([`config::TIMER_HZ`])
+pub static INITIAL_COUNTER: SeqLock<u32> = SeqLock::new(0);
 
 /// The number of jiffies since the kernel has started
 pub static JIFFIES: AtomicU64 = AtomicU64::new(0);
@@ -58,7 +65,9 @@ pub unsafe fn calibrate() {
     log::debug!("APIC: Internal frequency is {} MHz", frequency / 1_000_000);
     log::debug!("APIC: Timer configured at {} Hz", config::TIMER_HZ);
     log::debug!("APIC: Internal timer granularity is {} ns", granularity);
+
     INTERNAL_FREQUENCY.write(Hertz32::new(frequency));
+    INITIAL_COUNTER.write(counter);
 
     // Configure the Local APIC timer with the calculated counter
     apic::local::write(Register::INITIAL_COUNT, counter);
@@ -76,8 +85,6 @@ pub unsafe fn calibrate() {
 /// calibrating the Local APIC timer frequency with [`calibrate`].
 #[init]
 pub unsafe fn setup() {
-    let counter = INTERNAL_FREQUENCY.read().0 / u32::from(config::TIMER_HZ);
-
     // Enable the IRQ vector
     apic::io::enable_irq(IRQ_VECTOR);
 
@@ -87,14 +94,14 @@ pub unsafe fn setup() {
     // - Set the initial count to the computed value
     apic::local::write(Register::LVT_TIMER, u32::from(IRQ_VECTOR) | 0x20000);
     apic::local::write(Register::DIVIDE_CONFIGURATION, 0b0011);
-    apic::local::write(Register::INITIAL_COUNT, counter);
+    apic::local::write(Register::INITIAL_COUNT, INITIAL_COUNTER.read());
 }
 
 /// Prepare an IRQ to be raised in `ns` nanoseconds.
 ///
 /// This function should not be called by the core that has called [`calibrate`],
-/// since the Local APIC timer is already configured to raise an IRQ at [`config::TIMER_HZ`]
-/// Hz in periodic mode, to keep track of the time.
+/// since the Local APIC timer is already configured to raise an IRQ at
+/// [`config::TIMER_HZ`] Hz in periodic mode, to keep track of the time.
 ///
 /// # Safety
 /// The caller must ensure that raising an IRQ is safe and that the IRQ
@@ -112,6 +119,30 @@ pub unsafe fn prepare_irq_in(ns: Nanosecond32) {
     apic::local::write(Register::INITIAL_COUNT, ns / granularity);
 }
 
+/// Return the internal frequency of the Local APIC timer, which is the rate at
+/// the Local APIC timer counter is decremented.
+#[must_use]
+pub fn internal_frequency() -> Hertz32 {
+    INTERNAL_FREQUENCY.read()
+}
+
+/// Read the current value of the Local APIC timer counter. This can be useful to
+/// have a precise time reference inside the current tick.
+#[must_use]
+pub fn internal_counter() -> u32 {
+    // SAFETY: Reading the local APIC timer is safe and should not lead to UB
+    // or memory unsafety.
+    unsafe { apic::local::read(Register::INITIAL_COUNT) }
+}
+
+/// Return the initial counter value of the Local APIC timer, which is the value
+/// that the Local APIC timer counter is set in order to raise an IRQ at the
+/// specified frequency ([`config::TIMER_HZ`]).
+#[must_use]
+pub fn initial_counter() -> u32 {
+    INITIAL_COUNTER.read()
+}
+
 /// Check if the given IRQ is used by the Local APIC timer.
 #[must_use]
 pub const fn own_irq(irq: u8) -> bool {
@@ -125,8 +156,5 @@ pub fn handle_irq(_: &mut InterruptFrame) {
     if smp::is_bsp() {
         JIFFIES.fetch_add(1, Ordering::Relaxed);
     }
-
-    // TODO: Call the scheduler
-    crate::scheduler::tick();
-    // TODO: Handle timers
+    scheduler::tick();
 }
