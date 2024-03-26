@@ -54,30 +54,6 @@ pub unsafe extern "C" fn _start() -> ! {
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
-    let mut executor = future::Executor::new();
-    executor.spawn(future::Task::new(test()));
-    executor.spawn(future::Task::new(another_test()));
-
-    arch::irq::enable();
-    loop {
-        executor.run_once();
-    }
-
     // Enter the scheduler
     scheduler::enter();
-}
-
-async fn test() {
-    loop {
-        log::info!("Tic");
-        crate::future::sleep::sleep(::time::unit::Nanosecond(2_000_000_000)).await;
-    }
-}
-
-async fn another_test() {
-    loop {
-        crate::future::sleep::sleep(::time::unit::Nanosecond(1_000_000_000)).await;
-        log::info!("Tac");
-        crate::future::sleep::sleep(::time::unit::Nanosecond(1_000_000_000)).await;
-    }
 }

@@ -5,12 +5,18 @@ use core::{
     task::{Context, Poll},
 };
 
+/// A task that can be polled to completion
 pub struct Task {
+    /// The future that the task is running
     future: Pin<Box<dyn Future<Output = ()> + Send>>,
+
+    /// The unique identifier for the task. This is used to identify the task
+    /// in the task queue.
     id: Identifier,
 }
 
 impl Task {
+    /// Create a new task from a future
     #[must_use]
     pub fn new(future: impl Future<Output = ()> + Send + 'static) -> Self {
         Self {
@@ -19,10 +25,12 @@ impl Task {
         }
     }
 
+    /// Poll the task to completion
     pub fn poll(&mut self, context: &mut Context) -> Poll<()> {
         self.future.as_mut().poll(context)
     }
 
+    /// Get the unique identifier for the task
     #[must_use]
     pub const fn id(&self) -> Identifier {
         self.id
