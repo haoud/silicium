@@ -27,6 +27,8 @@ time = { path = "crates/silicium-time", package = "silicium-time" }
 hal = { path = "crates/silicium-hal", package = "silicium-hal" }
 id = { path = "crates/silicium-id", package = "silicium-id" }
 
+crossbeam = { version = "0.8.0", default-features = false, features = ["alloc"] }
+futures = { version = "0.3.30", default-features = false, features = ["alloc"] }
 arrayvec = { version = "0.7.4", default-features = false }
 talc = { version = "4.3.1", features = ["counters"] }
 static_assertions = "1.1.0"
@@ -39,11 +41,13 @@ limine = "0.2"
 log = "0.4.20"
 
 [dependencies]
+crossbeam = { workspace = true }
 arrayvec = { workspace = true }
 bitfield = { workspace = true }
 bitflags = { workspace = true }
 tailcall = { workspace = true }
 zerocopy = { workspace = true }
+futures = { workspace = true }
 seqlock = { workspace = true }
 limine = { workspace = true }
 macros = { workspace = true }

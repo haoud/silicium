@@ -14,6 +14,7 @@ extern crate alloc;
 
 pub mod arch;
 pub mod boot;
+pub mod future;
 pub mod mm;
 pub mod preempt;
 pub mod prelude;
@@ -46,6 +47,9 @@ pub unsafe extern "C" fn _start() -> ! {
 
     // Setup the scheduler
     scheduler::setup();
+
+    // Setup the async runtime
+    future::setup();
 
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");

@@ -1,4 +1,5 @@
 use crate::unit::{Millisecond, Millisecond32, Overflow, Second, Second32};
+use core::ops::{Add, AddAssign, Sub, SubAssign};
 
 /// Represents a duration in nanoseconds
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -35,6 +36,34 @@ impl TryFrom<Millisecond> for Nanosecond {
     }
 }
 
+impl Add<Nanosecond> for Nanosecond {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::new(self.0 + rhs.0)
+    }
+}
+
+impl AddAssign<Nanosecond> for Nanosecond {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
+    }
+}
+
+impl Sub<Nanosecond> for Nanosecond {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::new(self.0 - rhs.0)
+    }
+}
+
+impl SubAssign<Nanosecond> for Nanosecond {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs;
+    }
+}
+
 /// A 32-bit representation of a duration in nanoseconds
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Nanosecond32(pub u32);
@@ -67,5 +96,33 @@ impl TryFrom<Millisecond32> for Nanosecond32 {
             .checked_mul(1_000_000)
             .map(Self::new)
             .ok_or(Overflow(()))
+    }
+}
+
+impl Add<Nanosecond32> for Nanosecond32 {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::new(self.0 + rhs.0)
+    }
+}
+
+impl AddAssign<Nanosecond32> for Nanosecond32 {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
+    }
+}
+
+impl Sub<Nanosecond32> for Nanosecond32 {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::new(self.0 - rhs.0)
+    }
+}
+
+impl SubAssign<Nanosecond32> for Nanosecond32 {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs;
     }
 }

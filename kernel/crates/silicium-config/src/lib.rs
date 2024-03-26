@@ -44,3 +44,7 @@ const_assert!(MAX_TIDS > 0);
 /// prevent the system from working properly.
 pub const MAX_HANDLES: u32 = 1024;
 const_assert!(MAX_HANDLES >= 1024);
+
+/// The maximum numbers of asynchronous tasks that can be created.
+pub const MAX_TASKS: u32 = 64;
+const_assert!(MAX_TASKS >= 8);
