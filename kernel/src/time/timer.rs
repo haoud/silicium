@@ -1,5 +1,8 @@
 use crate::arch;
-use core::sync::atomic::{AtomicBool, Ordering};
+use core::{
+    any::Any,
+    sync::atomic::{AtomicBool, Ordering},
+};
 use spin::Spinlock;
 use time::Timespec;
 
@@ -9,11 +12,15 @@ static TIMERS: Spinlock<Vec<Timer>> = Spinlock::new(Vec::new());
 /// The callback type for timers.
 type Callback = Box<dyn FnMut(&mut Timer) + Send>;
 
+/// Custom data that can be stored in a timer.
+type Data = Box<dyn Any + Send>;
+
 /// A timer that will execute a callback when it expires if the guard is still active.
 pub struct Timer {
     callback: Option<Callback>,
     deadline: Timespec,
     guard: Guard,
+    data: Data,
 }
 
 impl Timer {
@@ -23,7 +30,7 @@ impl Timer {
     /// It returns a guard that will cancel the timer when dropped if the `ignore`
     /// method was not called on the guard before the timer expiration.
     #[must_use]
-    pub fn register<T>(deadline: Timespec, callback: T) -> Guard
+    pub fn register<T>(deadline: Timespec, data: Data, callback: T) -> Guard
     where
         T: FnMut(&mut Timer) + Send + 'static,
     {
@@ -36,6 +43,7 @@ impl Timer {
             callback: Some(Box::new(callback)),
             guard: guard.clone(),
             deadline,
+            data,
         };
 
         timer.activate();
@@ -55,13 +63,19 @@ impl Timer {
         self.guard.active()
     }
 
+    /// Returns the data associated with the timer.
+    #[must_use]
+    pub fn data(&mut self) -> &mut Data {
+        &mut self.data
+    }
+
     /// Activates the timer. If the timer has expired, it will be executed immediately,
     /// otherwise it will be pushed to the active timers list.
-    fn activate(mut self) {
+    fn activate(self) {
         if self.expired() {
             self.execute();
         } else {
-            TIMERS.lock().push(self);
+            TIMERS.lock_irq_safe().push(self);
         }
     }
 
@@ -69,10 +83,10 @@ impl Timer {
     ///
     /// # Panics
     /// Panics if the timer callback has already been called.
-    fn execute(&mut self) {
-        let mut callback = self.callback.take().expect("Timer callback already called");
+    fn execute(mut self) {
         if !self.guard.ignore {
-            (callback)(self);
+            let mut callback = self.callback.take().expect("Timer callback already called");
+            (callback)(&mut self);
         }
     }
 }
@@ -123,16 +137,17 @@ impl Drop for Guard {
 
 /// Eecute all expired timers and remove them from the list of active timers. Inactive
 /// timers will also be removed.
-#[atomic]
 pub fn handle() {
-    let mut timers = TIMERS.lock();
-
-    // Execute all expired timers and then remove them from the list of active
-    // timers. Inactive timers will also be removed.
-    timers
-        .iter_mut()
-        .filter(|timer| timer.expired())
-        .for_each(|timer| timer.execute());
-
-    timers.retain(|timer| !timer.expired() && timer.active());
+    TIMERS.with_irq_safe(|timers| {
+        let mut i = 0;
+        while i < timers.len() {
+            if timers[i].expired() {
+                timers.swap_remove(i).execute();
+            } else if !timers[i].active() {
+                timers.swap_remove(i);
+            } else {
+                i += 1;
+            }
+        }
+    });
 }

@@ -29,7 +29,7 @@ impl log::Log for Logger {
 
     fn log(&self, record: &log::Record) {
         if self.enabled(record.metadata()) {
-            if let Some(serial) = self.serial.lock().as_mut() {
+            if let Some(serial) = self.serial.lock_irq_safe().as_mut() {
                 let level = match record.level() {
                     log::Level::Error => "\x1B[1m\x1b[31m[!]\x1b[0m",
                     log::Level::Warn => "\x1B[1m\x1b[33m[-]\x1b[0m",
@@ -57,7 +57,7 @@ pub fn setup() {
 /// not available, this function does nothing. If an error occurs while writing
 /// the message, the error is ignored.
 pub fn write(message: &str) {
-    if let Some(serial) = LOGGER.serial.lock().as_ref() {
+    if let Some(serial) = LOGGER.serial.lock_irq_safe().as_ref() {
         for character in message.bytes() {
             _ = serial.send(character);
         }

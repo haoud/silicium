@@ -52,7 +52,10 @@ impl Executor {
 
             let context = &mut Context::from_waker(&waker);
             match task.poll(context) {
-                Poll::Pending => {}
+                Poll::Pending => {
+                    // If the task is not ready, push it back to the queue
+                    self.queue.push(id).expect("Too many async tasks");
+                }
                 Poll::Ready(()) => {
                     // Remove the task and waker from the executor
                     self.wakers.remove(&id);

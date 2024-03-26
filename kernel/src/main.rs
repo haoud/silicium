@@ -68,9 +68,16 @@ pub unsafe extern "C" fn _start() -> ! {
 }
 
 async fn test() {
-    log::info!("Hello from async function");
+    loop {
+        log::info!("Tic");
+        crate::future::sleep::sleep(::time::unit::Nanosecond(2_000_000_000)).await;
+    }
 }
 
 async fn another_test() {
-    log::info!("Hello from another async function");
+    loop {
+        crate::future::sleep::sleep(::time::unit::Nanosecond(1_000_000_000)).await;
+        log::info!("Tac");
+        crate::future::sleep::sleep(::time::unit::Nanosecond(1_000_000_000)).await;
+    }
 }
