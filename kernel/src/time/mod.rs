@@ -3,6 +3,8 @@ use macros::init;
 use seqlock::SeqLock;
 use time::unit::Second;
 
+pub mod timer;
+
 /// Number of days elased since the beginning of the year, excluding the current month.
 const ELAPSED_DAYS_MONTHS: [usize; 12] = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
 
@@ -96,8 +98,8 @@ impl Date {
         // Take into account leap years since 1970.
         seconds += (u64::from(self.year) - 1968) / 4 * 86400;
 
-        // If the current year is a leap year and the current month is January or February, we
-        // need to remove one day from the total number of seconds.
+        // If the current year is a leap year and the current month is January or
+        // February, we need to remove one day from the total number of seconds.
         if self.year % 4 == 0 && self.month <= 2 {
             seconds -= 86400;
         }
@@ -131,8 +133,8 @@ pub unsafe fn setup() {
     log::info!("Time: Unix time: {:?}", STARTUP_TIME.read());
 }
 
-/// Returns the number of days in the given month of the given year. The year is need to determine
-/// if the month of February has 28 or 29 days.
+/// Returns the number of days in the given month of the given year. The year is need
+/// to determine if the month of February has 28 or 29 days.
 ///
 /// # Panics
 /// This function will panic if the month is not in the range 1..=12.
@@ -163,9 +165,9 @@ pub fn month_elsapsed_days(year: u16, month: u8) -> u16 {
     days
 }
 
-/// Compute the month in the year from the number of days elapsed since the beginning of the year.
-/// The year is needed to determine if the month of February has 28 or 29 days. The days must
-/// be in the range 1..=366.
+/// Compute the month in the year from the number of days elapsed since the beginning
+/// of the year. The year is needed to determine if the month of February has 28 or 29
+/// days. The days must be in the range 1..=366.
 #[must_use]
 pub const fn month_in_year(year: u16, days: u16) -> u8 {
     let mut month_days = 0;

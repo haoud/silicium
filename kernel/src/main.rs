@@ -64,7 +64,7 @@ pub unsafe extern "C" fn _start() -> ! {
     }
 
     // Enter the scheduler
-    // scheduler::enter();
+    scheduler::enter();
 }
 
 async fn test() {

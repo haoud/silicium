@@ -132,7 +132,7 @@ pub fn internal_frequency() -> Hertz32 {
 pub fn internal_counter() -> u32 {
     // SAFETY: Reading the local APIC timer is safe and should not lead to UB
     // or memory unsafety.
-    unsafe { apic::local::read(Register::INITIAL_COUNT) }
+    unsafe { apic::local::read(Register::CURRENT_COUNT) }
 }
 
 /// Return the initial counter value of the Local APIC timer, which is the value
