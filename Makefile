@@ -24,11 +24,8 @@ unit-tests: unit-tests-kernel unit-tests-servers unit-tests-userspace
 build-kernel:
 	cd kernel && cargo build --release
 
-build-servers:
-	
-
 build-userspace:
-	
+	make -C user build
 
 build-book:
 	cd book && mdbook build
@@ -52,15 +49,11 @@ check-clippy:
 check-format:
 	cd kernel && cargo fmt --all -- --check
 
-
 unit-tests-kernel:
 	cd kernel && cargo test --release --target=x86_64-unknown-linux-gnu -Z build-std
 
-unit-tests-servers:
-	
-
 unit-tests-userspace:
-	
+	make -C user unit-tests
 
 integration-tests:
 	# QEMU_FLAGS="-nographic" && run

@@ -53,6 +53,9 @@ cp -v                                   \
 # Install the kernel
 cp -v kernel/target/$1/release/kernel iso/boot/silicium.elf
 
+# Install the user programs
+./scripts/install_package.sh init
+
 # Create the ISO
 xorriso -as mkisofs -b boot/limine-bios-cd.bin			  \
 		-no-emul-boot -boot-load-size 4 -boot-info-table 	\
