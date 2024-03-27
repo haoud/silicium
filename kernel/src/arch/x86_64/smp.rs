@@ -1,6 +1,6 @@
 use crate::{
     arch::x86_64::{apic, gdt, idt, paging, percpu, simd, tss},
-    scheduler,
+    user,
 };
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use macros::init;
@@ -100,5 +100,5 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
         core::hint::spin_loop();
     }
 
-    scheduler::enter()
+    user::scheduler::enter_usermode();
 }

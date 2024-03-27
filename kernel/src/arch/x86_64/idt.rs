@@ -181,6 +181,9 @@ pub extern "C" fn irq_handler(frame: &mut InterruptFrame) {
         log::warn!("Unhandled interrupt: {:?}", id);
     }
 
+    // Handle timers that have expired if the interrupt is not an exception. This
+    // is needed because this could lead to a deadlock if an exception was triggered
+    // during the timer handling.
     if !exception::own_interrupt(id) {
         time::timer::handle();
     }

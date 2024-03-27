@@ -18,9 +18,8 @@ pub mod future;
 pub mod mm;
 pub mod preempt;
 pub mod prelude;
-pub mod scheduler;
-pub mod sys;
 pub mod time;
+pub mod user;
 
 #[allow(unused_imports)]
 #[prelude_import]
@@ -45,15 +44,11 @@ pub unsafe extern "C" fn _start() -> ! {
     // Setup the time system
     time::setup();
 
-    // Setup the scheduler
-    scheduler::setup();
-
     // Setup the async runtime
     future::setup();
 
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
-    // Enter the scheduler
-    scheduler::enter();
+    user::scheduler::enter_usermode();
 }

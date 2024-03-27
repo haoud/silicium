@@ -4,7 +4,7 @@ use crate::{
         cpu::InterruptFrame,
         pit, smp,
     },
-    scheduler,
+    user,
 };
 use core::sync::atomic::{AtomicU64, Ordering};
 use macros::init;
@@ -156,5 +156,5 @@ pub fn handle_irq(_: &mut InterruptFrame) {
     if smp::is_bsp() {
         JIFFIES.fetch_add(1, Ordering::Relaxed);
     }
-    scheduler::tick();
+    user::scheduler::tick();
 }

@@ -79,7 +79,7 @@ pub fn atomic(_: TokenStream, item: TokenStream) -> TokenStream {
     input_fn.block = Box::new(syn::parse_quote!({
         crate::arch::hal::irq::without(|| {
             crate::preempt::without(|| {
-                crate::sys::sleep::without(|| {
+                crate::user::sleep::without(|| {
                     #body
                 })
             })
@@ -103,7 +103,7 @@ pub fn may_sleep(_: TokenStream, item: TokenStream) -> TokenStream {
     input_fn.block = Box::new(syn::parse_quote!({
         cfg_if::cfg_if! {
             if #[cfg(feature = "enforce_atomicity")] {
-                if !crate::sys::sleep::enabled() {
+                if !crate::user::sleep::enabled() {
                     panic!("#[may_sleep] function called in atomic context");
                 }
             }

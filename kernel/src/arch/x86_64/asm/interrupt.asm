@@ -1,9 +1,3 @@
-# This is the common interrupt handler, which is called by all interrupt
-# handlers. It switchs to the kernel GS segment if we was in user mode,
-# and saves all registers before calling the irq_handler function that will
-# handle and dispatch the interrupt. After the irq_handler returns, it restores
-# the registers, switches back to the user GS segment if we was in user mode,
-# and returns to the interrupted code.
 interrupt_common:
     # Swap the kernel and user GS if we was in user mode
     cmp QWORD ptr [rsp + 24], 0x08
@@ -30,8 +24,23 @@ interrupt_common:
     push rbp
    
     mov rdi, rsp
+
+    cmp QWORD ptr [rsp + 144], 0x08
+    je 1f
+    call kernel_enter
+
+  1:
     call irq_handler
 
+    # Check if we was in user mode before the interrupt and if it is
+    # the case, we need to swapgs before returning to user mode and to
+    # call the user_return function before returning to the interrupted
+    # code.
+    cmp QWORD ptr [rsp + 144], 0x08
+    je 1f 
+    call kernel_leave
+
+1:
    # Restore preserved registers
     pop rbp
     pop rbx

@@ -1,8 +1,8 @@
 use super::{process::Process, tid::Tid};
-use crate::{arch::context::Context, scheduler};
+use crate::arch::context::Context;
 use core::num::Saturating;
 
-/// A thread.
+/// An user thread.
 #[derive(Debug)]
 pub struct Thread {
     /// The identifier of the thread
@@ -14,6 +14,9 @@ pub struct Thread {
     /// The time slice of the thread in ticks
     quantum: Saturating<u64>,
 
+    /// Whether the thread should be rescheduled or not
+    reschedule: bool,
+
     /// The context of the thread. This contains some architecture-specific data
     /// that is used to save and restore the state of the thread when it is scheduled.
     context: Context,
@@ -23,23 +26,6 @@ pub struct Thread {
 }
 
 impl Thread {
-    /// Create a new kernel thread that will run the given function
-    #[must_use]
-    pub fn kernel(process: Arc<Process>, f: fn() -> !) -> Self {
-        let tid = Tid::generate().expect("Failed to generate a new thread ID");
-        let quantum = Saturating(scheduler::DEFAULT_QUANTUM);
-        let context = Context::kernel(f);
-        let state = State::Created;
-
-        Self {
-            process,
-            context,
-            quantum,
-            state,
-            tid,
-        }
-    }
-
     /// Get the process that the thread belongs to
     #[must_use]
     pub const fn process(&self) -> &Arc<Process> {
@@ -68,6 +54,17 @@ impl Thread {
     #[must_use]
     pub const fn quantum(&self) -> &Saturating<u64> {
         &self.quantum
+    }
+
+    /// Return whether the thread needs to be rescheduled or not
+    #[must_use]
+    pub fn needs_reschedule(&self) -> bool {
+        self.reschedule
+    }
+
+    /// Set whether the thread needs to be rescheduled or not
+    pub fn set_reschedule(&mut self, reschedule: bool) {
+        self.reschedule = reschedule;
     }
 
     /// Set the state of the thread
