@@ -22,8 +22,8 @@ impl Context {
         let rflags = 0x202;
         let rip = entry;
         let rsp = stack;
-        let cs = 0x23; // User 64-bits code segment
-        let ss = 0x2B; // User 64-bits data segment
+        let cs = 0x2B; // User 64-bits code segment
+        let ss = 0x23; // User 64-bits data segment
         Self {
             registers: Box::pin(Registers {
                 rflags,

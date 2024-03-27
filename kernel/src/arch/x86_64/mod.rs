@@ -18,6 +18,7 @@ pub mod pit;
 pub mod serial;
 pub mod simd;
 pub mod smp;
+pub mod syscall;
 pub mod tsc;
 pub mod tss;
 
@@ -54,6 +55,9 @@ pub unsafe fn setup() {
 
     // Setup the CPU identification
     cpu::cpuid::setup();
+
+    // Setup the system call mechanism
+    syscall::setup();
 
     // Setup the TSC
     tsc::setup();

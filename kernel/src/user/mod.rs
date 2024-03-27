@@ -4,6 +4,7 @@ pub mod pid;
 pub mod process;
 pub mod scheduler;
 pub mod sleep;
+pub mod syscall;
 pub mod thread;
 pub mod tid;
 
