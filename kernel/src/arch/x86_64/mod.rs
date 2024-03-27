@@ -46,6 +46,9 @@ pub unsafe fn setup() {
     // Insert the TSS into the GDT and load it
     tss::setup();
 
+    // Allocate the kernel stack for this core
+    tss::allocate_kstack();
+
     // Setup the SIMD support
     simd::setup();
 

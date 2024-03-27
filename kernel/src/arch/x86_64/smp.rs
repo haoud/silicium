@@ -86,6 +86,7 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     idt::load();
     gdt::setup();
     tss::setup();
+    tss::allocate_kstack();
     simd::setup();
     apic::local::setup();
     apic::local::timer::setup();

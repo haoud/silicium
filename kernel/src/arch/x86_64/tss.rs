@@ -1,4 +1,6 @@
+use super::bump;
 use crate::arch::x86_64::{gdt, opcode};
+use config::KSTACK_SIZE;
 use macros::{init, per_cpu};
 
 /// The Task State Segment (TSS) for the current CPU core. It is initialized to an
@@ -71,6 +73,21 @@ impl TaskStateSegment {
 pub unsafe fn setup() {
     gdt::load_tss(TSS.local().as_ptr());
     opcode::ltr(LTR_SELECTOR);
+}
+
+/// Allocates a new kernel stack for the current CPU core. This function is
+/// called during the initialization of the kernel to allocate a new stack for
+/// each CPU core. The stack is allocated using the boot memory allocator and
+/// should be big enough to handle the kernel stack.
+///
+/// # Safety
+/// This function is unsafe because it must only be called during the initialization
+/// of the kernel and only once per core.
+#[init]
+pub unsafe fn allocate_kstack() {
+    let stack = bump::boot_allocate_page_aligned(KSTACK_SIZE);
+    let rsp = stack.byte_add(KSTACK_SIZE).cast::<usize>();
+    set_kernel_stack(rsp);
 }
 
 /// Sets the kernel stack pointer (RSP0) in the TSS for the current CPU core.

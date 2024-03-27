@@ -48,3 +48,8 @@ const_assert!(MAX_HANDLES >= 1024);
 /// The maximum numbers of asynchronous tasks that can be created.
 pub const MAX_TASKS: u32 = 64;
 const_assert!(MAX_TASKS >= 8);
+
+/// The size of the kernel stack in bytes. This value must be a multiple of the page
+/// size and must be greater or equal to 8192 bytes.
+pub const KSTACK_SIZE: usize = 8192;
+const_assert!(KSTACK_SIZE >= 8192);
