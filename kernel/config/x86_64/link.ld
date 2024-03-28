@@ -14,7 +14,7 @@ SECTIONS
 
         . = ALIGN(16);
         __percpu_start = .;
-        . += 32;
+        . += 64;
         // gs:0 -> self pointer
         // gs:8 -> cpu identifier
         // gs:16 -> kernel stack pointer
