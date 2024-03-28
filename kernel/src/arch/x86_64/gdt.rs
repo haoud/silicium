@@ -140,7 +140,7 @@ pub fn setup() {
 /// a triple fault and an immediate reboot of the system.
 #[inline]
 pub unsafe fn load_tss(tss: *const TaskStateSegment) {
-    let address = core::ptr::addr_of!(tss) as u64;
+    let address = tss as u64;
     let mut low = 0;
 
     // Set the limit to the size of the TSS minus 1 (inclusive limit)
