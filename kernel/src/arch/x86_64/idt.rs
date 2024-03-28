@@ -163,7 +163,6 @@ pub unsafe fn load() {
 /// # Panics
 /// This function will panic if the interrupt is an exception and it is not
 /// handled by the kernel.
-#[atomic]
 #[no_mangle]
 pub extern "C" fn irq_handler(frame: &mut InterruptFrame) {
     let id = (frame.irq & 0xFF) as u8;

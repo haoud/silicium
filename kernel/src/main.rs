@@ -47,6 +47,9 @@ pub unsafe extern "C" fn _start() -> ! {
     // Setup the async runtime
     future::setup();
 
+    // Setup the user mode
+    user::setup();
+
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 

@@ -1,15 +1,18 @@
 syscall_enter:
-    swapgs              # Switch to the kernel GS
-    mov gs:0x24, rsp    # Save the user stack pointer in the per-cpu area
-    mov rsp, gs:0x16    # Set the kernel stack pointer
+    swapgs            # Switch to the kernel GS
+    mov gs:24, rsp    # Save the user stack pointer in the per-cpu area
+    mov rsp, gs:16    # Set the kernel stack pointer
+
+    # Enable interrupts, it's safe now that we're on the kernel stack
+    sti
 
     # Create a fake interrupt frame
     push 0x23           # SS
-    push gs:0x24        # RSP 
+    push gs:24          # RSP 
     push r11            # RFLAGS
     push 0x2B           # CS
     push rcx            # RIP
-     
+
     # Save scratch registers
     push r11
     push r10
@@ -52,6 +55,13 @@ syscall_enter:
     pop r9
     pop r10
     pop r11
+
+    # Disable interrupts since we're about to return to user mode. If interrupts are
+    # enabled before we use swapgs, it could cause a race condition if an interrupt
+    # occurs after the swapgs but before the iretq. The interrupt handler would then
+    # assume that we was in user mode and use swapgs again, loading the user GS into
+    # the active GS ! This would cause the kernel to crash and is a security issue.
+    cli
 
     # Restore user GS and return
     swapgs

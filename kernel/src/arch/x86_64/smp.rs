@@ -5,6 +5,8 @@ use crate::{
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use macros::init;
 
+use super::syscall;
+
 /// The SMP request to Limine. This will order Limine to fetch information about
 /// the APs and start them for us. We will only need to write their entry point
 /// at a specific address and they will automatically jump to it. God bless the
@@ -89,6 +91,7 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     tss::allocate_kstack();
     simd::setup();
     apic::local::setup();
+    syscall::setup();
     apic::local::timer::setup();
     paging::load_kernel_pml4();
 

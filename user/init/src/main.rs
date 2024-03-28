@@ -1,8 +1,11 @@
 #![no_std]
 #![no_main]
 
-pub fn _start() -> ! {
-    loop {}
+#[no_mangle]
+pub unsafe fn _start() -> ! {
+    loop {
+        core::arch::asm!("syscall");
+    }
 }
 
 #[panic_handler]

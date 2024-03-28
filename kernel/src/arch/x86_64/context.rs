@@ -18,10 +18,10 @@ pub struct Context {
 impl Context {
     /// Create a new user context with the given entry point and stack pointer.
     #[must_use]
-    pub fn new(entry: u64, stack: u64) -> Self {
+    pub fn new(entry: usize, stack: usize) -> Self {
         let rflags = 0x202;
-        let rip = entry;
-        let rsp = stack;
+        let rip = entry as u64;
+        let rsp = stack as u64;
         let cs = 0x2B; // User 64-bits code segment
         let ss = 0x23; // User 64-bits data segment
         Self {

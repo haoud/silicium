@@ -133,10 +133,10 @@ pub fn map<T>(frame: Frame, f: impl FnOnce(Virtual) -> T) -> T {
 /// and to no break Rust's aliasing and mutability rules.
 #[inline]
 #[must_use]
-pub(crate) fn translate(phys: impl Into<Physical>) -> Virtual {
-    // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in the
-    // `x86_64` architecture, the physical address is at most 52 bits. Therefore, the
-    // addition of the physical address to the HHDM_START will always result in a valid
-    // canonical address.
+pub fn translate(phys: impl Into<Physical>) -> Virtual {
+    // SAFETY: This is safe since the HHDM_START is a valid canonical address, and in
+    // the `x86_64` architecture, the physical address is at most 52 bits. Therefore,
+    // the addition of the physical address to the HHDM_START will always result in a
+    // valid canonical address.
     unsafe { Virtual::new_unchecked(usize::from(HHDM_START) + usize::from(phys.into())) }
 }

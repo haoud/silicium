@@ -1,4 +1,4 @@
-use super::bump;
+use super::{bump, percpu};
 use crate::arch::x86_64::{gdt, opcode};
 use config::KSTACK_SIZE;
 use macros::{init, per_cpu};
@@ -18,7 +18,7 @@ pub const GDT_INDEX: usize = 6;
 /// store information about a task. On `x86_64`, the TSS is only used to store the
 /// stack pointers for the different privilege levels, the Interrupt Stack Table
 /// (IST) and the I/O port permissions.
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 pub struct TaskStateSegment {
     reserved0: u32,
     rsp0: u64,
@@ -86,7 +86,8 @@ pub unsafe fn setup() {
 #[init]
 pub unsafe fn allocate_kstack() {
     let stack = bump::boot_allocate_page_aligned(KSTACK_SIZE);
-    let rsp = stack.byte_add(KSTACK_SIZE).cast::<usize>();
+    let rsp = stack.byte_add(KSTACK_SIZE - 16).cast::<usize>();
+    percpu::set_kernel_stack(rsp);
     set_kernel_stack(rsp);
 }
 

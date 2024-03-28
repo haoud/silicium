@@ -99,7 +99,7 @@ pub const XF_VECTOR: u8 = 19;
 /// # Panics
 /// Panics if the exception cannot be handled by the kernel or if the exception is not
 /// an exception ([`own_interrupt`] returns false).
-pub fn handle(exception: u8, _frame: &mut InterruptFrame) {
+pub fn handle(exception: u8, frame: &mut InterruptFrame) {
     match exception {
         DE_VECTOR => {
             panic!("Unhandled divide by zero exception");
@@ -145,8 +145,13 @@ pub fn handle(exception: u8, _frame: &mut InterruptFrame) {
             panic!("Unhandled general protection fault");
         }
         PF_VECTOR => {
+            let code = frame.error;
             let cr2 = cpu::cr2::read();
-            panic!("Unhandled page fault for address: {:#x}", cr2);
+            let rip = frame.rip;
+            panic!(
+                "Unhandled page fault for address {:#x} at {:#x} (code: {:3b})",
+                cr2, rip, code
+            );
         }
         MF_VECTOR => {
             panic!("Unhandled floating-point exception");

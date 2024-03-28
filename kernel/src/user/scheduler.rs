@@ -49,6 +49,11 @@ impl Scheduler {
     }
 }
 
+/// Add a thread to the scheduler's ready queue.
+pub fn add(thread: Thread) {
+    SCHEDULER.lock().enqueue(thread);
+}
+
 /// Get a thread ready to run. If none is available, idle the CPU until one
 /// becomes available.
 #[must_use]

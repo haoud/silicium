@@ -2,6 +2,8 @@ use super::{process::Process, tid::Tid};
 use crate::arch::context::Context;
 use core::num::Saturating;
 
+pub const STACK_BASE: usize = 0x0000_07FF_FFFF_F000;
+
 /// An user thread.
 #[derive(Debug)]
 pub struct Thread {
@@ -26,6 +28,20 @@ pub struct Thread {
 }
 
 impl Thread {
+    /// # Panics
+    /// Panics if the kernel ran out of TIDs
+    #[must_use]
+    pub fn new(process: Arc<Process>, entry: usize) -> Self {
+        Self {
+            context: Context::new(entry, STACK_BASE),
+            process,
+            tid: Tid::generate().expect("kernel ran out of TIDs"),
+            state: State::Created,
+            quantum: Saturating(0),
+            reschedule: false,
+        }
+    }
+
     /// Get the process that the thread belongs to
     #[must_use]
     pub const fn process(&self) -> &Arc<Process> {
