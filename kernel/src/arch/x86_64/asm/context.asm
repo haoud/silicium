@@ -2,11 +2,12 @@
 # user context RIP.
 #
 # Parameters:
-#   - RSI: pointer to the saved user context registers
+#   - RDI: pointer to the saved user context registers
 # 
 # This function never returns to the caller.
 jump_to:
-  mov rsp, rsi
+  cli
+  mov rsp, rdi
   pop rbp
   pop rbx
   pop r12
@@ -23,5 +24,6 @@ jump_to:
   pop r10
   pop r11
   add rsp, 16
-  swapgs
+  swapgs 
   iretq
+
