@@ -8,7 +8,7 @@ use crate::{
         },
         physical,
     },
-    boot,
+    boot, mm,
 };
 use addr::{Frame, Virtual};
 use macros::init;
@@ -87,7 +87,7 @@ impl Pml4 {
         &mut self,
         addr: Virtual,
         behavior: MissingEntry,
-    ) -> Result<&mut page::Entry, FetchError> {
+    ) -> Result<(table::Level, &mut page::Entry), FetchError> {
         Self::fetch_entry(&mut self.table[..], addr, table::Level::Pml4, behavior)
     }
 
@@ -97,7 +97,7 @@ impl Pml4 {
         addr: Virtual,
         level: table::Level,
         behavior: MissingEntry,
-    ) -> Result<&mut page::Entry, FetchError> {
+    ) -> Result<(table::Level, &mut page::Entry), FetchError> {
         // Get the index of the entry in the table depending on the current level
         let index = match level {
             table::Level::Pml4 => (usize::from(addr) >> 39) & 0x1FF,
@@ -107,18 +107,36 @@ impl Pml4 {
         };
 
         let entry = &mut table[index];
-
         if let Some(next) = level.next() {
+            if entry.huge_page() {
+                return Ok((level, entry));
+            }
+
             let frame = match entry.address() {
                 Some(frame) => frame,
                 None => match behavior {
                     MissingEntry::Fail => return Err(FetchError::MissingTable),
                     MissingEntry::Allocate(flags) => {
-                        // TODO: Allocate a new zeroed frame
-                        let frame = Frame::try_new(0).ok_or(FetchError::OutOfMemory)?;
+                        // Allocate a new frame for the missing table
+                        let frame = mm::physical::ALLOCATOR
+                            .lock()
+                            .allocate(mm::physical::allocator::Flags::KERNEL)
+                            .ok_or(FetchError::OutOfMemory)?;
 
-                        // Update the entry with the new frame address and flags and continue
-                        // the translation with the new table
+                        // Zero the frame
+                        let vaddr = physical::translate(frame);
+                        core::ptr::write_bytes(
+                            vaddr.as_mut_ptr::<u8>(),
+                            0,
+                            usize::from(config::PAGE_SIZE),
+                        );
+
+                        let mut flags = page::Flags::WRITABLE | page::Flags::PRESENT;
+                        if usize::from(addr) < 0x0000_8000_0000_0000 {
+                            flags |= page::Flags::USER;
+                        }
+                        // Update the entry with the new frame address and flags and
+                        // continue the translation with the new table
                         entry.set_address(frame);
                         entry.add_flags(flags);
                         frame
@@ -130,7 +148,7 @@ impl Pml4 {
             let table = &mut *physical::translate(frame).as_mut_ptr::<Table>();
             Self::fetch_entry(&mut table[..], addr, next, behavior)
         } else {
-            Ok(entry)
+            Ok((level, entry))
         }
     }
 
