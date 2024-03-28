@@ -9,16 +9,18 @@ pub mod syscall;
 pub mod thread;
 pub mod tid;
 
+/// Create the init process and add an user thread to it. Then, this function
+/// register the init thread to the scheduler to allow it to run.
+///
+/// # Safety
+/// This function is unsafe because it must be  called during the initialization of the
+/// kernel.
 #[init]
 pub unsafe fn setup() {
     let init = include_bytes!("../../../iso/boot/init.elf");
     let process = Arc::new(process::Process::new());
     let thread = elf::load(process.clone(), init).expect("failed to load init process");
     scheduler::add(thread);
-
-    let process = Arc::new(process::Process::new());
-    let thread = elf::load(process.clone(), init).expect("failed to load init process");
-    scheduler::add(thread)
 }
 
 /// Automatically called by the interrupt handler when an user thread enters into

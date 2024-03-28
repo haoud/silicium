@@ -4,7 +4,10 @@ use core::num::Saturating;
 
 pub const STACK_BASE: usize = 0x0000_07FF_FFFF_F000;
 
-/// An user thread.
+/// Represents an user thread. A thread is a sequence of instructions that belongs to a
+/// process and that can run concurrently with other threads in the system. Threads share
+/// the same address space and resources as the process they belong to, but have their
+/// own execution context, state and stack and may also have their own resources.
 #[derive(Debug)]
 pub struct Thread {
     /// The identifier of the thread

@@ -53,5 +53,6 @@ pub unsafe extern "C" fn _start() -> ! {
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
+    // Enter the user mode
     user::scheduler::enter_usermode();
 }

@@ -104,5 +104,6 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
         core::hint::spin_loop();
     }
 
+    // Enter the user mode
     user::scheduler::enter_usermode();
 }

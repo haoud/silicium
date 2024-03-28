@@ -126,6 +126,7 @@ pub fn schedule_to(regs: &Registers, next: Thread) {
         _ => unreachable!("Invalid state for scheduling a thread"),
     };
 
+    set_current(next);
     unsafe {
         arch::context::perform_switch(switch);
     }

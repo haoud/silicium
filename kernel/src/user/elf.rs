@@ -63,13 +63,6 @@ pub fn load(process: Arc<Process>, file: &[u8]) -> Result<Thread, LoadError> {
                 )
                 .expect("Failed to map an ELF segment");
 
-                log::trace!(
-                    "Mapped segment {:?} at {:#x} -> {:#x}",
-                    phdr.p_type,
-                    page,
-                    mapped_frame
-                );
-
                 // The start offset of the writing in the page: it is needed to handle
                 // the case where the segment is not page aligned, and therefore the
                 // first page of the segment is not fully filled.
