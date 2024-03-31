@@ -1,6 +1,4 @@
-use super::{bump, percpu};
 use crate::arch::x86_64::{gdt, opcode};
-use config::KSTACK_SIZE;
 use macros::{init, per_cpu};
 
 /// The Task State Segment (TSS) for the current CPU core. It is initialized to an
@@ -75,23 +73,9 @@ pub unsafe fn setup() {
     opcode::ltr(LTR_SELECTOR);
 }
 
-/// Allocates a new kernel stack for the current CPU core. This function is
-/// called during the initialization of the kernel to allocate a new stack for
-/// each CPU core. The stack is allocated using the boot memory allocator and
-/// should be big enough to handle the kernel stack.
+/// Sets the kernel stack pointer (RSP0) for the current CPU core both in the
+/// TSS and in the per-CPU data.
 ///
-/// # Safety
-/// This function is unsafe because it must only be called during the initialization
-/// of the kernel and only once per core.
-#[init]
-pub unsafe fn allocate_kstack() {
-    let stack = bump::boot_allocate_page_aligned(KSTACK_SIZE);
-    let rsp = stack.byte_add(KSTACK_SIZE - 16).cast::<usize>();
-    percpu::set_kernel_stack(rsp);
-    set_kernel_stack(rsp);
-}
-
-/// Sets the kernel stack pointer (RSP0) in the TSS for the current CPU core.
 /// This stack will be used when an exception occurs while running in user
 /// mode. Since we cannot handle exceptions in user mode, the CPU will switch
 /// to the kernel stack to handle the exception if needed. If we was already
@@ -104,5 +88,6 @@ pub unsafe fn allocate_kstack() {
 /// stack must remain valid while this stack pointer is used as the kernel stack.
 /// ***Please remember when passing the rsp argument that the stack grows downwards !***
 pub unsafe fn set_kernel_stack(rsp: *mut usize) {
+    core::arch::asm!("mov gs:32, {0}", in(reg) rsp as u64);
     TSS.local_mut().rsp0 = rsp as u64;
 }

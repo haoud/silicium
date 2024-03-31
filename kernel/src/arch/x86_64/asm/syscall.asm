@@ -1,17 +1,26 @@
+# Called when a syscall is made with the SYSCALL instruction.
+# TODO: Better description
 syscall_enter:
+    # Interrupts was masked by the SYSCALL instruction as well as some others
+    # flags needed by the system V ABI. The original RFLAGS is saved in the
+    # R11 register.
+
     swapgs            # Switch to the kernel GS
-    mov gs:24, rsp    # Save the user stack pointer in the per-cpu area
-    mov rsp, gs:16    # Set the kernel stack pointer
+    mov gs:16, rsp    # Save the user stack pointer in the per-cpu area
+    mov rsp, gs:32    # Set the kernel stack pointer to the user registers area
 
-    # Enable interrupts, it's safe now that we're on the kernel stack
-    sti
+    # Push some data to caracterize the trap type
+    push 0    # Error code
+    push 2    # Trap type (syscall)
+    push rax  # Custom data (syscall number)
+    push 0    # Padding
 
-    # Create a fake interrupt frame
-    push 0x23           # SS
-    push gs:24          # RSP 
-    push r11            # RFLAGS
-    push 0x2B           # CS
-    push rcx            # RIP
+    # Save registers
+    push 0x23         # SS
+    push gs:16        # RSP 
+    push r11          # RFLAGS
+    push 0x2B         # CS
+    push rcx          # RIP
 
     # Save scratch registers
     push r11
@@ -32,37 +41,7 @@ syscall_enter:
     push rbx
     push rbp
 
-    mov rdi, rsp
-    call kernel_enter
-    call syscall_handler
-    call kernel_leave
+    # Resume to the kernel task responsible for the current 
+    # user thread
+    jmp resume_kernel
 
-    # Restore preserved registers
-    pop rbp
-    pop rbx
-    pop r12
-    pop r13
-    pop r14
-    pop r15
-
-    # Restore scratch registers
-    pop rax
-    pop rcx
-    pop rdx
-    pop rsi
-    pop rdi
-    pop r8
-    pop r9
-    pop r10
-    pop r11
-
-    # Disable interrupts since we're about to return to user mode. If interrupts are
-    # enabled before we use swapgs, it could cause a race condition if an interrupt
-    # occurs after the swapgs but before the iretq. The interrupt handler would then
-    # assume that we was in user mode and use swapgs again, loading the user GS into
-    # the active GS ! This would cause the kernel to crash and is a security issue.
-    cli
-
-    # Restore user GS and return
-    swapgs
-    iretq

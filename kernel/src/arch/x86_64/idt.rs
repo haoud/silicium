@@ -165,7 +165,7 @@ pub unsafe fn load() {
 /// handled by the kernel.
 #[no_mangle]
 pub extern "C" fn irq_handler(frame: &mut InterruptFrame) {
-    let id = (frame.irq & 0xFF) as u8;
+    let id = (frame.data & 0xFF) as u8;
 
     if exception::own_interrupt(id) {
         exception::handle(id, frame);

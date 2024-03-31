@@ -15,10 +15,11 @@ SECTIONS
         . = ALIGN(16);
         __percpu_start = .;
         . += 64;
-        // gs:0 -> self pointer
-        // gs:8 -> cpu identifier
-        // gs:16 -> kernel stack pointer
-        // gs:24 -> user stack pointer temporary save location
+        // gs:0 -> Self pointer
+        // gs:8 -> CPU LAPIC Identifier
+        // gs:16 -> User stack pointer (syscall only)
+        // gs:24 -> Per-cpu kernel stack pointer
+        // gs:32 -> Per-thread kernel stack pointer
         *(.percpu*)
         __percpu_end = .;
     }

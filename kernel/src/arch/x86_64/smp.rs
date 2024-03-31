@@ -1,11 +1,10 @@
+use super::syscall;
 use crate::{
     arch::x86_64::{apic, gdt, idt, paging, percpu, simd, tss},
-    user,
+    future,
 };
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use macros::init;
-
-use super::syscall;
 
 /// The SMP request to Limine. This will order Limine to fetch information about
 /// the APs and start them for us. We will only need to write their entry point
@@ -85,10 +84,10 @@ pub fn core_id() -> u64 {
 #[init]
 unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     percpu::setup(u64::from(info.lapic_id));
+    percpu::setup_kernel_stack();
     idt::load();
     gdt::setup();
     tss::setup();
-    tss::allocate_kstack();
     simd::setup();
     apic::local::setup();
     syscall::setup();
@@ -96,7 +95,6 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     paging::load_kernel_pml4();
 
     CPU_COUNT.fetch_add(1, Ordering::SeqCst);
-
     log::info!("AP {} correctly booted", info.lapic_id);
 
     // Wait for other APs to finish their setup
@@ -104,6 +102,5 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
         core::hint::spin_loop();
     }
 
-    // Enter the user mode
-    user::scheduler::enter_usermode();
+    future::executor::run();
 }

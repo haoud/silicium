@@ -1,10 +1,11 @@
-use super::cpu::InterruptFrame;
+use super::{cpu::InterruptFrame, tss};
+use crate::user::thread::Trap;
 use core::pin::Pin;
 
 core::arch::global_asm!(include_str!("asm/context.asm"));
 
 extern "C" {
-    fn jump_to(register: *const Registers) -> !;
+    fn execute_thread(register: *const Registers);
 }
 
 /// The context of a user process. It contains the saved state of an user thread
@@ -35,82 +36,66 @@ impl Context {
             }),
         }
     }
+
+    /// Return a mutable pointer to the registers of this context. The pointer must be
+    /// used with care as it is possible to corrupt the state of the context.
+    ///
+    /// If you use this method, you are probably doing something wrong.
+    #[must_use]
+    pub fn registers_ptr(&mut self) -> *mut Registers {
+        core::ptr::addr_of_mut!(*self.registers)
+    }
+
+    /// Return a mutable reference to the registers of this context.
+    #[must_use]
+    pub fn registers_mut(&mut self) -> &mut Registers {
+        &mut self.registers
+    }
+
+    /// Return a reference to the registers of this context.
+    #[must_use]
+    pub fn registers(&self) -> &Registers {
+        &self.registers
+    }
+
+    /// Return a mutable pointer to the kernel stack of this context. Silicium use
+    /// a very small kernel stack for each thread that is only used when the thread
+    /// enters the kernel. The kernel will save its state on this stack before
+    /// switching to the per-core kernel stack. This allow to save memory when creating
+    /// a kernel thread and to have a bigger kernel stack for each core that will allow
+    /// use to use more stack memory and avoid stack overflow.
+    #[must_use]
+    pub fn kstack_rsp(&self) -> *mut usize {
+        unsafe {
+            core::ptr::addr_of!(*self.registers)
+                .byte_add(core::mem::size_of::<Registers>())
+                .cast::<usize>()
+                .cast_mut()
+        }
+    }
 }
 
 /// The registers of an user context are always saved when entering into
 /// kernel mode. We can simply use the same structure for both.
 pub type Registers = InterruptFrame;
 
-/// The context to switch to. This structure is used to perform a context switch
-/// after calling [`prepare_switch`].
-#[derive(Debug)]
-pub struct SwitchContext {
-    next: *const Registers,
-}
-
-impl SwitchContext {
-    #[must_use]
-    fn new(next: &Context) -> Self {
-        Self {
-            next: core::ptr::from_ref(&next.registers),
-        }
-    }
-}
-
-/// Prepare a context switch from the current context to the next context. This will
-/// save the registers of the current context into the current context and return
-/// a [`SwitchContext`] that can be used to perform the actual context switch with
-/// [`perform_switch`].
-pub fn prepare_switch(
-    register: &Registers,
-    current: &mut Context,
-    next: &Context,
-) -> SwitchContext {
-    *current.registers = register.clone();
-    SwitchContext::new(next)
-}
-
-/// Switch to the next context. This function will never return and will switch
-/// to the next context.
+/// Run the context until a trap occurs. This function will execute the user thread and
+/// let it run until a trap occurs. A trap is an event that occurs during the execution
+/// of the thread that requires the kernel to handle it. This can be an exception, an
+/// interrupt or a system call.
 ///
-/// # Safety
-/// The caller must ensure that the `context` is a valid [`SwitchContext`] and that
-/// the current context its pointing to is still valid.
-pub unsafe fn perform_switch(context: SwitchContext) -> ! {
-    jump_to(context.next)
-}
+/// This function will return the trap type that occurred and the data associated with it.
+#[must_use]
+#[allow(clippy::cast_possible_truncation)]
+pub unsafe fn run(context: &mut Context) -> Trap {
+    tss::set_kernel_stack(context.kstack_rsp());
+    execute_thread(context.registers_ptr());
 
-/// The context to jump to. This structure is used to perform a context jump
-/// after calling [`prepare_jump`]. This work similarly to a context switch but
-/// without saving the current context. This can be used to jump to a new context
-/// without saving the current one, for example when starting the first thread on
-/// a CPU or when a thread has finished.
-#[derive(Debug)]
-pub struct JumpContext {
-    next: *const Registers,
-}
-
-impl JumpContext {
-    #[must_use]
-    fn new(next: &Context) -> Self {
-        Self {
-            next: core::ptr::from_ref(&next.registers),
-        }
+    let registers = &context.registers;
+    match registers.trap {
+        0 => Trap::Exception(registers.error as usize, registers.data as u8),
+        1 => Trap::Interrupt(registers.data as u8),
+        2 => Trap::Syscall(registers.data as u32),
+        _ => unreachable!("Unknown trap type"),
     }
-}
-
-/// Prepare a context jump to the next context. This will return a [`JumpContext`]
-/// that can be used to perform the actual context jump with [`perform_jump`].
-pub fn prepare_jump(next: &Context) -> JumpContext {
-    JumpContext::new(next)
-}
-
-/// Jump to the next context. This function will never return and will jump to the
-/// next context.
-///
-/// # Safety
-/// The caller must ensure that the `context` is a valid [`JumpContext`] and that
-/// the current context its pointing to is still valid.
-pub unsafe fn perform_jump(context: JumpContext) -> ! {
-    jump_to(context.next)
 }

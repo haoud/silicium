@@ -31,8 +31,10 @@ pub mod tss;
 /// memory.
 #[macros::init]
 pub unsafe fn setup() {
-    // Initialized the per-cpu variable for this core
+    // Initialized the per-cpu variable for this core and setup the
+    // local kernel stack for the current core
     percpu::setup(0);
+    percpu::setup_kernel_stack();
 
     // Setup the pagingation
     paging::setup();
@@ -46,9 +48,6 @@ pub unsafe fn setup() {
 
     // Insert the TSS into the GDT and load it
     tss::setup();
-
-    // Allocate the kernel stack for this core
-    tss::allocate_kstack();
 
     // Setup the SIMD support
     simd::setup();

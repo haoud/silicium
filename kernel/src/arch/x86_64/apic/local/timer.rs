@@ -1,10 +1,7 @@
-use crate::{
-    arch::x86_64::{
-        apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
-        cpu::InterruptFrame,
-        pit, smp,
-    },
-    user,
+use crate::arch::x86_64::{
+    apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
+    cpu::InterruptFrame,
+    pit, smp,
 };
 use core::sync::atomic::{AtomicU64, Ordering};
 use macros::init;
@@ -156,5 +153,4 @@ pub fn handle_irq(_: &mut InterruptFrame) {
     if smp::is_bsp() {
         JIFFIES.fetch_add(1, Ordering::Relaxed);
     }
-    user::scheduler::tick();
 }

@@ -1,7 +1,10 @@
 use super::{process::Process, tid::Tid};
-use crate::arch::context::Context;
+use crate::arch::{self, context::Context};
 use core::num::Saturating;
 
+/// The base address of the stack of the thread. This is temporary and should be replaced
+/// by a more dynamic solution in the future by allocating a virtual memory region for the
+/// thread stack.
 pub const STACK_BASE: usize = 0x0000_07FF_FFFF_F000;
 
 /// Represents an user thread. A thread is a sequence of instructions that belongs to a
@@ -142,4 +145,48 @@ pub enum State {
     /// by another thread. This variant is similar to the `Exited` variant, but
     /// contains the signal that terminated the thread instead of the exit code.
     Terminated(u32),
+}
+
+/// A trap that occurred during the execution of a thread.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Trap {
+    /// An exception occurred during the execution of the thread. This variant
+    /// contains the error code of the exception and the identifier of the exception.
+    Exception(usize, u8),
+
+    /// An interrupt occurred during the execution of the thread. This variant
+    /// contains the identifier of the interrupt.
+    Interrupt(u8),
+
+    /// A system call occurred during the execution of the thread. This variant
+    /// contains the identifier of the system call.
+    Syscall(u32),
+}
+
+/// The behavior of the thread after a trap occurred.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Resume {
+    /// Terminate the thread with the specified exit code. This means that the thread
+    /// exited normally and will not be able to run again.
+    Terminate(u32),
+
+    /// Kill the thread with the specified signal. This means that the thread was killed
+    /// for various reasons (illegal instruction, segmentation fault, signal sent by another
+    /// thread, etc.) and will not be able to run again.
+    Kill(u32),
+
+    /// Continue the execution of the thread. This means that the thread will immediately be
+    /// resumed and will continue to run until another trap occurs.
+    Continue,
+
+    /// Yield the thread. This means that the thread will be rescheduled and will be put back
+    /// in the ready queue to be executed later.
+    Yield,
+}
+
+pub fn execute(thread: &mut Thread) -> Trap {
+    unsafe {
+        thread.process().page_table().lock().load_current();
+    }
+    unsafe { arch::context::run(thread.context_mut()) }
 }
