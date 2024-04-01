@@ -79,10 +79,7 @@ impl Executor {
 
             let context = &mut Context::from_waker(&waker);
             match task.poll(context) {
-                Poll::Pending => {
-                    // If the task is not ready, push it back to the queue
-                    self.queue.push(id).expect("Too many async tasks");
-                }
+                Poll::Pending => {}
                 Poll::Ready(()) => {
                     // Remove the task and waker from the executor
                     self.wakers.remove(&id);
@@ -124,9 +121,11 @@ pub fn spawn(task: Task) {
 ///
 /// # Safety
 /// The caller must ensure that the stack in which the current thread is running will
-/// remain valid for the entire duration of the kernel.
+/// remain valid for the entire duration of the kernel. The caller must also ensure that
+/// enabling interrupts at this point will not cause any issue.
 pub unsafe fn run() -> ! {
     // Wait until the executor is initialized
+    arch::irq::enable();
     while EXECUTOR.lock().as_ref().is_none() {
         arch::irq::wait();
     }

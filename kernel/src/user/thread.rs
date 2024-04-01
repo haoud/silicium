@@ -43,7 +43,7 @@ impl Thread {
             process,
             tid: Tid::generate().expect("kernel ran out of TIDs"),
             state: State::Created,
-            quantum: Saturating(0),
+            quantum: Saturating(10),
             reschedule: false,
         }
     }
@@ -66,16 +66,18 @@ impl Thread {
         &self.context
     }
 
-    /// Return a mutable reference to the time slice of the thread
-    #[must_use]
-    pub const fn quantum_mut(&mut self) -> &mut Saturating<u64> {
-        &mut self.quantum
+    /// Decrement the quantum of the thread. If the quantum reaches zero, this function will
+    /// set the reschedule flag to true, which means that the thread needs to be rescheduled.
+    pub fn decrement_quantum(&mut self) {
+        self.quantum -= 1;
+        if self.quantum.0 == 0 {
+            self.reschedule = true;
+        }
     }
 
-    /// Return a mutable reference to the time slice of the thread
-    #[must_use]
-    pub const fn quantum(&self) -> &Saturating<u64> {
-        &self.quantum
+    /// Restore the quantum of the thread to its default value
+    pub fn restore_quantum(&mut self) {
+        self.quantum = Saturating(10);
     }
 
     /// Return whether the thread needs to be rescheduled or not
@@ -184,9 +186,14 @@ pub enum Resume {
     Yield,
 }
 
+/// Execute the thread. This function will jump to the thread's saved state and will
+/// execute it until a trap occurs. The trap will be returned to the caller, which will
+/// then decide what to do with the thread.
 pub fn execute(thread: &mut Thread) -> Trap {
+    // SAFETY: Changing page table should be safe
     unsafe {
         thread.process().page_table().lock().load_current();
     }
-    unsafe { arch::context::run(thread.context_mut()) }
+
+    arch::context::run(thread.context_mut())
 }

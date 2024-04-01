@@ -55,3 +55,37 @@ impl From<Identifier> for u64 {
         identifier.0
     }
 }
+
+/// A future that yield the current task and put it at the end of the task queue.
+/// The first pool of this future will always return `Poll::Pending`, to ensure
+#[derive(Debug)]
+pub struct YieldFuture {
+    polled: bool,
+}
+
+impl YieldFuture {
+    /// Create a new yield future
+    #[must_use]
+    pub const fn new() -> Self {
+        Self { polled: false }
+    }
+}
+
+impl Future for YieldFuture {
+    type Output = ();
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        if self.polled {
+            Poll::Ready(())
+        } else {
+            self.get_mut().polled = true;
+            cx.waker().wake_by_ref();
+            Poll::Pending
+        }
+    }
+}
+
+/// Yield the current task and put it at the end of the task queue
+pub async fn yield_now() {
+    YieldFuture::new().await
+}

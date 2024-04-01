@@ -4,7 +4,7 @@
 #[no_mangle]
 pub unsafe fn _start() -> ! {
     loop {
-        //core::arch::asm!("syscall");
+        core::arch::asm!("syscall");
     }
 }
 

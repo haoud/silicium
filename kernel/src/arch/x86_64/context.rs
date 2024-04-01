@@ -5,7 +5,7 @@ use core::pin::Pin;
 core::arch::global_asm!(include_str!("asm/context.asm"));
 
 extern "C" {
-    fn execute_thread(register: *const Registers);
+    fn execute_thread(register: &Registers);
 }
 
 /// The context of a user process. It contains the saved state of an user thread
@@ -35,15 +35,6 @@ impl Context {
                 ..InterruptFrame::default()
             }),
         }
-    }
-
-    /// Return a mutable pointer to the registers of this context. The pointer must be
-    /// used with care as it is possible to corrupt the state of the context.
-    ///
-    /// If you use this method, you are probably doing something wrong.
-    #[must_use]
-    pub fn registers_ptr(&mut self) -> *mut Registers {
-        core::ptr::addr_of_mut!(*self.registers)
     }
 
     /// Return a mutable reference to the registers of this context.
@@ -87,9 +78,15 @@ pub type Registers = InterruptFrame;
 /// This function will return the trap type that occurred and the data associated with it.
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
-pub unsafe fn run(context: &mut Context) -> Trap {
-    tss::set_kernel_stack(context.kstack_rsp());
-    execute_thread(context.registers_ptr());
+pub fn run(context: &mut Context) -> Trap {
+    // SAFETY: This is safe becayse we ensure that the kernel stack is valid and big
+    // enough to handle the execution of the thread before switching to the per-core
+    // kernel stack. The `execute_thread` function is safe to call but we still need
+    // to put in a unsafe block because it is an external function, written in assembly.
+    unsafe {
+        tss::set_kernel_stack(context.kstack_rsp());
+        execute_thread(&context.registers);
+    }
 
     let registers = &context.registers;
     match registers.trap {

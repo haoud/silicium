@@ -24,8 +24,10 @@ interrupt_common:
 
     # Depending on the privilege level of the interrupted 
     # code, call the appropriate handler
-    cmp QWORD ptr [rsp + 168], 0x08
+    cmp QWORD ptr [rsp + 160], 0x08
     je kernel_interrupt
+
+    swapgs
     jmp resume_kernel
 
 # Called when an interrupt occurs during the execution of the kernel. It will enable interrupts (because
@@ -34,11 +36,23 @@ interrupt_common:
 kernel_interrupt:
     # Enable interrupts and call the interrupt handler with the
     # stack frame as argument.
-    sti
+    cmp QWORD ptr [rsp + 136], 0
+    je .exception
+
+    cmp QWORD ptr [rsp + 136], 1
+    je .interrupt
+
+    # Should never be reached
+    jmp kernel_interrupt
+
+.exception:
     mov rdi, rsp
+    call exception_handler
+    jmp interrupt_exit
+
+.interrupt:
+    mov rdi, QWORD ptr [rsp + 128]
     call irq_handler
-    
-    # Exit the interrupt handler
     jmp interrupt_exit 
 
 

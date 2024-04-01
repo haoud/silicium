@@ -1,7 +1,7 @@
-use super::{executor, Task};
+use super::{executor, task, Task};
 use crate::{
-    arch::x86_64::idt::irq_handler,
-    user::thread::{self, Thread},
+    arch::x86_64::{exception, irq},
+    user::thread::{self, Resume, Thread},
 };
 
 /// Spawn a thread. This will allow the thread to be executed by the executor.
@@ -18,16 +18,33 @@ pub async fn thread_loop(mut thread: Thread) {
         //  - Continue the execution of the thread
         //  - Yield the thread
         //  - Terminate the thread
-        match thread::execute(&mut thread) {
-            thread::Trap::Exception(_error, _id) => {
-                irq_handler(thread.context_mut().registers_mut());
+        let resume = match thread::execute(&mut thread) {
+            thread::Trap::Exception(error, id) => {
+                let register = thread.context_mut().registers_mut();
+                exception::handler(id, error, register)
             }
-            thread::Trap::Interrupt(_code) => {
-                irq_handler(thread.context_mut().registers_mut());
+            thread::Trap::Interrupt(code) => {
+                let thread = &mut thread;
+                irq::user_handler(thread, code)
             }
-            thread::Trap::Syscall(_nr) => {
-                log::debug!("Exiting");
-            }
+            thread::Trap::Syscall(nr) => Resume::Terminate(nr),
         };
+
+        log::debug!("Thread resumed with {:?}", resume);
+
+        // If the thread quantity is zero, yield the thread
+        if thread.needs_reschedule() && resume == Resume::Continue {
+            thread.set_reschedule(false);
+            thread.restore_quantum();
+            task::yield_now().await;
+        } else if let Resume::Terminate(code) = resume {
+            log::debug!("Thread terminated with exit code {}", code);
+            break;
+        } else if let Resume::Kill(code) = resume {
+            log::debug!("Thread killed with exit code {}", code);
+            break;
+        } else {
+            // We can safely continue the execution of the thread
+        }
     }
 }

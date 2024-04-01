@@ -8,19 +8,19 @@ syscall_enter:
     swapgs            # Switch to the kernel GS
     mov gs:16, rsp    # Save the user stack pointer in the per-cpu area
     mov rsp, gs:32    # Set the kernel stack pointer to the user registers area
-
-    # Push some data to caracterize the trap type
-    push 0    # Error code
-    push 2    # Trap type (syscall)
-    push rax  # Custom data (syscall number)
-    push 0    # Padding
-
+    
     # Save registers
     push 0x23         # SS
     push gs:16        # RSP 
     push r11          # RFLAGS
     push 0x2B         # CS
     push rcx          # RIP
+
+    # Push some data to caracterize the trap type
+    push 0    # Error code
+    push 2    # Trap type (syscall)
+    push rax  # Custom data (syscall number)
+    push 0    # Padding
 
     # Save scratch registers
     push r11

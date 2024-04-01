@@ -6,8 +6,6 @@
 # its (small) stack frame before restoring the stack frame previously stored
 # into gs:24 and returning to the caller.
 execute_thread:
-    cli
-
     # Save RFLAGS and callee-saved registers
     pushfq
     push r15
@@ -16,7 +14,10 @@ execute_thread:
     push r12
     push rbx
     push rbp
-  
+
+    # Disable interrupts
+    cli
+
     # Save the stack pointer into the per-cpu data structure
     mov gs:24, rsp
 
@@ -45,7 +46,6 @@ execute_thread:
 # occurs. It will restore the kernel stack pointer and the callee-saved registers before
 # returning to the caller, allowing the kernel to resume its execution.
 resume_kernel:
-  swapgs
   mov rsp, gs:24
   pop rbp
   pop rbx
