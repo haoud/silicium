@@ -3,7 +3,6 @@ use crate::future;
 pub mod elf;
 pub mod pid;
 pub mod process;
-pub mod sleep;
 pub mod syscall;
 pub mod thread;
 pub mod tid;

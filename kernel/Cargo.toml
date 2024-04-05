@@ -66,13 +66,7 @@ log = { workspace = true }
 id = { workspace = true }
 
 [features]
-default = ["enforce_atomicity", "panic_info", "logging"]
-
-# Enforce the atomicity of operations during runtime at the cost of
-# reduced performance. This is useful for debugging, but should not
-# be enabled in production as it would not be as useful since this
-# kind of bug should be caught during development and testing.
-enforce_atomicity = []
+default = ["panic_info", "logging"]
 
 # Enable panic messages at the cost of increased binary size, 
 # but useful for debugging

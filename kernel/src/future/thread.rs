@@ -30,8 +30,6 @@ pub async fn thread_loop(mut thread: Thread) {
             thread::Trap::Syscall(nr) => Resume::Terminate(nr),
         };
 
-        log::debug!("Thread resumed with {:?}", resume);
-
         // If the thread quantity is zero, yield the thread
         if thread.needs_reschedule() && resume == Resume::Continue {
             thread.set_reschedule(false);

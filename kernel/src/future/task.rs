@@ -58,6 +58,7 @@ impl From<Identifier> for u64 {
 
 /// A future that yield the current task and put it at the end of the task queue.
 /// The first pool of this future will always return `Poll::Pending`, to ensure
+/// that the task is put at the end of the task queue.
 #[derive(Debug)]
 pub struct YieldFuture {
     polled: bool,

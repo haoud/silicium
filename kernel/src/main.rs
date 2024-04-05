@@ -16,7 +16,6 @@ pub mod arch;
 pub mod boot;
 pub mod future;
 pub mod mm;
-pub mod preempt;
 pub mod prelude;
 pub mod time;
 pub mod user;
