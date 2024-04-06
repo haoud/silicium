@@ -110,6 +110,7 @@ pub fn without<T, F: FnOnce() -> T>(f: F) -> T {
 
 pub fn user_handler(thread: &mut Thread, irq: u8) -> Resume {
     irq_handler(irq);
+
     if apic::local::timer::own_irq(irq) {
         thread.decrement_quantum();
     }

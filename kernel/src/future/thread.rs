@@ -12,12 +12,6 @@ pub fn spawn(thread: Thread) {
 /// TODO: Explain this beautiful function !
 pub async fn thread_loop(mut thread: Thread) {
     loop {
-        // Jump to the thread's, and wait for a trap to occur
-        // Handle the trap
-        // Depending on the trap result:
-        //  - Continue the execution of the thread
-        //  - Yield the thread
-        //  - Terminate the thread
         let resume = match thread::execute(&mut thread) {
             thread::Trap::Exception(error, id) => {
                 let register = thread.context_mut().registers_mut();
