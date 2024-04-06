@@ -17,6 +17,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: lld
+        version: 1.0
+  
     - name: Check formatting
       run: make check-format
 
