@@ -1,6 +1,5 @@
 use super::{cpu::InterruptFrame, tss};
 use crate::user::thread::Trap;
-use core::pin::Pin;
 
 core::arch::global_asm!(include_str!("asm/context.asm"));
 
@@ -13,7 +12,7 @@ extern "C" {
 #[derive(Debug)]
 pub struct Context {
     /// The saved register state of this context.
-    registers: Pin<Box<Registers>>,
+    registers: Registers,
 }
 
 impl Context {
@@ -26,15 +25,24 @@ impl Context {
         let cs = 0x2B; // User 64-bits code segment
         let ss = 0x23; // User 64-bits data segment
         Self {
-            registers: Box::pin(Registers {
+            registers: Registers {
                 rflags,
                 rsp,
                 rip,
                 cs,
                 ss,
                 ..InterruptFrame::default()
-            }),
+            },
         }
+    }
+
+    /// Return a mutable pointer to the registers of this context. The pointer must be
+    /// used with care as it is possible to corrupt the state of the context.
+    ///
+    /// If you use this method, you are probably doing something wrong.
+    #[must_use]
+    pub fn registers_ptr(&mut self) -> *mut Registers {
+        core::ptr::addr_of_mut!(self.registers)
     }
 
     /// Return a mutable reference to the registers of this context.
@@ -58,7 +66,7 @@ impl Context {
     #[must_use]
     pub fn kstack_rsp(&self) -> *mut usize {
         unsafe {
-            core::ptr::addr_of!(*self.registers)
+            core::ptr::addr_of!(self.registers)
                 .byte_add(core::mem::size_of::<Registers>())
                 .cast::<usize>()
                 .cast_mut()

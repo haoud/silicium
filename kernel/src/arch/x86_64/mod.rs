@@ -29,7 +29,7 @@ pub mod tss;
 /// initialization of the kernel. Before calling this function, the boot memory
 /// allocator must be initialized to allow this function to dynamically allocate
 /// memory.
-#[macros::init]
+#[init]
 pub unsafe fn setup() {
     // Initialized the per-cpu variable for this core and setup the
     // local kernel stack for the current core

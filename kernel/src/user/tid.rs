@@ -1,7 +1,7 @@
-use config::MAX_TIDS;
+use config::MAX_TASKS;
 
 /// The size of the bitmap used to keep track of thread identifiers.
-const TID_BITMAP_COUNT: usize = MAX_TIDS as usize / core::mem::size_of::<usize>();
+const TID_BITMAP_COUNT: usize = MAX_TASKS as usize / core::mem::size_of::<usize>();
 
 /// A bitmap used to keep track of thread identifiers.
 static TID_ALLOCATOR: spin::Mutex<id::Generator<TID_BITMAP_COUNT>> =
@@ -31,7 +31,7 @@ impl Tid {
     /// # Panics
     /// Panics if the `id` is greater than or equal to `MAX_TIDS`.
     pub fn new(id: u32) -> Self {
-        assert!(id < MAX_TIDS);
+        assert!(id < MAX_TASKS);
         Self(id)
     }
 
