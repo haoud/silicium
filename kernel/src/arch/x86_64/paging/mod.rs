@@ -97,10 +97,11 @@ pub unsafe fn map(
     frame: Frame,
     flags: page::Flags,
 ) -> Result<(), MapError> {
-    let entry = pml4
+    let (level, entry) = pml4
         .fetch_last_entry(addr, MissingEntry::Allocate(flags))
         .map_err(|_| MapError::OutOfMemory)?;
 
+    assert!(level == table::Level::Pt);
     if entry.present() {
         log::warn!("Attempt to map an already mapped address: {:#x}", addr);
         return Err(MapError::AlreadyMapped);
@@ -125,10 +126,11 @@ pub unsafe fn map(
 /// returned by this function.
 /// Failure to do so will result in undefined behavior.
 pub unsafe fn unmap(pml4: &mut Pml4, addr: Virtual) -> Result<Frame, UnmapError> {
-    let entry = pml4
+    let (level, entry) = pml4
         .fetch_last_entry(addr, MissingEntry::Fail)
         .map_err(|_| UnmapError::NotMapped)?;
 
+    assert!(level == table::Level::Pt);
     if let Some(frame) = entry.address() {
         entry.clear();
         tlb::shootdown(addr);
@@ -139,9 +141,7 @@ pub unsafe fn unmap(pml4: &mut Pml4, addr: Virtual) -> Result<Frame, UnmapError>
     }
 }
 
-/// Translates a virtual address to a physical frame. The virtual address is not
-/// required to be page aligned, and the function will return the frame containing
-/// the address if it is mapped, or `None` if it is not.
+/// Translates a virtual address to a physical address.
 ///
 /// # Safety
 /// The caller must ensure that the PML4 is valid and that each frame pointing to
@@ -149,9 +149,15 @@ pub unsafe fn unmap(pml4: &mut Pml4, addr: Virtual) -> Result<Frame, UnmapError>
 /// Failure to do so will result in undefined behavior, likely a page fault.
 #[must_use]
 pub unsafe fn translate(pml4: &mut Pml4, addr: Virtual) -> Option<Frame> {
-    pml4.fetch_last_entry(addr, MissingEntry::Fail)
-        .map(|entry| entry.address())
-        .ok()?
+    let (level, entry) = pml4.fetch_last_entry(addr, MissingEntry::Fail).ok()?;
+    let base = entry.address()?;
+
+    Some(Frame::new(match level {
+        table::Level::Pt => usize::from(base) + (usize::from(addr) & 0xFFF),
+        table::Level::Pd => usize::from(base) + (usize::from(addr) & 0x1F_FFFF),
+        table::Level::Pdpt => usize::from(base) + (usize::from(addr) & 0x3FF_FFFF),
+        _ => unreachable!(),
+    }))
 }
 
 /// Error returned when trying to map an address.

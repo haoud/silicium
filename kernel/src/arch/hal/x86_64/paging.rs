@@ -1,6 +1,8 @@
 use crate::arch::x86_64::paging::{self, page, pml4::Pml4};
 use addr::{Frame, Virtual};
-use hal::paging::{MapError, MapFlags, MapRights, UnmapError};
+use hal::paging::{MapError, UnmapError};
+
+pub use hal::paging::{MapFlags, MapRights};
 
 /// A page table is a data structure used by a virtual memory system in an
 /// operating system to store the mapping between virtual addresses and physical

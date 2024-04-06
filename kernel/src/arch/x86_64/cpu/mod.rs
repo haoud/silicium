@@ -13,7 +13,7 @@ pub mod xcr0;
 /// This structure is used to save the state of the CPU before the interrupt
 /// handler is called.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
-#[repr(C)]
+#[repr(C, align(16))]
 pub struct InterruptFrame {
     // Preserved registers
     pub rbp: u64,
@@ -34,8 +34,22 @@ pub struct InterruptFrame {
     pub r10: u64,
     pub r11: u64,
 
-    // The interrupt number and error code (if any)
-    pub irq: u64,
+    pub padding: u64,
+
+    /// Custom data pushed by the interrupt handler. This data is used to pass
+    /// additional information to the interrupt handler. For example, the IRQ
+    /// number for an interrupt is pushed in this field.
+    pub data: u64,
+
+    /// The trap type. For now, there is only 3 types of traps:
+    /// - Exception
+    /// - Interrupt
+    /// - System call
+    pub trap: u64,
+
+    /// The error code. It is either pushed by the CPU automatically when certain
+    /// exceptions are triggered or pushed by the interrupt handler. In the last
+    /// case, the error code is set to 0.
     pub error: u64,
 
     // Pushed by the CPU automatically when an interrupt is triggered

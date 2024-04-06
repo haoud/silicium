@@ -1,0 +1,20 @@
+{
+    "llvm-target": "x86_64-unknown-none",
+    "data-layout": "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128",
+    "target-pointer-width": "64",
+    "target-c-int-width": "32", 
+    "target-endian": "little",
+    "arch": "x86_64", 
+    "os": "none",
+    "executables": true,
+    "linker-flavor": "ld.lld",
+    "linker": "lld",
+    "position-independent-executables": false,
+    "tls-model": "global-dynamic",
+    "relocation-model": "static",
+    "frame-pointer": "may-omit",
+    "dynamic-linking": false,
+    "panic-strategy": "abort",
+    "code-model": "small",
+    "features": ""
+}

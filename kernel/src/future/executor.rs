@@ -2,10 +2,15 @@ use super::{
     task::{self, Task},
     waker::TaskWaker,
 };
+use crate::arch;
 use alloc::collections::BTreeMap;
 use config::MAX_TASKS;
 use core::task::{Context, Poll, Waker};
 use crossbeam::queue::ArrayQueue;
+use spin::Spinlock;
+
+/// The global executor that will run all async tasks
+static EXECUTOR: Spinlock<Option<Executor>> = Spinlock::new(None);
 
 /// A simple executor that runs async tasks. This executor is a simple FIFO executor
 /// that runs tasks in the order they are spawned.
@@ -31,6 +36,14 @@ impl Executor {
             tasks: BTreeMap::new(),
             queue: Arc::new(ArrayQueue::new(MAX_TASKS as usize)),
         }
+    }
+
+    /// Returns true if there is no task in the executor ready to be polled. The name of this
+    /// function comes from the french word "chômage" that means "unemployment". I thought it
+    /// was a funny name for this function (Yeah, that was more funny when it was 3AM...)
+    #[must_use]
+    pub fn chomage(&self) -> bool {
+        self.queue.is_empty()
     }
 
     /// Spawns a new task in the executor. The task will be polled when the executor
@@ -66,10 +79,7 @@ impl Executor {
 
             let context = &mut Context::from_waker(&waker);
             match task.poll(context) {
-                Poll::Pending => {
-                    // If the task is not ready, push it back to the queue
-                    self.queue.push(id).expect("Too many async tasks");
-                }
+                Poll::Pending => {}
                 Poll::Ready(()) => {
                     // Remove the task and waker from the executor
                     self.wakers.remove(&id);
@@ -83,5 +93,53 @@ impl Executor {
 impl Default for Executor {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Initialize the executor.
+///
+/// # Safety
+/// This function must be called only once during the startup of the kernel and before
+/// any other async operation.
+#[init]
+pub unsafe fn setup() {
+    EXECUTOR.lock().replace(Executor::new());
+}
+
+/// Spawn a new task in the executor. The task will be polled when the executor will be
+/// run with the `run` function.
+pub fn spawn(task: Task) {
+    EXECUTOR
+        .lock()
+        .as_mut()
+        .expect("Executor not initialized")
+        .spawn(task);
+}
+
+pub fn change_priority(_task_id: task::Identifier, _priority: task::Priority) {
+    unimplemented!()
+}
+
+/// Run the executor. This function will run the executor in a loop, polling tasks
+/// forever. Since this function will never return, it is marked as `!`.
+///
+/// # Safety
+/// The caller must ensure that the stack in which the current thread is running will
+/// remain valid for the entire duration of the kernel. The caller must also ensure that
+/// enabling interrupts at this point will not cause any issue.
+pub unsafe fn run() -> ! {
+    // Wait until the executor is initialized
+    arch::irq::enable();
+    while EXECUTOR.lock().as_ref().is_none() {
+        arch::irq::wait();
+    }
+
+    loop {
+        EXECUTOR.lock().as_mut().unwrap().run_once();
+        // TODO: Maybe we can wait until a task is ready to be polled instead of
+        // waiting for an interruption to occur ? Using an async task maybe...
+        while EXECUTOR.lock().as_mut().unwrap().chomage() {
+            arch::irq::wait();
+        }
     }
 }

@@ -45,6 +45,13 @@ const_assert!(MAX_TIDS > 0);
 pub const MAX_HANDLES: u32 = 1024;
 const_assert!(MAX_HANDLES >= 1024);
 
-/// The maximum numbers of asynchronous tasks that can be created.
-pub const MAX_TASKS: u32 = 64;
-const_assert!(MAX_TASKS >= 8);
+/// The maximum numbers of asynchronous tasks that can be created. Since each thread
+/// is attached to an kernel stack, this value should be AT LEAST twice the number of
+/// threads that can be created (and I'm pretty sure it should be greater than that).
+pub const MAX_TASKS: u32 = MAX_TIDS * 8;
+const_assert!(MAX_TASKS >= MAX_TIDS * 2);
+
+/// The size of the kernel stack in bytes. This value must be a multiple of the page
+/// size and must be greater or equal to 8192 bytes.
+pub const KSTACK_SIZE: usize = 8192;
+const_assert!(KSTACK_SIZE >= 8192);

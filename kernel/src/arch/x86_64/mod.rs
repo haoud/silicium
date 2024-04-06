@@ -18,6 +18,7 @@ pub mod pit;
 pub mod serial;
 pub mod simd;
 pub mod smp;
+pub mod syscall;
 pub mod tsc;
 pub mod tss;
 
@@ -30,8 +31,10 @@ pub mod tss;
 /// memory.
 #[macros::init]
 pub unsafe fn setup() {
-    // Initialized the per-cpu variable for this core
+    // Initialized the per-cpu variable for this core and setup the
+    // local kernel stack for the current core
     percpu::setup(0);
+    percpu::setup_kernel_stack();
 
     // Setup the pagingation
     paging::setup();
@@ -51,6 +54,9 @@ pub unsafe fn setup() {
 
     // Setup the CPU identification
     cpu::cpuid::setup();
+
+    // Setup the system call mechanism
+    syscall::setup();
 
     // Setup the TSC
     tsc::setup();

@@ -15,7 +15,7 @@ use bitmap::Bitmap;
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Generator<const N: usize> {
     bitmap: Bitmap<N>,
-    last: usize,
+    start: usize,
 }
 
 impl<const N: usize> Generator<N> {
@@ -30,7 +30,7 @@ impl<const N: usize> Generator<N> {
     pub const fn new() -> Self {
         Self {
             bitmap: Bitmap::zeroes(),
-            last: N,
+            start: 0,
         }
     }
 
@@ -38,8 +38,8 @@ impl<const N: usize> Generator<N> {
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
     pub const fn generate(&mut self) -> Option<u32> {
-        if let Some(id) = self.bitmap.get_next_zero(self.last) {
-            self.last = id;
+        if let Some(id) = self.bitmap.get_next_zero(self.start) {
+            self.start = id + 1;
             Some(id as u32)
         } else {
             None
@@ -52,7 +52,8 @@ impl<const N: usize> Generator<N> {
     /// Panic if the identifier is out of range or if it is not in use.
     #[allow(clippy::needless_pass_by_value)]
     pub const fn release(&mut self, id: u32) {
-        assert!((id as usize) < N && self.bitmap.get(id as usize));
+        assert!((id as usize) < N);
+        assert!(self.bitmap.get(id as usize));
         self.bitmap.clear(id as usize);
     }
 }

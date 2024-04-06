@@ -126,115 +126,52 @@ impl<const N: usize> Bitmap<N> {
     /// from the given index and wrap around to the beginning of the
     /// bitmap if necessary.
     ///
+    /// If the given index is out of bounds, it will be wrapped around
+    /// to the beginning of the bitmap using the modulo operator.
+    ///
     /// This is useful for implementing ID pools, where we want to
     /// find the next available ID after a given one.
-    ///
-    /// # Panics
-    /// Panics if the index is out of bounds
     #[must_use]
     pub const fn get_next_zero(&mut self, start: usize) -> Option<usize> {
-        assert!(start < N * core::mem::size_of::<usize>());
+        // Search from the start bit to the end of the bitmap
+        // If we reach the end, wrap around to the beginning
+        let start_index = (start / Self::BITS_PER_WORD) % N;
+        let start_bit = start % Self::BITS_PER_WORD;
 
-        // Find the index of the first bit that is not set to 1 starting
-        // from the given index until we reach the end of the bitmap.
-        let mut index = start / Self::BITS_PER_WORD;
-        let mut mask = usize::MAX << (start % Self::BITS_PER_WORD);
+        // Start searching from the start index
+        let mut index = start_index;
         while index < N {
-            let word = self.data[index] | mask;
-            if word != usize::MAX {
-                let bit = word.trailing_zeros() as usize;
-                self.data[index] |= 1 << bit;
-                return Some(index * Self::BITS_PER_WORD + bit);
-            }
-            mask = usize::MAX;
-            index += 1;
-        }
-
-        // If we didn't find any available bit, start from the beginning
-        // of the bitmap and continue until we reach the original index.
-        index = 0;
-        while index < start / Self::BITS_PER_WORD {
             let word = self.data[index];
             if word != usize::MAX {
-                let bit = word.trailing_zeros() as usize;
-                self.data[index] |= 1 << bit;
-                return Some(index * Self::BITS_PER_WORD + bit);
+                let mut bit = start_bit;
+                while bit < Self::BITS_PER_WORD {
+                    if (word & (1 << bit)) == 0 {
+                        self.data[index] |= 1 << bit;
+                        return Some(index * Self::BITS_PER_WORD + bit);
+                    }
+                    bit += 1;
+                }
             }
             index += 1;
         }
 
-        // If we didn't find any available bit, check the remaining bits
-        // if the original index is not aligned with the word size.
-        if start % Self::BITS_PER_WORD != 0 {
-            let bit = start % Self::BITS_PER_WORD;
-            let mask = usize::MAX >> (Self::BITS_PER_WORD - bit);
-            let word = self.data[index] | mask;
-            if word != usize::MAX {
-                let bit = word.trailing_zeros() as usize;
-                self.data[index] |= 1 << bit;
-                return Some(index * Self::BITS_PER_WORD + bit);
-            }
-        }
-
-        // If we didn't find any available bit, return None.
-        None
-    }
-
-    /// Get the index of the first bit that is set to 1, set it to 0,
-    /// and return it. If all bits are set to 0, return None.
-    ///
-    /// This method is the same as `get_first_one`, but it will start
-    /// from the given index and wrap around to the beginning of the
-    /// bitmap if necessary.
-    ///
-    /// # Panics
-    /// Panics if the index is out of bounds
-    #[must_use]
-    pub const fn get_next_one(&mut self, start: usize) -> Option<usize> {
-        assert!(start < N * core::mem::size_of::<usize>());
-
-        // Find the index of the first bit that is set to 1 starting
-        // from the given index until we reach the end of the bitmap.
-        let mut index = start / Self::BITS_PER_WORD;
-        let mut mask = usize::MAX << (start % Self::BITS_PER_WORD);
-        while index < N {
-            let word = self.data[index] & mask;
-            if word != 0 {
-                let bit = word.trailing_zeros() as usize;
-                self.data[index] &= !(1 << bit);
-                return Some(index * Self::BITS_PER_WORD + bit);
-            }
-            mask = usize::MAX;
-            index += 1;
-        }
-
-        // If we didn't find any available bit, start from the beginning
-        // of the bitmap and continue until we reach the original index.
+        // If we reach the end of the bitmap, wrap around to the beginning
         index = 0;
-        while index < start / Self::BITS_PER_WORD {
+        while index < start_index {
             let word = self.data[index];
-            if word != 0 {
-                let bit = word.trailing_zeros() as usize;
-                self.data[index] &= !(1 << bit);
-                return Some(index * Self::BITS_PER_WORD + bit);
+            if word != usize::MAX {
+                let mut bit = 0;
+                while bit < Self::BITS_PER_WORD {
+                    if (word & (1 << bit)) == 0 {
+                        self.data[index] |= 1 << bit;
+                        return Some(index * Self::BITS_PER_WORD + bit);
+                    }
+                    bit += 1;
+                }
             }
             index += 1;
         }
 
-        // If we didn't find any available bit, check the remaining bits
-        // if the original index is not aligned with the word size.
-        if start % Self::BITS_PER_WORD != 0 {
-            let bit = start % Self::BITS_PER_WORD;
-            let mask = usize::MAX >> (Self::BITS_PER_WORD - bit);
-            let word = self.data[index] & mask;
-            if word != 0 {
-                let bit = word.trailing_zeros() as usize;
-                self.data[index] &= !(1 << bit);
-                return Some(index * Self::BITS_PER_WORD + bit);
-            }
-        }
-
-        // If we didn't find any available bit, return None.
         None
     }
 }

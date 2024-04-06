@@ -31,6 +31,7 @@ crossbeam = { version = "0.8.0", default-features = false, features = ["alloc"] 
 futures = { version = "0.3.30", default-features = false, features = ["alloc"] }
 arrayvec = { version = "0.7.4", default-features = false }
 talc = { version = "4.3.1", features = ["counters"] }
+elf = { version = "0.7.4", default-features = false }
 static_assertions = "1.1.0"
 zerocopy = "0.7.32"
 bitfield = "0.14.0"
@@ -59,18 +60,13 @@ addr = { workspace = true }
 spin = { workspace = true }
 talc = { workspace = true }
 time = { workspace = true }
+elf = { workspace = true }
 hal = { workspace = true }
 log = { workspace = true }
 id = { workspace = true }
 
 [features]
-default = ["enforce_atomicity", "panic_info", "logging"]
-
-# Enforce the atomicity of operations during runtime at the cost of
-# reduced performance. This is useful for debugging, but should not
-# be enabled in production as it would not be as useful since this
-# kind of bug should be caught during development and testing.
-enforce_atomicity = []
+default = ["panic_info", "logging"]
 
 # Enable panic messages at the cost of increased binary size, 
 # but useful for debugging

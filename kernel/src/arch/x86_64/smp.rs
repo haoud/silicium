@@ -1,6 +1,7 @@
+use super::syscall;
 use crate::{
     arch::x86_64::{apic, gdt, idt, paging, percpu, simd, tss},
-    scheduler,
+    future,
 };
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use macros::init;
@@ -83,16 +84,17 @@ pub fn core_id() -> u64 {
 #[init]
 unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     percpu::setup(u64::from(info.lapic_id));
+    percpu::setup_kernel_stack();
     idt::load();
     gdt::setup();
     tss::setup();
     simd::setup();
     apic::local::setup();
+    syscall::setup();
     apic::local::timer::setup();
     paging::load_kernel_pml4();
 
     CPU_COUNT.fetch_add(1, Ordering::SeqCst);
-
     log::info!("AP {} correctly booted", info.lapic_id);
 
     // Wait for other APs to finish their setup
@@ -100,5 +102,5 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
         core::hint::spin_loop();
     }
 
-    scheduler::enter()
+    future::executor::run();
 }

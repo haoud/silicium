@@ -1,6 +1,7 @@
 pub mod executor;
 pub mod sleep;
 pub mod task;
+pub mod thread;
 pub mod waker;
 
 pub use executor::Executor;
@@ -13,4 +14,6 @@ pub use waker::TaskWaker;
 /// This function must be called only once during the startup of the
 /// kernel and before any other async operation.
 #[init]
-pub unsafe fn setup() {}
+pub unsafe fn setup() {
+    executor::setup();
+}

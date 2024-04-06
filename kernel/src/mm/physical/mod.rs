@@ -114,14 +114,16 @@ impl State {
             }
         }
 
-        // Mark the frame used by the array as used by the kernel. This is done to prevent the frame
-        // used by the info array from being used for allocation
+        // Mark the frame used by the array as used by the kernel. This is done to
+        // prevent the frame used by the info array from being used for allocation
         let count = (array_size / usize::from(PAGE_SIZE)) + 1;
         let start = array_location.index();
-        for frame in array.iter_mut().take(start).skip(start + count) {
+        for frame in array.iter_mut().take(start + count).skip(start) {
+            frame.flags &= !frame::Flags::FREE;
             frame.flags |= frame::Flags::KERNEL;
             frame.count = 1;
             kernel += 1;
+            free -= 1;
         }
 
         poisoned -= info.boot_allocated / usize::from(PAGE_SIZE);

@@ -16,8 +16,6 @@ case $1 in
       -device isa-debug-exit      \
       -cdrom bin/silicium.iso     \
       -rtc base=localtime         \
-      -no-shutdown                \
-      -no-reboot                  \
       -serial stdio               \
       -cpu max                    \
       -smp 2                      \
@@ -27,8 +25,6 @@ case $1 in
     qemu-system-x86_64            \
       -cdrom bin/silicium.iso     \
       -rtc base=localtime         \
-      -no-shutdown                \
-      -no-reboot                  \
       -serial stdio               \
       -cpu max                    \
       -smp 2                      \

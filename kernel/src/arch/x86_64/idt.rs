@@ -1,8 +1,4 @@
-use super::paging;
-use crate::{
-    arch::x86_64::{apic, cpu::InterruptFrame, exception, opcode},
-    time,
-};
+use crate::arch::x86_64::opcode;
 use macros::init;
 
 core::arch::global_asm!(include_str!("asm/interrupt.asm"));
@@ -154,34 +150,4 @@ pub fn setup() {
 pub unsafe fn load() {
     let register = Register::new(core::ptr::addr_of!(TABLE));
     register.load();
-}
-
-/// The interrupt handler. This function is called by the CPU when an interrupt
-/// is triggered. It will call the appropriate interrupt handler for the given
-/// interrupt.
-///
-/// # Panics
-/// This function will panic if the interrupt is an exception and it is not
-/// handled by the kernel.
-#[atomic]
-#[no_mangle]
-pub extern "C" fn irq_handler(frame: &mut InterruptFrame) {
-    let id = (frame.irq & 0xFF) as u8;
-
-    if exception::own_interrupt(id) {
-        exception::handle(id, frame);
-    } else if apic::io::is_irq(id) {
-        apic::local::end_of_interrupt();
-        if apic::local::timer::own_irq(id) {
-            apic::local::timer::handle_irq(frame);
-        }
-    } else if paging::tlb::own_irq(id) {
-        paging::tlb::flush();
-    } else {
-        log::warn!("Unhandled interrupt: {:?}", id);
-    }
-
-    if !exception::own_interrupt(id) {
-        time::timer::handle();
-    }
 }

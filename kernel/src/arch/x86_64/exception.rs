@@ -1,4 +1,7 @@
-use crate::arch::x86_64::cpu::{self, InterruptFrame};
+use crate::{
+    arch::x86_64::cpu::{self, InterruptFrame},
+    user::thread::Resume,
+};
 
 /// Divide by zero exception vector. This exception is triggered when the CPU tries to
 /// divide a number by zero.
@@ -99,7 +102,7 @@ pub const XF_VECTOR: u8 = 19;
 /// # Panics
 /// Panics if the exception cannot be handled by the kernel or if the exception is not
 /// an exception ([`own_interrupt`] returns false).
-pub fn handle(exception: u8, _frame: &mut InterruptFrame) {
+pub fn handler(exception: u8, error: usize, frame: &mut InterruptFrame) -> Resume {
     match exception {
         DE_VECTOR => {
             panic!("Unhandled divide by zero exception");
@@ -146,7 +149,11 @@ pub fn handle(exception: u8, _frame: &mut InterruptFrame) {
         }
         PF_VECTOR => {
             let cr2 = cpu::cr2::read();
-            panic!("Unhandled page fault for address: {:#x}", cr2);
+            let rip = frame.rip;
+            panic!(
+                "Unhandled page fault for address {:#x} at {:#x} (code: {:6b})",
+                cr2, rip, error
+            );
         }
         MF_VECTOR => {
             panic!("Unhandled floating-point exception");
@@ -164,6 +171,15 @@ pub fn handle(exception: u8, _frame: &mut InterruptFrame) {
             panic!("Unhandled exception: {}", exception);
         }
     }
+
+    //Resume::Kill(exception as u32)
+}
+
+/// Handle an interrupt. See [`handler`] for more information, since this function only serves
+/// as a wrapper around the [`handler`] function for assembly code.
+#[no_mangle]
+pub extern "C" fn exception_handler(frame: &mut InterruptFrame) {
+    handler(frame.data as u8, frame.error as usize, frame);
 }
 
 /// Return true if the interrupt is an exception, false otherwise.

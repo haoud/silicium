@@ -83,10 +83,17 @@ impl Virtual {
         (self.0 & 0xFFF) == 0
     }
 
-    /// Align the address to the previous page aligned address. If the address is already
-    /// page-aligned, the same address is returned.
+    /// Align the address to the previous page aligned address. If the address is
+    /// already page-aligned, the same address is returned.
     #[must_use]
     pub const fn page_align_down(&self) -> Self {
+        Self(self.0 & !0xFFF)
+    }
+
+    /// Align the address to the next page aligned address. If the address is already
+    /// page-aligned, the same address is returned.
+    #[must_use]
+    pub const fn page_align_up(&self) -> Self {
         Self((self.0 + 0xFFF) & !0xFFF)
     }
 }

@@ -1,11 +1,11 @@
+use super::irq;
 use crate::arch::x86_64::{bump, msr};
+use config::KSTACK_SIZE;
 use core::{
     cell::UnsafeCell,
     ops::{Deref, DerefMut},
 };
 use macros::init;
-
-use super::irq;
 
 extern "C" {
     /// The start of the per-CPU section. This is a linker symbol that is used to
@@ -293,6 +293,23 @@ pub unsafe fn setup(lapic_id: u64) {
     core::arch::asm!("mov gs:8, {}", in(reg) lapic_id);
 }
 
+/// Allocate a kernel stack for the current CPU and initialize the GS:16 location
+/// with the freshly allocated stack.
+/// This kernel stack will be used when the user code enter into kernel mode, after
+/// saving its state on the small stack located in the TSS.
+/// This allow to have a small kernel stack for each thread and use a bigger kernel
+/// stack per core, saving memory and avoiding stack overflow.
+///
+/// # Safety
+/// This function should only be called once per core and only during the initialization
+/// of the kernel. Failing to do so will result in undefined behavior.
+#[init]
+pub unsafe fn setup_kernel_stack() {
+    let kstack = bump::boot_allocate(KSTACK_SIZE);
+    let rsp = kstack.byte_add(KSTACK_SIZE).cast::<usize>();
+    set_kernel_stack(rsp);
+}
+
 /// Fetch the per-CPU object for the current CPU for the static variable located at
 /// the given address. This function will correctly return an unique object for each
 /// CPU using the GS segment register.
@@ -335,5 +352,5 @@ pub unsafe fn get_percpu_section() -> usize {
 /// stack must remain valid while this stack pointer is used as the kernel stack.
 /// ***Please remember when passing the rsp argument that the stack grows downwards !***
 pub unsafe fn set_kernel_stack(rsp: *mut usize) {
-    core::arch::asm!("mov gs:16, {}", in(reg) rsp as u64);
+    core::arch::asm!("mov gs:24, {}", in(reg) rsp as u64);
 }

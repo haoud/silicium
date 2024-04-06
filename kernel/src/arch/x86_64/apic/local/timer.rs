@@ -1,10 +1,6 @@
-use crate::{
-    arch::x86_64::{
-        apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
-        cpu::InterruptFrame,
-        pit, smp,
-    },
-    scheduler,
+use crate::arch::x86_64::{
+    apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
+    pit, smp,
 };
 use core::sync::atomic::{AtomicU64, Ordering};
 use macros::init;
@@ -150,11 +146,13 @@ pub const fn own_irq(irq: u8) -> bool {
 }
 
 /// Handle the Local APIC timer interrupt.
-pub fn handle_irq(_: &mut InterruptFrame) {
+pub fn handle_irq() {
     // The boot CPU is the only one that increments the jiffies counter to
     // keep track of the time
     if smp::is_bsp() {
         JIFFIES.fetch_add(1, Ordering::Relaxed);
+        if JIFFIES.load(Ordering::Relaxed) % 1000 == 0 {
+            log::debug!("Jiffies: {}", JIFFIES.load(Ordering::Relaxed));
+        }
     }
-    scheduler::tick();
 }

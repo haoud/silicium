@@ -16,7 +16,7 @@ pub const GDT_INDEX: usize = 6;
 /// store information about a task. On `x86_64`, the TSS is only used to store the
 /// stack pointers for the different privilege levels, the Interrupt Stack Table
 /// (IST) and the I/O port permissions.
-#[repr(C, packed)]
+#[repr(C, packed(4))]
 pub struct TaskStateSegment {
     reserved0: u32,
     rsp0: u64,
@@ -73,7 +73,9 @@ pub unsafe fn setup() {
     opcode::ltr(LTR_SELECTOR);
 }
 
-/// Sets the kernel stack pointer (RSP0) in the TSS for the current CPU core.
+/// Sets the kernel stack pointer (RSP0) for the current CPU core both in the
+/// TSS and in the per-CPU data.
+///
 /// This stack will be used when an exception occurs while running in user
 /// mode. Since we cannot handle exceptions in user mode, the CPU will switch
 /// to the kernel stack to handle the exception if needed. If we was already
@@ -86,5 +88,6 @@ pub unsafe fn setup() {
 /// stack must remain valid while this stack pointer is used as the kernel stack.
 /// ***Please remember when passing the rsp argument that the stack grows downwards !***
 pub unsafe fn set_kernel_stack(rsp: *mut usize) {
+    core::arch::asm!("mov gs:32, {0}", in(reg) rsp as u64);
     TSS.local_mut().rsp0 = rsp as u64;
 }
