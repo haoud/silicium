@@ -43,7 +43,7 @@ build-docs:
 
 	mv kernel/target/x86_64/doc/* docs/kernel/
 	
-check-clippy:
+check-clippy: build-userspace
 	cd kernel && cargo clippy --all-features -- -D warnings
 
 check-format:

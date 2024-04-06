@@ -116,7 +116,7 @@ impl Pml4 {
                 Some(frame) => frame,
                 None => match behavior {
                     MissingEntry::Fail => return Err(FetchError::MissingTable),
-                    MissingEntry::Allocate(flags) => {
+                    MissingEntry::Allocate(_flags) => {
                         // Allocate a new frame for the missing table
                         let frame = mm::physical::ALLOCATOR
                             .lock()
