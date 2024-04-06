@@ -6,7 +6,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use macros::init;
 
 /// The request that will order the Limine bootloader to provide a memory map.
-static MMAP: spin::Spinlock<Option<ArrayVec<mmap::Entry, 32>>> = spin::Spinlock::new(None);
+static MMAP: spin::Mutex<Option<ArrayVec<mmap::Entry, 32>>> = spin::Mutex::new(None);
 
 /// The total amount of memory allocated by the boot allocator.
 static ALLOCATED: AtomicUsize = AtomicUsize::new(0);

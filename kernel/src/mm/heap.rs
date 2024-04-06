@@ -3,7 +3,6 @@ use crate::{
     mm::physical::{self, allocator::Flags},
 };
 use config::PAGE_SHIFT;
-use spin::Spinlock;
 
 /// The global heap allocator. This allocator is used to allocate memory on the
 /// kernel heap. However, the kernel heap should only used to allocate relatively
@@ -13,7 +12,7 @@ use spin::Spinlock;
 /// TODO: Maybe integrate the virtual memory allocator with the heap allocator ?
 #[global_allocator]
 #[cfg(not(test))]
-static ALLOCATOR: talc::Talck<Spinlock<()>, OomHandler> =
+static ALLOCATOR: talc::Talck<spin::Mutex<()>, OomHandler> =
     talc::Talck::new(talc::Talc::new(OomHandler {}));
 
 /// The global OOM handler when the kernel heap is exhausted. This handler will

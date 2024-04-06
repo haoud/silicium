@@ -3,11 +3,10 @@ use core::{
     any::Any,
     sync::atomic::{AtomicBool, Ordering},
 };
-use spin::Spinlock;
 use time::Timespec;
 
 /// The list of active timers.
-static TIMERS: Spinlock<Vec<Timer>> = Spinlock::new(Vec::new());
+static TIMERS: spin::Mutex<Vec<Timer>> = spin::Mutex::new(Vec::new());
 
 /// The callback type for timers.
 type Callback = Box<dyn FnMut(&mut Timer) + Send>;
@@ -75,7 +74,7 @@ impl Timer {
         if self.expired() {
             self.execute();
         } else {
-            TIMERS.lock_irq_safe().push(self);
+            TIMERS.lock().push(self);
         }
     }
 
@@ -138,16 +137,16 @@ impl Drop for Guard {
 /// Eecute all expired timers and remove them from the list of active timers. Inactive
 /// timers will also be removed.
 pub fn handle() {
-    TIMERS.with_irq_safe(|timers| {
-        let mut i = 0;
-        while i < timers.len() {
-            if timers[i].expired() {
-                timers.swap_remove(i).execute();
-            } else if !timers[i].active() {
-                timers.swap_remove(i);
-            } else {
-                i += 1;
-            }
+    let mut timers = TIMERS.lock();
+    let mut i = 0;
+
+    while i < timers.len() {
+        if timers[i].expired() {
+            timers.swap_remove(i).execute();
+        } else if !timers[i].active() {
+            timers.swap_remove(i);
+        } else {
+            i += 1;
         }
-    });
+    }
 }

@@ -10,7 +10,6 @@ use addr::Virtual;
 use config::PAGE_SIZE;
 use core::{cmp::min, num::TryFromIntError};
 use elf::{endian::NativeEndian, segment::ProgramHeader, ElfBytes};
-use spin::Spinlock;
 
 /// Create a empty user address space and load the ELF file into it.
 ///
@@ -122,7 +121,7 @@ pub fn load(file: &[u8]) -> Result<Thread, LoadError> {
         };
     }
 
-    Ok(Thread::new(entry, Arc::new(Spinlock::new(page_table))))
+    Ok(Thread::new(entry, Arc::new(spin::Mutex::new(page_table))))
 }
 
 /// Convert the ELF flags of a section into the paging flags, used to map the

@@ -1,7 +1,5 @@
 use super::tid::Tid;
 use crate::arch::{self, context::Context, paging::PageTable};
-use core::num::Saturating;
-use spin::Spinlock;
 
 /// The base address of the stack of the thread. This is temporary and should be replaced
 /// by a more dynamic solution in the future by allocating a virtual memory region for the
@@ -20,39 +18,31 @@ pub struct Thread {
     /// The state of the thread
     state: State,
 
-    /// The time slice of the thread in ticks
-    quantum: Saturating<u64>,
-
-    /// Whether the thread should be rescheduled or not
-    reschedule: bool,
-
     /// The context of the thread. This contains some architecture-specific data
     /// that is used to save and restore the state of the thread when it is scheduled.
     context: Context,
 
     /// The page table of the thread. This is used to map the virtual memory of the
     /// thread to the physical memory of the system.
-    page_table: Arc<Spinlock<PageTable>>,
+    page_table: Arc<spin::Mutex<PageTable>>,
 }
 
 impl Thread {
     /// # Panics
     /// Panics if the kernel ran out of TIDs
     #[must_use]
-    pub fn new(entry: usize, page_table: Arc<Spinlock<PageTable>>) -> Self {
+    pub fn new(entry: usize, page_table: Arc<spin::Mutex<PageTable>>) -> Self {
         Self {
             context: Context::new(entry, STACK_BASE),
             tid: Tid::generate().expect("kernel ran out of TIDs"),
             state: State::Created,
-            quantum: Saturating(10),
-            reschedule: false,
             page_table,
         }
     }
 
     /// Get a reference to the page table of the thread
     #[must_use]
-    pub fn page_table(&self) -> &Arc<Spinlock<PageTable>> {
+    pub fn page_table(&self) -> &Arc<spin::Mutex<PageTable>> {
         &self.page_table
     }
 
@@ -66,31 +56,6 @@ impl Thread {
     #[must_use]
     pub fn context(&self) -> &Context {
         &self.context
-    }
-
-    /// Decrement the quantum of the thread. If the quantum reaches zero, this function will
-    /// set the reschedule flag to true, which means that the thread needs to be rescheduled.
-    pub fn decrement_quantum(&mut self) {
-        self.quantum -= 1;
-        if self.quantum.0 == 0 {
-            self.reschedule = true;
-        }
-    }
-
-    /// Restore the quantum of the thread to its default value
-    pub fn restore_quantum(&mut self) {
-        self.quantum = Saturating(10);
-    }
-
-    /// Return whether the thread needs to be rescheduled or not
-    #[must_use]
-    pub fn needs_reschedule(&self) -> bool {
-        self.reschedule
-    }
-
-    /// Set whether the thread needs to be rescheduled or not
-    pub fn set_reschedule(&mut self, reschedule: bool) {
-        self.reschedule = reschedule;
     }
 
     /// Set the state of the thread
@@ -198,4 +163,25 @@ pub fn execute(thread: &mut Thread) -> Trap {
     }
 
     arch::context::run(thread.context_mut())
+}
+
+/// Avoid this function to be put in the .init section that is discarded after the kernel is
+/// loaded.
+#[link_section = ".text"]
+pub fn enter() -> ! {
+    loop {
+        // Get a task from the scheduler
+        //
+        // Loop:
+        //  - Execute the task until a trap occurs
+        //  - Handle the trap
+        //  - Before returning to the task:
+        //      * Reschedule the task if needed
+        //      * Exit the task if needed
+        //
+        unsafe {
+            arch::irq::enable();
+            arch::irq::wait();
+        }
+    }
 }

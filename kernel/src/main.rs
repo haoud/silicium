@@ -48,9 +48,5 @@ pub unsafe extern "C" fn _start() -> ! {
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
-    // FIXME: Use a more reliable stack (this stack will be deallocated in the future)
-    loop {
-        arch::irq::enable();
-        arch::irq::wait();
-    }
+    user::thread::enter();
 }

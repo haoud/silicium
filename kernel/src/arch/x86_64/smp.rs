@@ -1,7 +1,7 @@
 use super::syscall;
-use crate::arch::{
-    self,
-    x86_64::{apic, gdt, idt, paging, percpu, simd, tss},
+use crate::{
+    arch::x86_64::{apic, gdt, idt, paging, percpu, simd, tss},
+    user,
 };
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use macros::init;
@@ -102,8 +102,5 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
         core::hint::spin_loop();
     }
 
-    loop {
-        arch::irq::enable();
-        arch::irq::wait();
-    }
+    user::thread::enter();
 }

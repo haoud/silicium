@@ -1,12 +1,11 @@
 use config::MAX_TIDS;
-use spin::Spinlock;
 
 /// The size of the bitmap used to keep track of thread identifiers.
 const TID_BITMAP_COUNT: usize = MAX_TIDS as usize / core::mem::size_of::<usize>();
 
 /// A bitmap used to keep track of thread identifiers.
-static TID_ALLOCATOR: Spinlock<id::Generator<TID_BITMAP_COUNT>> =
-    Spinlock::new(id::Generator::new());
+static TID_ALLOCATOR: spin::Mutex<id::Generator<TID_BITMAP_COUNT>> =
+    spin::Mutex::new(id::Generator::new());
 
 /// A thread identifier. It can only be created by the `Tid::generate` method and
 /// is automatically released when it goes out of scope.
