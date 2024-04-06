@@ -2,6 +2,7 @@
 # `interrupt_handlers` section. It will save the registers and depending if the interrupted code was
 # running in the kernel or in user space, will call `kernel_interrupt` if the kernel was interrupted or
 # `resume_kernel` if the user space was interrupted by the interrupt.
+.global interrupt_common
 interrupt_common:
     # Save scratch registers
     push r11
@@ -33,6 +34,7 @@ interrupt_common:
 # Called when an interrupt occurs during the execution of the kernel. It will enable interrupts (because
 # it is safe to do so here) and call the interrupt handler with the stack frame as argument. After the
 # completion of the interrupt handler, it will call `interrupt_exit` to restore the interrupted code.
+.global kernel_interrupt
 kernel_interrupt:
     # Enable interrupts and call the interrupt handler with the
     # stack frame as argument.
@@ -58,6 +60,7 @@ kernel_interrupt:
 
 # Called by the interrupt handler when an interrupt was handled by the kernel. It will disable
 # interrupts temporarily and restore the interrupted code.
+.global interrupt_exit
 interrupt_exit:
     # Disable interrupts
     cli

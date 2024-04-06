@@ -1,5 +1,6 @@
 # Called when a syscall is made with the SYSCALL instruction.
 # TODO: Better description
+.global syscall_enter
 syscall_enter:
     # Interrupts was masked by the SYSCALL instruction as well as some others
     # flags needed by the system V ABI. The original RFLAGS is saved in the
