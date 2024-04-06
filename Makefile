@@ -18,7 +18,7 @@
 	help
 
 run: run-x86_64
-build: build-kernel build-servers build-userspace
+build: build-servers build-userspace build-kernel
 unit-tests: unit-tests-kernel unit-tests-servers unit-tests-userspace
 
 build-kernel:
