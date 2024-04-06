@@ -1,3 +1,5 @@
+use core::ops::{Add, AddAssign, Sub, SubAssign};
+
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Virtual(pub(crate) usize);
@@ -96,57 +98,123 @@ impl Virtual {
     pub const fn page_align_up(&self) -> Self {
         Self((self.0 + 0xFFF) & !0xFFF)
     }
+
+    /// Returns the index of the address in the page map level 4 table associated with the address.
+    #[must_use]
+    pub const fn pml4_index(&self) -> usize {
+        (self.0 >> 39) & 0x1FF
+    }
+
+    /// Returns the index of the address in the page directory pointer table associated with the address.
+    #[must_use]
+    pub const fn pdpt_index(&self) -> usize {
+        (self.0 >> 30) & 0x1FF
+    }
+
+    /// Returns the index of the address in the page directory table associated with the address.
+    #[must_use]
+    pub const fn pd_index(&self) -> usize {
+        (self.0 >> 21) & 0x1FF
+    }
+
+    /// Returns the index of the address in the page table associated with the address.
+    #[must_use]
+    pub const fn pt_index(&self) -> usize {
+        (self.0 >> 12) & 0x1FF
+    }
+
+    /// Returns the offset of the address within a 4 KiB page.
+    #[must_use]
+    pub const fn page_offset(&self) -> usize {
+        self.0 & 0xFFF
+    }
 }
 
-impl const From<Virtual> for usize {
+impl From<Virtual> for usize {
     fn from(addr: Virtual) -> usize {
         addr.0
     }
 }
 
-impl const From<Virtual> for u64 {
+impl From<Virtual> for u64 {
     fn from(addr: Virtual) -> u64 {
         addr.0 as u64
     }
 }
 
-impl const core::fmt::Binary for Virtual {
+impl Add<usize> for Virtual {
+    type Output = Self;
+
+    fn add(self, rhs: usize) -> Self {
+        Self(self.0 + rhs)
+    }
+}
+
+impl Sub<usize> for Virtual {
+    type Output = Self;
+
+    fn sub(self, rhs: usize) -> Self {
+        Self(self.0 - rhs)
+    }
+}
+
+impl AddAssign<usize> for Virtual {
+    fn add_assign(&mut self, rhs: usize) {
+        assert!(
+            Self::try_new(self.0 + rhs).is_some(),
+            "Invalid addition of virtual addresses"
+        );
+        self.0 += rhs;
+    }
+}
+
+impl SubAssign<usize> for Virtual {
+    fn sub_assign(&mut self, rhs: usize) {
+        assert!(
+            Self::try_new(self.0 - rhs).is_some(),
+            "Invalid subtraction of virtual addresses"
+        );
+        self.0 -= rhs;
+    }
+}
+
+impl core::fmt::Binary for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#b}", self.0)
     }
 }
 
-impl const core::fmt::Octal for Virtual {
+impl core::fmt::Octal for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#o}", self.0)
     }
 }
 
-impl const core::fmt::LowerHex for Virtual {
+impl core::fmt::LowerHex for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#x}", self.0)
     }
 }
 
-impl const core::fmt::UpperHex for Virtual {
+impl core::fmt::UpperHex for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#X}", self.0)
     }
 }
 
-impl const core::fmt::Pointer for Virtual {
+impl core::fmt::Pointer for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#x}", self.0)
     }
 }
 
-impl const core::fmt::Debug for Virtual {
+impl core::fmt::Debug for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Virtual({:#x})", self.0)
     }
 }
 
-impl const core::fmt::Display for Virtual {
+impl core::fmt::Display for Virtual {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#x}", self.0)
     }

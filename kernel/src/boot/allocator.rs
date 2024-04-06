@@ -5,7 +5,7 @@ use config::PAGE_SIZE;
 use core::sync::atomic::{AtomicUsize, Ordering};
 use macros::init;
 
-/// The request that will order the Limine bootloader to provide a memory map.
+/// The memory map provided by the bootloader.
 static MMAP: spin::Mutex<Option<ArrayVec<mmap::Entry, 32>>> = spin::Mutex::new(None);
 
 /// The total amount of memory allocated by the boot allocator.

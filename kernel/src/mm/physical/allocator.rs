@@ -13,7 +13,7 @@ bitflags::bitflags! {
 }
 
 impl Allocator {
-    // Create a new instance of the frame allocator
+    /// Create a new instance of the frame allocator
     #[must_use]
     pub const fn new() -> Self {
         Self
@@ -45,12 +45,17 @@ impl Allocator {
             })
             .map(|(index, _)| index)?;
 
+        // Compute the flags to set on the frames
+        let flags = if flags.contains(Flags::KERNEL) {
+            frame::Flags::KERNEL
+        } else {
+            frame::Flags::empty()
+        };
+
         // Mark the frames as used and set the kernel flag if requested
         frames[index..(index + count)].iter_mut().for_each(|frame| {
             frame.flags.remove(frame::Flags::FREE);
-            if flags.contains(Flags::KERNEL) {
-                frame.flags.insert(frame::Flags::KERNEL);
-            }
+            frame.flags.insert(flags);
         });
 
         Some(Frame::from_index(index))

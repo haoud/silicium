@@ -105,55 +105,55 @@ impl Frame {
     }
 }
 
-impl const From<Frame> for usize {
+impl From<Frame> for usize {
     fn from(frame: Frame) -> usize {
         frame.0 .0
     }
 }
 
-impl const From<Frame> for u64 {
+impl From<Frame> for u64 {
     fn from(frame: Frame) -> u64 {
         frame.0 .0 as u64
     }
 }
 
-impl const core::fmt::Binary for Frame {
+impl core::fmt::Binary for Frame {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#b}", self.0)
     }
 }
 
-impl const core::fmt::Octal for Frame {
+impl core::fmt::Octal for Frame {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#o}", self.0)
     }
 }
 
-impl const core::fmt::LowerHex for Frame {
+impl core::fmt::LowerHex for Frame {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#x}", self.0)
     }
 }
 
-impl const core::fmt::UpperHex for Frame {
+impl core::fmt::UpperHex for Frame {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#X}", self.0)
     }
 }
 
-impl const core::fmt::Pointer for Frame {
+impl core::fmt::Pointer for Frame {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#x}", self.0)
     }
 }
 
-impl const core::fmt::Debug for Frame {
+impl core::fmt::Debug for Frame {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Virtual({:#x})", self.0)
     }
 }
 
-impl const core::fmt::Display for Frame {
+impl core::fmt::Display for Frame {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#x}", self.0)
     }

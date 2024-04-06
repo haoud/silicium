@@ -15,6 +15,17 @@ pub struct Entry {
 }
 
 impl Entry {
+    /// Creates a new memory map entry with a zero length and a reserved kind. This is useful for
+    /// creating a sentinel entry that marks the end of the memory map.
+    #[must_use]
+    pub const fn none() -> Self {
+        Self {
+            start: Physical::new(0),
+            length: 0,
+            kind: Kind::Reserved,
+        }
+    }
+
     /// Returns the end address of the memory region (excluding the returned
     /// address)
     ///
@@ -28,11 +39,7 @@ impl Entry {
 
 impl Default for Entry {
     fn default() -> Self {
-        Self {
-            start: Physical::new(0),
-            length: 0,
-            kind: Kind::Reserved,
-        }
+        Self::none()
     }
 }
 

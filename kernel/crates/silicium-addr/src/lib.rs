@@ -1,5 +1,4 @@
 #![cfg_attr(not(test), no_std)]
-#![feature(const_trait_impl)]
 
 #[cfg(not(target_arch = "x86_64"))]
 compile_error!("silicium-addr only supports x86_64 architecture");
