@@ -137,7 +137,7 @@ impl<const N: usize> Bitmap<N> {
         // If we reach the end, wrap around to the beginning
         let start_index = (start / Self::BITS_PER_WORD) % N;
         let start_bit = start % Self::BITS_PER_WORD;
-       
+
         // Start searching from the start index
         let mut index = start_index;
         while index < N {
