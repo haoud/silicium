@@ -1,6 +1,7 @@
-use super::{process::Process, tid::Tid};
-use crate::arch::{self, context::Context};
+use super::tid::Tid;
+use crate::arch::{self, context::Context, paging::PageTable};
 use core::num::Saturating;
+use spin::Spinlock;
 
 /// The base address of the stack of the thread. This is temporary and should be replaced
 /// by a more dynamic solution in the future by allocating a virtual memory region for the
@@ -29,29 +30,30 @@ pub struct Thread {
     /// that is used to save and restore the state of the thread when it is scheduled.
     context: Context,
 
-    /// The process that the thread belongs to
-    process: Arc<Process>,
+    /// The page table of the thread. This is used to map the virtual memory of the
+    /// thread to the physical memory of the system.
+    page_table: Arc<Spinlock<PageTable>>,
 }
 
 impl Thread {
     /// # Panics
     /// Panics if the kernel ran out of TIDs
     #[must_use]
-    pub fn new(process: Arc<Process>, entry: usize) -> Self {
+    pub fn new(entry: usize, page_table: Arc<Spinlock<PageTable>>) -> Self {
         Self {
             context: Context::new(entry, STACK_BASE),
-            process,
             tid: Tid::generate().expect("kernel ran out of TIDs"),
             state: State::Created,
             quantum: Saturating(10),
             reschedule: false,
+            page_table,
         }
     }
 
-    /// Get the process that the thread belongs to
+    /// Get a reference to the page table of the thread
     #[must_use]
-    pub const fn process(&self) -> &Arc<Process> {
-        &self.process
+    pub fn page_table(&self) -> &Arc<Spinlock<PageTable>> {
+        &self.page_table
     }
 
     /// Get a mutable reference to the context of the thread
@@ -192,7 +194,7 @@ pub enum Resume {
 pub fn execute(thread: &mut Thread) -> Trap {
     // SAFETY: Changing page table should be safe
     unsafe {
-        thread.process().page_table().lock().load_current();
+        thread.page_table().lock().load_current();
     }
 
     arch::context::run(thread.context_mut())
