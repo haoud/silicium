@@ -1,6 +1,6 @@
 use super::syscall;
 use crate::{
-    arch::x86_64::{apic, gdt, idt, paging, percpu, simd, tss},
+    arch::x86_64::{apic, cpu, gdt, idt, paging, percpu, simd, tss},
     user,
 };
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -85,6 +85,8 @@ pub fn core_id() -> u64 {
 unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
     percpu::setup(u64::from(info.lapic_id));
     percpu::setup_kernel_stack();
+    cpu::enable_required_features();
+
     idt::load();
     gdt::setup();
     tss::setup();
@@ -102,5 +104,5 @@ unsafe extern "C" fn ap_start(info: &limine::smp::Cpu) -> ! {
         core::hint::spin_loop();
     }
 
-    user::thread::enter();
+    user::scheduler::enter();
 }

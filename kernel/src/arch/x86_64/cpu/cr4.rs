@@ -80,7 +80,7 @@ bitflags! {
         /// Enable protection keys feature.
         const PKE = 1 << 22;
 
-        //// Enable CET shadow stack.
+        /// Enable CET shadow stack.
         const CET = 1 << 23;
 
         /// Enables 4 level paging to associate each address with a protection key.

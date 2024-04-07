@@ -36,6 +36,9 @@ pub unsafe fn setup() {
     percpu::setup(0);
     percpu::setup_kernel_stack();
 
+    // Enable the required CPU features
+    cpu::enable_required_features();
+
     // Setup the pagingation
     paging::setup();
 

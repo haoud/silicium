@@ -85,3 +85,9 @@ pub fn halt() -> ! {
         opcode::hlt();
     }
 }
+
+#[init]
+pub unsafe fn enable_required_features() {
+    cr4::enable(cr4::Features::PGE);
+    log::trace!("CR4 enabled features: {:?}", cr4::read());
+}

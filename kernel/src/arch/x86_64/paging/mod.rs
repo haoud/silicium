@@ -58,7 +58,7 @@ pub unsafe fn setup() {
         .filter(|entry| !entry.present())
         .for_each(|entry| {
             let frame = bump::boot_zeroed_frame();
-            entry.add_flags(page::Flags::PRESENT | page::Flags::WRITABLE | page::Flags::GLOBAL);
+            entry.add_flags(page::Flags::PRESENT | page::Flags::WRITABLE);
             entry.set_address(frame);
         });
 }
