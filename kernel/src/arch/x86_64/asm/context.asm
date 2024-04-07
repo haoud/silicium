@@ -16,9 +16,6 @@ execute_thread:
     push rbx
     push rbp
 
-    # Disable interrupts
-    cli
-
     # Save the stack pointer into the per-cpu data structure
     mov gs:24, rsp
 

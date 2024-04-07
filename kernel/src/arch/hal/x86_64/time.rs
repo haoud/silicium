@@ -2,6 +2,7 @@ use crate::arch::x86_64::apic;
 use config::TIMER_HZ;
 use core::sync::atomic::Ordering;
 use time::{
+    frequency::Hertz,
     unit::{Millisecond, Nanosecond, Second},
     Timespec,
 };
@@ -17,8 +18,8 @@ pub fn get_jiffies() -> u64 {
 
 /// Returns the frequency of the jiffies in hertz, which is the number of
 /// jiffies per second.
-pub const fn jiffies_frequency() -> u64 {
-    TIMER_HZ as u64
+pub const fn jiffies_frequency() -> Hertz {
+    Hertz::new(TIMER_HZ as u64)
 }
 
 /// Returns the granularity of the jiffies in milliseconds, which is the
@@ -47,7 +48,8 @@ pub fn jiffies_nano_offset() -> Nanosecond {
 /// more expensive.
 #[must_use]
 pub fn current_timespec() -> Timespec {
-    let seconds = get_jiffies() / jiffies_frequency();
-    let nanos = jiffies_nano_offset();
-    Timespec::conform(Second::new(seconds), nanos)
+    let seconds = get_jiffies() / jiffies_frequency().0;
+    let sub_tick = get_jiffies() % jiffies_frequency().0;
+    let nanos = sub_tick * 1_000_000 + jiffies_nano_offset().0;
+    Timespec::conform(Second::new(seconds), Nanosecond::new(nanos))
 }

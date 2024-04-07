@@ -2,6 +2,7 @@ use crate::{arch, boot};
 
 pub mod context;
 pub mod date;
+pub mod exception;
 pub mod irq;
 pub mod log;
 pub mod paging;

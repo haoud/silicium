@@ -150,3 +150,9 @@ pub fn handle() {
         }
     }
 }
+
+/// Returns the time of the next deadline if there is any active timer.
+#[must_use]
+pub fn next_deadline() -> Option<Timespec> {
+    TIMERS.lock().iter().map(|t| t.deadline).min()
+}

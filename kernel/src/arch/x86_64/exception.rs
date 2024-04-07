@@ -1,6 +1,6 @@
 use crate::{
     arch::x86_64::cpu::{self, InterruptFrame},
-    user::thread::Resume,
+    user::thread,
 };
 
 /// Divide by zero exception vector. This exception is triggered when the CPU tries to
@@ -97,12 +97,14 @@ pub const MC_VECTOR: u8 = 18;
 /// exception (#UD) instead of this exception.
 pub const XF_VECTOR: u8 = 19;
 
-/// Handle an exception. This function should be called when an exception is triggered.
-///
-/// # Panics
-/// Panics if the exception cannot be handled by the kernel or if the exception is not
-/// an exception ([`own_interrupt`] returns false).
-pub fn handler(exception: u8, error: usize, frame: &mut InterruptFrame) -> Resume {
+#[no_mangle]
+pub extern "C" fn exception_handler(frame: &mut InterruptFrame) {
+    handle(frame);
+}
+
+pub fn handle(frame: &mut InterruptFrame) -> thread::Resume {
+    let exception = frame.data as u8;
+    let error = frame.error;
     match exception {
         DE_VECTOR => {
             panic!("Unhandled divide by zero exception");
@@ -171,15 +173,6 @@ pub fn handler(exception: u8, error: usize, frame: &mut InterruptFrame) -> Resum
             panic!("Unhandled exception: {}", exception);
         }
     }
-
-    //Resume::Kill(exception as u32)
-}
-
-/// Handle an interrupt. See [`handler`] for more information, since this function only serves
-/// as a wrapper around the [`handler`] function for assembly code.
-#[no_mangle]
-pub extern "C" fn exception_handler(frame: &mut InterruptFrame) {
-    handler(frame.data as u8, frame.error as usize, frame);
 }
 
 /// Return true if the interrupt is an exception, false otherwise.

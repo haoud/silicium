@@ -1,3 +1,5 @@
+use time::Timespec;
+
 use super::tid::Tid;
 use crate::arch::{self, context::Context, paging::PageTable};
 
@@ -25,6 +27,14 @@ pub struct Thread {
     /// The page table of the thread. This is used to map the virtual memory of the
     /// thread to the physical memory of the system.
     page_table: Arc<spin::Mutex<PageTable>>,
+
+    /// The virtual runtime of the thread. This is used by the scheduler to determine
+    /// the order in which threads should be scheduled.
+    pub(super) vruntime: Timespec,
+
+    /// The deadline of the thread. This is used by the scheduler to determine when
+    /// the thread should be preempted if it has not finished executing.
+    pub(super) deadline: Timespec,
 }
 
 impl Thread {
@@ -35,6 +45,8 @@ impl Thread {
         Self {
             context: Context::new(entry, STACK_BASE),
             tid: Tid::generate().expect("kernel ran out of TIDs"),
+            vruntime: Timespec::zero(),
+            deadline: Timespec::zero(),
             state: State::Created,
             page_table,
         }
@@ -110,26 +122,23 @@ pub enum State {
     /// variant contains the exit code of the thread.
     Exited(u32),
 
-    /// The thread has been terminated by an signal and is waiting to be joined
+    /// The thread has been killed by an signal and is waiting to be joined
     /// by another thread. This variant is similar to the `Exited` variant, but
     /// contains the signal that terminated the thread instead of the exit code.
-    Terminated(u32),
+    Killed(u32),
 }
 
 /// A trap that occurred during the execution of a thread.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Trap {
-    /// An exception occurred during the execution of the thread. This variant
-    /// contains the error code of the exception and the identifier of the exception.
-    Exception(usize, u8),
+    /// An exception occurred during the execution of the thread.
+    Exception,
 
-    /// An interrupt occurred during the execution of the thread. This variant
-    /// contains the identifier of the interrupt.
-    Interrupt(u8),
+    /// An interrupt occurred during the execution of the thread.
+    Interrupt,
 
-    /// A system call occurred during the execution of the thread. This variant
-    /// contains the identifier of the system call.
-    Syscall(u32),
+    /// A system call occurred during the execution of the thread.
+    Syscall,
 }
 
 /// The behavior of the thread after a trap occurred.
@@ -161,27 +170,5 @@ pub fn execute(thread: &mut Thread) -> Trap {
     unsafe {
         thread.page_table().lock().load_current();
     }
-
     arch::context::run(thread.context_mut())
-}
-
-/// Avoid this function to be put in the .init section that is discarded after the kernel is
-/// loaded.
-#[link_section = ".text"]
-pub fn enter() -> ! {
-    loop {
-        // Get a task from the scheduler
-        //
-        // Loop:
-        //  - Execute the task until a trap occurs
-        //  - Handle the trap
-        //  - Before returning to the task:
-        //      * Reschedule the task if needed
-        //      * Exit the task if needed
-        //
-        unsafe {
-            arch::irq::enable();
-            arch::irq::wait();
-        }
-    }
 }

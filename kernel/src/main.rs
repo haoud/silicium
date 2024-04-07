@@ -48,5 +48,6 @@ pub unsafe extern "C" fn _start() -> ! {
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
-    user::thread::enter();
+    // Enter the scheduler
+    user::scheduler::enter();
 }

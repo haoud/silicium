@@ -1,4 +1,5 @@
 pub mod elf;
+pub mod scheduler;
 pub mod syscall;
 pub mod thread;
 pub mod tid;
@@ -12,4 +13,5 @@ pub mod tid;
 pub unsafe fn setup() {
     let init = include_bytes!("../../../iso/boot/init.elf");
     let thread = elf::load(init).expect("failed to load init process");
+    scheduler::add_thread(thread);
 }

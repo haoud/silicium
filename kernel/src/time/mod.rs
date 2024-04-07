@@ -50,7 +50,7 @@ impl Unix {
         let startup_time = STARTUP_TIME.read();
         let jiffies = arch::time::get_jiffies();
         let jiffies_frequency = arch::time::jiffies_frequency();
-        Self::new(startup_time.0 .0 + (jiffies / jiffies_frequency))
+        Self::new(startup_time.0 .0 + (jiffies / jiffies_frequency.0))
     }
 }
 

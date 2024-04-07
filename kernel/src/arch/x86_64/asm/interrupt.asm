@@ -38,6 +38,7 @@ interrupt_common:
 kernel_interrupt:
     # Enable interrupts and call the interrupt handler with the
     # stack frame as argument.
+    mov rdi, rsp
     cmp QWORD ptr [rsp + 136], 0
     je .exception
 
@@ -45,15 +46,13 @@ kernel_interrupt:
     je .interrupt
 
     # Should never be reached
-    jmp kernel_interrupt
+    ud2 
 
 .exception:
-    mov rdi, rsp
     call exception_handler
     jmp interrupt_exit
 
 .interrupt:
-    mov rdi, QWORD ptr [rsp + 128]
     call irq_handler
     jmp interrupt_exit 
 
@@ -62,9 +61,6 @@ kernel_interrupt:
 # interrupts temporarily and restore the interrupted code.
 .global interrupt_exit
 interrupt_exit:
-    # Disable interrupts
-    cli
-
     # Restore preserved registers
     pop rbp
     pop rbx
