@@ -1,6 +1,5 @@
 use super::{cpu::InterruptFrame, tss};
 use crate::user::thread::Trap;
-use core::pin::Pin;
 
 core::arch::global_asm!(include_str!("asm/context.asm"));
 
@@ -13,7 +12,7 @@ extern "C" {
 #[derive(Debug)]
 pub struct Context {
     /// The saved register state of this context.
-    registers: Pin<Box<Registers>>,
+    registers: Registers,
 }
 
 impl Context {
@@ -26,15 +25,24 @@ impl Context {
         let cs = 0x2B; // User 64-bits code segment
         let ss = 0x23; // User 64-bits data segment
         Self {
-            registers: Box::pin(Registers {
+            registers: Registers {
                 rflags,
                 rsp,
                 rip,
                 cs,
                 ss,
                 ..InterruptFrame::default()
-            }),
+            },
         }
+    }
+
+    /// Return a mutable pointer to the registers of this context. The pointer must be
+    /// used with care as it is possible to corrupt the state of the context.
+    ///
+    /// If you use this method, you are probably doing something wrong.
+    #[must_use]
+    pub fn registers_ptr(&mut self) -> *mut Registers {
+        core::ptr::addr_of_mut!(self.registers)
     }
 
     /// Return a mutable reference to the registers of this context.
@@ -58,7 +66,7 @@ impl Context {
     #[must_use]
     pub fn kstack_rsp(&self) -> *mut usize {
         unsafe {
-            core::ptr::addr_of!(*self.registers)
+            core::ptr::addr_of!(self.registers)
                 .byte_add(core::mem::size_of::<Registers>())
                 .cast::<usize>()
                 .cast_mut()
@@ -70,6 +78,14 @@ impl Context {
 /// kernel mode. We can simply use the same structure for both.
 pub type Registers = InterruptFrame;
 
+/// Save the current context in the given context. This function will save the user GS
+/// and FS registers since the user can change them with the `WRGSBASE` and `WRFSBASE`, and
+/// will also save the FPU registers.
+pub fn save(_context: &mut Context) {
+    // TODO: Save GS and FS since user can change them with `WRGSBASE` and `WRFSBASE`
+    // TODO: Save FPU registers
+}
+
 /// Run the context until a trap occurs. This function will execute the user thread and
 /// let it run until a trap occurs. A trap is an event that occurs during the execution
 /// of the thread that requires the kernel to handle it. This can be an exception, an
@@ -79,6 +95,9 @@ pub type Registers = InterruptFrame;
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
 pub fn run(context: &mut Context) -> Trap {
+    // TODO: Restore GS and FS
+    // TODO: Restore FPU registers
+
     // SAFETY: This is safe becayse we ensure that the kernel stack is valid and big
     // enough to handle the execution of the thread before switching to the per-core
     // kernel stack. The `execute_thread` function is safe to call but we still need
@@ -90,9 +109,9 @@ pub fn run(context: &mut Context) -> Trap {
 
     let registers = &context.registers;
     match registers.trap {
-        0 => Trap::Exception(registers.error as usize, registers.data as u8),
-        1 => Trap::Interrupt(registers.data as u8),
-        2 => Trap::Syscall(registers.data as u32),
+        0 => Trap::Exception,
+        1 => Trap::Interrupt,
+        2 => Trap::Syscall,
         _ => unreachable!("Unknown trap type"),
     }
 }

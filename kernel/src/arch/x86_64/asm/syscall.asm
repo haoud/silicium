@@ -1,9 +1,12 @@
 # Called when a syscall is made with the SYSCALL instruction.
+# Interrupts was masked by the SYSCALL instruction as well as some others
+# flags needed by the system V ABI. The original RFLAGS is saved in the
+# R10 register.
+# 
 # TODO: Better description
+.global syscall_enter
 syscall_enter:
-    # Interrupts was masked by the SYSCALL instruction as well as some others
-    # flags needed by the system V ABI. The original RFLAGS is saved in the
-    # R11 register.
+    # TODO: -ENOSYS fast path
 
     swapgs            # Switch to the kernel GS
     mov gs:16, rsp    # Save the user stack pointer in the per-cpu area

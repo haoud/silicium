@@ -254,6 +254,14 @@ pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level
         // Copy the entry from the source table to the destination table
         *to = *from;
 
+        // Enable the global flag for the kernel page table entries. This will
+        // prevent the TLB from flushing the entries when CR3 is updated. However,
+        // the TLB can still be flushed by other means, like with the `invlpg`
+        // instruction or if an translation entry is evicted from the TLB.
+        if level == table::Level::Pt && !to.user() {
+            to.add_flags(page::Flags::GLOBAL);
+        }
+
         // If the level has a next level, recursively copy the next level
         if let Some(next) = level.next() {
             // If the level is PDPT or PD and the huge page flag is set, we can
@@ -280,7 +288,6 @@ pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level
             core::ptr::copy_nonoverlapping(src, dst, Table::COUNT);
 
             // Update the destination entry with the new frame address
-            to.add_flags(page::Flags::GLOBAL);
             to.set_address(dst_frame);
 
             // Recursively copy the next level

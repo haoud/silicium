@@ -1,8 +1,5 @@
-use crate::future;
-
 pub mod elf;
-pub mod pid;
-pub mod process;
+pub mod scheduler;
 pub mod syscall;
 pub mod thread;
 pub mod tid;
@@ -15,7 +12,6 @@ pub mod tid;
 #[init]
 pub unsafe fn setup() {
     let init = include_bytes!("../../../iso/boot/init.elf");
-    let process = Arc::new(process::Process::new());
-    let thread = elf::load(process.clone(), init).expect("failed to load init process");
-    future::thread::spawn(thread);
+    let thread = elf::load(init).expect("failed to load init process");
+    scheduler::add_thread(thread);
 }

@@ -29,12 +29,15 @@ pub mod tss;
 /// initialization of the kernel. Before calling this function, the boot memory
 /// allocator must be initialized to allow this function to dynamically allocate
 /// memory.
-#[macros::init]
+#[init]
 pub unsafe fn setup() {
     // Initialized the per-cpu variable for this core and setup the
     // local kernel stack for the current core
     percpu::setup(0);
     percpu::setup_kernel_stack();
+
+    // Enable the required CPU features
+    cpu::enable_required_features();
 
     // Setup the pagingation
     paging::setup();

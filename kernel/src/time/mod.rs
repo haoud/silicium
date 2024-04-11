@@ -31,6 +31,7 @@ pub struct Date {
 pub struct Unix(pub Second);
 
 impl Unix {
+    /// Create a new Unix time from the given number of seconds since January 1st, 1970.
     #[must_use]
     pub const fn new(seconds: u64) -> Self {
         Self(Second(seconds))
@@ -49,7 +50,7 @@ impl Unix {
         let startup_time = STARTUP_TIME.read();
         let jiffies = arch::time::get_jiffies();
         let jiffies_frequency = arch::time::jiffies_frequency();
-        Self::new(startup_time.0 .0 + (jiffies / jiffies_frequency))
+        Self::new(startup_time.0 .0 + (jiffies / jiffies_frequency.0))
     }
 }
 
@@ -120,12 +121,12 @@ impl From<Unix> for Date {
 #[init]
 pub unsafe fn setup() {
     STARTUP_DATE.write(Date {
-        year: arch::hal::date::years(),
-        month: arch::hal::date::months(),
-        day: arch::hal::date::days(),
-        hour: arch::hal::date::hours(),
-        minute: arch::hal::date::minutes(),
-        second: arch::hal::date::seconds(),
+        year: arch::date::years(),
+        month: arch::date::months(),
+        day: arch::date::days(),
+        hour: arch::date::hours(),
+        minute: arch::date::minutes(),
+        second: arch::date::seconds(),
     });
     STARTUP_TIME.write(STARTUP_DATE.read().to_unix_time());
 

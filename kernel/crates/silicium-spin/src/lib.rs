@@ -3,9 +3,6 @@
 //! and re-exports its types.
 //! In the future, we may want to implement our own spinlock to reduce the
 //! number of dependencies and to have more control over the implementation.
-#![cfg_attr(not(test), no_std)]
-#![allow(clippy::match_bool)]
+#![no_std]
 
-pub mod lock;
-
-pub use lock::{Spinlock, SpinlockGuard, SpinlockIrqGuard};
+pub use spin::{Lazy, Mutex, Once, RwLock};

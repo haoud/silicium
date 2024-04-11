@@ -1,6 +1,7 @@
-use super::{process::Process, tid::Tid};
-use crate::arch::{self, context::Context};
-use core::num::Saturating;
+use time::Timespec;
+
+use super::tid::Tid;
+use crate::arch::{self, context::Context, paging::PageTable};
 
 /// The base address of the stack of the thread. This is temporary and should be replaced
 /// by a more dynamic solution in the future by allocating a virtual memory region for the
@@ -19,39 +20,42 @@ pub struct Thread {
     /// The state of the thread
     state: State,
 
-    /// The time slice of the thread in ticks
-    quantum: Saturating<u64>,
-
-    /// Whether the thread should be rescheduled or not
-    reschedule: bool,
-
     /// The context of the thread. This contains some architecture-specific data
     /// that is used to save and restore the state of the thread when it is scheduled.
     context: Context,
 
-    /// The process that the thread belongs to
-    process: Arc<Process>,
+    /// The page table of the thread. This is used to map the virtual memory of the
+    /// thread to the physical memory of the system.
+    page_table: Arc<spin::Mutex<PageTable>>,
+
+    /// The virtual runtime of the thread. This is used by the scheduler to determine
+    /// the order in which threads should be scheduled.
+    pub(super) vruntime: Timespec,
+
+    /// The deadline of the thread. This is used by the scheduler to determine when
+    /// the thread should be preempted if it has not finished executing.
+    pub(super) deadline: Timespec,
 }
 
 impl Thread {
     /// # Panics
     /// Panics if the kernel ran out of TIDs
     #[must_use]
-    pub fn new(process: Arc<Process>, entry: usize) -> Self {
+    pub fn new(entry: usize, page_table: Arc<spin::Mutex<PageTable>>) -> Self {
         Self {
             context: Context::new(entry, STACK_BASE),
-            process,
             tid: Tid::generate().expect("kernel ran out of TIDs"),
+            vruntime: Timespec::zero(),
+            deadline: Timespec::zero(),
             state: State::Created,
-            quantum: Saturating(10),
-            reschedule: false,
+            page_table,
         }
     }
 
-    /// Get the process that the thread belongs to
+    /// Get a reference to the page table of the thread
     #[must_use]
-    pub const fn process(&self) -> &Arc<Process> {
-        &self.process
+    pub fn page_table(&self) -> &Arc<spin::Mutex<PageTable>> {
+        &self.page_table
     }
 
     /// Get a mutable reference to the context of the thread
@@ -64,31 +68,6 @@ impl Thread {
     #[must_use]
     pub fn context(&self) -> &Context {
         &self.context
-    }
-
-    /// Decrement the quantum of the thread. If the quantum reaches zero, this function will
-    /// set the reschedule flag to true, which means that the thread needs to be rescheduled.
-    pub fn decrement_quantum(&mut self) {
-        self.quantum -= 1;
-        if self.quantum.0 == 0 {
-            self.reschedule = true;
-        }
-    }
-
-    /// Restore the quantum of the thread to its default value
-    pub fn restore_quantum(&mut self) {
-        self.quantum = Saturating(10);
-    }
-
-    /// Return whether the thread needs to be rescheduled or not
-    #[must_use]
-    pub fn needs_reschedule(&self) -> bool {
-        self.reschedule
-    }
-
-    /// Set whether the thread needs to be rescheduled or not
-    pub fn set_reschedule(&mut self, reschedule: bool) {
-        self.reschedule = reschedule;
     }
 
     /// Set the state of the thread
@@ -143,26 +122,23 @@ pub enum State {
     /// variant contains the exit code of the thread.
     Exited(u32),
 
-    /// The thread has been terminated by an signal and is waiting to be joined
+    /// The thread has been killed by an signal and is waiting to be joined
     /// by another thread. This variant is similar to the `Exited` variant, but
     /// contains the signal that terminated the thread instead of the exit code.
-    Terminated(u32),
+    Killed(u32),
 }
 
 /// A trap that occurred during the execution of a thread.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Trap {
-    /// An exception occurred during the execution of the thread. This variant
-    /// contains the error code of the exception and the identifier of the exception.
-    Exception(usize, u8),
+    /// An exception occurred during the execution of the thread.
+    Exception,
 
-    /// An interrupt occurred during the execution of the thread. This variant
-    /// contains the identifier of the interrupt.
-    Interrupt(u8),
+    /// An interrupt occurred during the execution of the thread.
+    Interrupt,
 
-    /// A system call occurred during the execution of the thread. This variant
-    /// contains the identifier of the system call.
-    Syscall(u32),
+    /// A system call occurred during the execution of the thread.
+    Syscall,
 }
 
 /// The behavior of the thread after a trap occurred.
@@ -192,8 +168,7 @@ pub enum Resume {
 pub fn execute(thread: &mut Thread) -> Trap {
     // SAFETY: Changing page table should be safe
     unsafe {
-        thread.process().page_table().lock().load_current();
+        thread.page_table().lock().load_current();
     }
-
     arch::context::run(thread.context_mut())
 }

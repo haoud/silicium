@@ -3,7 +3,6 @@ use crate::arch::x86_64::{
     pit, smp,
 };
 use core::sync::atomic::{AtomicU64, Ordering};
-use macros::init;
 use seqlock::SeqLock;
 use time::{frequency::Hertz32, unit::Nanosecond32};
 

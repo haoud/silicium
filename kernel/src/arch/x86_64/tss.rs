@@ -73,9 +73,7 @@ pub unsafe fn setup() {
     opcode::ltr(LTR_SELECTOR);
 }
 
-/// Sets the kernel stack pointer (RSP0) for the current CPU core both in the
-/// TSS and in the per-CPU data.
-///
+/// Sets the kernel stack pointer (RSP0) in the TSS for the current CPU core.
 /// This stack will be used when an exception occurs while running in user
 /// mode. Since we cannot handle exceptions in user mode, the CPU will switch
 /// to the kernel stack to handle the exception if needed. If we was already

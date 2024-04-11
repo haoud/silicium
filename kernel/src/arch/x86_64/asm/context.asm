@@ -5,6 +5,7 @@
 # syscall will occur. The register state of the user context will be saved in
 # its (small) stack frame before restoring the stack frame previously stored
 # into gs:24 and returning to the caller.
+.global execute_thread
 execute_thread:
     # Save RFLAGS and callee-saved registers
     pushfq
@@ -14,9 +15,6 @@ execute_thread:
     push r12
     push rbx
     push rbp
-
-    # Disable interrupts
-    cli
 
     # Save the stack pointer into the per-cpu data structure
     mov gs:24, rsp
@@ -45,6 +43,7 @@ execute_thread:
 # Resume the kernel. This function is called when an exception, an interrupt or a syscall
 # occurs. It will restore the kernel stack pointer and the callee-saved registers before
 # returning to the caller, allowing the kernel to resume its execution.
+.global resume_kernel
 resume_kernel:
   mov rsp, gs:24
   pop rbp

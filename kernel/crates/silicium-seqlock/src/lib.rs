@@ -28,12 +28,11 @@ use core::{
     mem::MaybeUninit,
     sync::atomic::{AtomicUsize, Ordering},
 };
-use spin::Spinlock;
 
 /// A sequential lock
 pub struct SeqLock<T> {
     data: UnsafeCell<T>,
-    spin: Spinlock<()>,
+    spin: spin::Mutex<()>,
     seq: AtomicUsize,
 }
 
@@ -52,7 +51,7 @@ impl<T: Copy> SeqLock<T> {
         Self {
             data: UnsafeCell::new(data),
             seq: AtomicUsize::new(0),
-            spin: Spinlock::new(()),
+            spin: spin::Mutex::new(()),
         }
     }
 

@@ -1,9 +1,9 @@
-use super::{
-    process::Process,
-    thread::{self, Thread},
-};
+use super::thread::{self, Thread};
 use crate::{
-    arch::{self, paging},
+    arch::{
+        self,
+        paging::{self, PageTable},
+    },
     mm::{self, physical::allocator::Flags},
 };
 use addr::Virtual;
@@ -20,8 +20,9 @@ use elf::{endian::NativeEndian, segment::ProgramHeader, ElfBytes};
 /// Panics if the kernel ran out of memory when loading the ELF file or if the ELF
 /// file contains overlapping segments
 #[allow(clippy::cast_possible_truncation)]
-pub fn load(process: Arc<Process>, file: &[u8]) -> Result<Thread, LoadError> {
+pub fn load(file: &[u8]) -> Result<Thread, LoadError> {
     let elf = check_elf(ElfBytes::<NativeEndian>::minimal_parse(file)?)?;
+    let mut page_table = PageTable::new();
 
     // Map all the segments of the ELF file that are loadable
     for phdr in elf
@@ -55,7 +56,7 @@ pub fn load(process: Arc<Process>, file: &[u8]) -> Result<Thread, LoadError> {
                     .expect("failed to allocate frame for mapping an ELF segment");
 
                 paging::map(
-                    &mut process.page_table().lock(),
+                    &mut page_table,
                     mapping_vaddr,
                     mapped_frame,
                     mapping_flags,
@@ -110,7 +111,7 @@ pub fn load(process: Arc<Process>, file: &[u8]) -> Result<Thread, LoadError> {
 
         unsafe {
             paging::map(
-                &mut process.page_table().lock(),
+                &mut page_table,
                 Virtual::new(stack - i * usize::from(PAGE_SIZE)),
                 frame,
                 paging::MapFlags::empty(),
@@ -120,7 +121,7 @@ pub fn load(process: Arc<Process>, file: &[u8]) -> Result<Thread, LoadError> {
         };
     }
 
-    Ok(Thread::new(process, entry))
+    Ok(Thread::new(entry, Arc::new(spin::Mutex::new(page_table))))
 }
 
 /// Convert the ELF flags of a section into the paging flags, used to map the

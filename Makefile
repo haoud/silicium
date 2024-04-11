@@ -18,8 +18,8 @@
 	help
 
 run: run-x86_64
-build: build-servers build-userspace build-kernel
-unit-tests: unit-tests-kernel unit-tests-servers unit-tests-userspace
+build: build-servers build-userspace install-user build-kernel
+unit-tests: build-kernel unit-tests-kernel unit-tests-servers unit-tests-userspace
 
 build-kernel:
 	cd kernel && cargo build --release
@@ -42,7 +42,10 @@ build-docs:
 		--release
 
 	mv kernel/target/x86_64/doc/* docs/kernel/
-	
+
+install-user:
+	./scripts/install_user.sh
+
 check-clippy: build-userspace
 	cd kernel && cargo clippy --all-features -- -D warnings
 
@@ -71,7 +74,9 @@ run-aarch64: build
 	./scripts/runner.sh
 
 clean:
+	cd user && make clean
 	cd kernel && cargo clean
+
 
 help:
 	@echo "WIP"

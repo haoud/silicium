@@ -85,3 +85,17 @@ pub fn halt() -> ! {
         opcode::hlt();
     }
 }
+
+/// Enable the required CPU features that are needed for the kernel to work
+/// properly. If a feature is not supported by the CPU, the kernel will panic
+/// or triple fault.
+///
+/// # Safety
+/// The caller must ensure to call this function only once per core, only during
+/// the kernel initialization phase, and as soon as possible on boot to avoid
+/// any issues.
+#[init]
+pub unsafe fn enable_required_features() {
+    cr4::enable(cr4::Features::PGE);
+    log::trace!("CR4 enabled features: {:?}", cr4::read());
+}
