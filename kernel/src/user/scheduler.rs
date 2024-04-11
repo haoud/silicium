@@ -1,4 +1,7 @@
-use super::thread::{self, Resume, Thread};
+use super::{
+    syscall,
+    thread::{self, Resume, Thread},
+};
 use crate::arch;
 use config::TIMER_HZ;
 use time::{unit::Nanosecond, Timespec};
@@ -85,7 +88,7 @@ pub fn enter() -> ! {
             let resume = match trap {
                 thread::Trap::Exception => arch::exception::handle(register),
                 thread::Trap::Interrupt => arch::irq::handle(register),
-                thread::Trap::Syscall => Resume::Continue,
+                thread::Trap::Syscall => syscall::handler(register),
             };
 
             // If the start time is greater than the end time, it means that the trap is

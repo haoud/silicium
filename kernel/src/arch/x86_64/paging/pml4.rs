@@ -256,8 +256,8 @@ pub unsafe fn recursive_copy(to: &mut [page::Entry], from: &[page::Entry], level
 
         // Enable the global flag for the kernel page table entries. This will
         // prevent the TLB from flushing the entries when CR3 is updated. However,
-        // the TLB can still be flushed by other means, like the `invlpg` instruction 
-        // or if an translation entry is evicted from the TLB.
+        // the TLB can still be flushed by other means, like with the `invlpg`
+        // instruction or if an translation entry is evicted from the TLB.
         if level == table::Level::Pt && !to.user() {
             to.add_flags(page::Flags::GLOBAL);
         }
