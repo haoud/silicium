@@ -40,14 +40,8 @@ jobs:
         packages: lld
         version: 1.0
 
-    - name: Build kernel
-      run: make build-kernel
-
-    - name: Build servers
-      run: make build-servers
-
-    - name: Build user-space
-      run: make build-userspace
+    - name: Build kernel, servers and userspace
+      run: make build
   
   unit-tests:
     name: Unit tests
