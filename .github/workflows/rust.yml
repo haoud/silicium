@@ -10,8 +10,24 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: lld
+        version: 1.0
+
+    - name: Build kernel, servers and userspace
+      run: make build
+
   checks:
     name: Checks
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
@@ -28,21 +44,6 @@ jobs:
     - name: Check clippy
       run: make check-clippy
 
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - uses: awalsh128/cache-apt-pkgs-action@latest
-      with:
-        packages: lld
-        version: 1.0
-
-    - name: Build kernel, servers and userspace
-      run: make build
-  
   unit-tests:
     name: Unit tests
     needs: build
