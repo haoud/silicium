@@ -1,7 +1,6 @@
-use time::Timespec;
-
 use super::tid::Tid;
 use crate::arch::{self, context::Context, paging::PageTable};
+use time::Timespec;
 
 /// The base address of the stack of the thread. This is temporary and should be replaced
 /// by a more dynamic solution in the future by allocating a virtual memory region for the
