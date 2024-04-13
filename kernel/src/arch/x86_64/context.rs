@@ -1,4 +1,7 @@
-use super::{cpu::InterruptFrame, simd, tss};
+use super::{
+    cpu::{self, InterruptFrame},
+    simd, tss,
+};
 use crate::user::thread::Trap;
 
 core::arch::global_asm!(include_str!("asm/context.asm"));
@@ -17,6 +20,12 @@ pub struct Context {
     /// The extended SIMD state of the CPU, which includes the x87 FPU,
     /// MMX, and SSE registers.
     simd: simd::ExtendedState,
+
+    /// The value of the GS register used by the user thread. Default value is 0.
+    gs: u64,
+
+    /// The value of the FS register used by the user thread. Default value is 0.
+    fs: u64,
 }
 
 impl Context {
@@ -39,6 +48,8 @@ impl Context {
                 ..InterruptFrame::default()
             },
             simd: simd::ExtendedState::default(),
+            gs: 0,
+            fs: 0,
         }
     }
 
@@ -88,7 +99,10 @@ pub type Registers = InterruptFrame;
 /// and FS registers since the user can change them with the `WRGSBASE` and `WRFSBASE`, and
 /// will also save the FPU registers.
 pub fn save(context: &mut Context) {
-    // TODO: Save GS and FS since user can change them with `WRGSBASE` and `WRFSBASE`
+    // Save the user GS and FS registers
+    context.fs = cpu::current_fs();
+    context.gs = cpu::current_user_gs();
+
     // Save the extended FPU state
     context.simd.xsave();
 }
@@ -102,7 +116,10 @@ pub fn save(context: &mut Context) {
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
 pub fn run(context: &mut Context) -> Trap {
-    // TODO: Restore GS and FS
+    // Restore the user GS and FS registers
+    cpu::set_user_gs(context.gs);
+    cpu::set_fs(context.fs);
+
     // Restore the extended FPU state
     context.simd.xrstor();
 
