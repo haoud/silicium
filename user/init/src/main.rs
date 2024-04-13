@@ -4,8 +4,8 @@
 #[no_mangle]
 pub unsafe fn _start() -> ! {
     loop {
-        core::arch::asm!("mov rax, 2");
-        core::arch::asm!("xor rsi, rsi");
+        core::arch::asm!("mov rax, 0");
+        core::arch::asm!("mov rsi, 0");
         core::arch::asm!("syscall");
     }
 }

@@ -8,7 +8,7 @@
 syscall_enter:
     # Fast path if the syscall number is invalid. 
     cmp rax, 1
-    jle .continue
+    jbe .continue
 
     mov rax, -1
     sysretq
