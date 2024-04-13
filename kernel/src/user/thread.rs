@@ -21,7 +21,7 @@ pub struct Thread {
 
     /// The context of the thread. This contains some architecture-specific data
     /// that is used to save and restore the state of the thread when it is scheduled.
-    context: Context,
+    context: Box<Context>,
 
     /// The page table of the thread. This is used to map the virtual memory of the
     /// thread to the physical memory of the system.
@@ -42,7 +42,7 @@ impl Thread {
     #[must_use]
     pub fn new(entry: usize, page_table: Arc<spin::Mutex<PageTable>>) -> Self {
         Self {
-            context: Context::new(entry, STACK_BASE),
+            context: Box::new(Context::new(entry, STACK_BASE)),
             tid: Tid::generate().expect("kernel ran out of TIDs"),
             vruntime: Timespec::zero(),
             deadline: Timespec::zero(),

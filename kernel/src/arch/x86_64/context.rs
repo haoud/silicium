@@ -1,4 +1,4 @@
-use super::{cpu::InterruptFrame, tss};
+use super::{cpu::InterruptFrame, simd, tss};
 use crate::user::thread::Trap;
 
 core::arch::global_asm!(include_str!("asm/context.asm"));
@@ -13,6 +13,10 @@ extern "C" {
 pub struct Context {
     /// The saved register state of this context.
     registers: Registers,
+
+    /// The extended SIMD state of the CPU, which includes the x87 FPU,
+    /// MMX, and SSE registers.
+    simd: simd::ExtendedState,
 }
 
 impl Context {
@@ -24,6 +28,7 @@ impl Context {
         let rsp = stack as u64;
         let cs = 0x2B; // User 64-bits code segment
         let ss = 0x23; // User 64-bits data segment
+
         Self {
             registers: Registers {
                 rflags,
@@ -33,6 +38,7 @@ impl Context {
                 ss,
                 ..InterruptFrame::default()
             },
+            simd: simd::ExtendedState::default(),
         }
     }
 
@@ -81,9 +87,10 @@ pub type Registers = InterruptFrame;
 /// Save the current context in the given context. This function will save the user GS
 /// and FS registers since the user can change them with the `WRGSBASE` and `WRFSBASE`, and
 /// will also save the FPU registers.
-pub fn save(_context: &mut Context) {
+pub fn save(context: &mut Context) {
     // TODO: Save GS and FS since user can change them with `WRGSBASE` and `WRFSBASE`
-    // TODO: Save FPU registers
+    // Save the extended FPU state
+    context.simd.xsave();
 }
 
 /// Run the context until a trap occurs. This function will execute the user thread and
@@ -96,7 +103,8 @@ pub fn save(_context: &mut Context) {
 #[allow(clippy::cast_possible_truncation)]
 pub fn run(context: &mut Context) -> Trap {
     // TODO: Restore GS and FS
-    // TODO: Restore FPU registers
+    // Restore the extended FPU state
+    context.simd.xrstor();
 
     // SAFETY: This is safe becayse we ensure that the kernel stack is valid and big
     // enough to handle the execution of the thread before switching to the per-core
