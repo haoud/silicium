@@ -120,6 +120,7 @@ pub fn enter() -> ! {
                             // is ready to run.
                             continue;
                         }
+
                         arch::context::save(thread.context_mut());
                         add_thread(thread);
                         break;
@@ -172,6 +173,7 @@ pub fn get_thread() -> Thread {
                 thread.vruntime + Nanosecond::new(20_000_000),
                 scheduler.min_vruntime,
             );
+
             thread.set_state(thread::State::Running);
             return thread;
         }
