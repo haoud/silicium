@@ -1,6 +1,8 @@
 use crate::arch::x86_64::opcode;
 pub use cpuid::cpuid;
 
+use super::msr;
+
 pub mod cpuid;
 pub mod cr0;
 pub mod cr2;
@@ -98,4 +100,58 @@ pub fn halt() -> ! {
 pub unsafe fn enable_required_features() {
     cr4::enable(cr4::Features::PGE);
     log::trace!("CR4 enabled features: {:?}", cr4::read());
+}
+
+/// Return the current value of the FS register by reading the MSR register
+/// `IA32_FS_BASE`.
+#[must_use]
+pub fn current_fs() -> u64 {
+    // SAFETY: Reading this MSR register is safe because it always exists on
+    // x86_64 and will not cause any side effects
+    unsafe { msr::read(msr::Register::FS_BASE) }
+}
+
+/// Set the FS base to the specified value by writing the MSR register
+/// `IA32_FS_BASE`.
+#[inline]
+pub fn set_fs(fs: u64) {
+    // SAFETY: Writing this MSR register is safe because it always exists on
+    // x86_64 and will not cause any side effects
+    unsafe { msr::write(msr::Register::FS_BASE, fs) }
+}
+
+/// Read the current value of the GS register by reading the MSR registers
+/// `IA32_KERNEL_GS_BASE`.
+#[must_use]
+pub fn current_kernel_gs() -> u64 {
+    // SAFETY: Reading this MSR register is safe because it always exists on
+    // x86_64 and will not cause any side effects
+    unsafe { msr::read(msr::Register::GS_BASE) }
+}
+
+/// Read the current user value of the GS register by reading the MSR registers
+/// `IA32_KERNEL_GS_BASE`.
+///
+/// Yes, this function reads the `KERNEL_GS_BASE` MSR register. No it is not a mistake.
+/// This is because when entering into the kernel, we execute the `swapgs` instruction
+/// which swaps the `GS_BASE` register with the `KERNEL_GS_BASE` MSR. This means that
+/// the `GS_BASE` is always the kernel GS during the kernel execution, and the
+/// `KERNEL_GS_BASE` is the saved user GS.
+#[must_use]
+pub fn current_user_gs() -> u64 {
+    // SAFETY: Reading this MSR register is safe because it always exists on
+    // x86_64 and will not cause any side effects
+    unsafe { msr::read(msr::Register::KERNEL_GS_BASE) }
+}
+
+/// Set the user GS register to the specified value.
+///
+/// Yes, this function writes the `KERNEL_GS_BASE` MSR register. No it is not a mistake.
+/// This is because when entering into the kernel, we execute the `swapgs` instruction
+/// which swaps the `GS_BASE` register with the `KERNEL_GS_BASE` MSR. This means that
+/// the `GS_BASE` is always the kernel GS during the kernel execution, and the
+/// `KERNEL_GS_BASE` is the saved user GS.
+#[inline]
+pub fn set_user_gs(gs: u64) {
+    unsafe { msr::write(msr::Register::KERNEL_GS_BASE, gs) }
 }

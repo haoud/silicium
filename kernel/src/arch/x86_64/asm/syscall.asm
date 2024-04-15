@@ -6,8 +6,14 @@
 # TODO: Better description
 .global syscall_enter
 syscall_enter:
-    # TODO: -ENOSYS fast path
+    # Fast path if the syscall number is invalid. 
+    cmp rax, 1
+    jbe .continue
 
+    mov rax, -1
+    sysretq
+
+.continue:
     swapgs            # Switch to the kernel GS
     mov gs:16, rsp    # Save the user stack pointer in the per-cpu area
     mov rsp, gs:32    # Set the kernel stack pointer to the user registers area

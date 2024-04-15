@@ -111,10 +111,16 @@ pub fn enter() -> ! {
                 }
                 Resume::Continue => {
                     // If the thread has not finished executing before the deadline, add it
-                    // back to the ready queue.
+                    // back to the ready queue. Otherwise, continue executing the thread
+                    // until it finishes.
                     if thread.deadline > thread.vruntime {
-                        // TODO: Do not jump here if there is no other thread to run, or if the
-                        // thread has still the lowest vruntime.
+                        if SCHEDULER.lock().ready.is_empty() {
+                            // No other thread are ready to run, so we can continue. This
+                            // thread will be preempted during the next trap if another thread
+                            // is ready to run.
+                            continue;
+                        }
+
                         arch::context::save(thread.context_mut());
                         add_thread(thread);
                         break;
@@ -159,10 +165,15 @@ pub fn get_thread() -> Thread {
                 scheduler.min_vruntime = last.vruntime;
             }
 
-            // Set the deadline to 20ms from the current vruntime. If the thread
-            // does not finish executing within this time, it will be preempted
+            // Set the deadline to 20ms from the current vruntime, or to the scheduler
+            // min_vruntime if this thread has not been scheduled for a long time. If
+            // the thread does not finish executing within this time, it will be preempted
             // and added back to the ready queue.
-            thread.deadline = thread.vruntime + Nanosecond::new(20_000_000);
+            thread.deadline = core::cmp::min(
+                thread.vruntime + Nanosecond::new(20_000_000),
+                scheduler.min_vruntime,
+            );
+
             thread.set_state(thread::State::Running);
             return thread;
         }
