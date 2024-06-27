@@ -9,21 +9,22 @@ pub mod percpu;
 pub mod physical;
 pub mod time;
 
-#[cfg(not(test))]
 pub mod lang;
 
-/// Request for the `HHDM` (High Half Direct Mapping) feature. This will order Limine
-/// to map all physical memory to the high half of the virtual address space, at a fixed
-/// offset of `0xFFFF_8000_0000_0000`. However, `Reserved` and `Bad Memory` regions will
-/// not be mapped into the HHDM region.
+/// Request for the `HHDM` (High Half Direct Mapping) feature. This will order
+/// Limine to map all physical memory to the high half of the virtual address
+/// space, at a fixed offset of `0xFFFF_8000_0000_0000`. However, `Reserved`
+/// and `Bad Memory` regions will not be mapped into the HHDM region.
 #[used]
-static HHDM_REQUEST: limine::request::HhdmRequest = limine::request::HhdmRequest::new();
+static HHDM_REQUEST: limine::request::HhdmRequest =
+    limine::request::HhdmRequest::new();
 
-/// Request for the memory map. This will order Limine to provide a memory map to the kernel.
-/// The memory map is needed to initialize the memory manager and to know which memory regions
-/// are usable and which are not.
+/// Request for the memory map. This will order Limine to provide a memory map
+/// to the kernel. The memory map is needed to initialize the memory manager
+/// and to know which memory regions are usable and which are not.
 #[used]
-static MMAP_REQUEST: limine::request::MemoryMapRequest = limine::request::MemoryMapRequest::new();
+static MMAP_REQUEST: limine::request::MemoryMapRequest =
+    limine::request::MemoryMapRequest::new();
 
 /// Setup the architecture dependent parts of the kernel depending
 /// on the target architecture.

@@ -10,6 +10,13 @@
 #![feature(effects)]
 #![allow(internal_features)]
 
+// TODO::
+// - Set the indentation to maximum 80 characters per line
+// - Remove some very unstable features:
+//      - const_trait_impl
+//      - prelude_import
+//      - effects
+
 extern crate alloc;
 
 pub mod arch;
@@ -24,16 +31,17 @@ pub mod user;
 #[prelude_import]
 pub use prelude::*;
 
-/// The entry point for the kernel. This function call the architecture specific setup
-/// function, print a message to the console and then halts the CPU.
+/// The entry point for the kernel. This function call the architecture
+/// specific setup function, print a message to the console and then halts
+/// the CPU.
 ///
 /// # Safety
-/// This function is marked as unsafe because it must be called only once at the start
-/// of the kernel. Failing to do so will result in undefined behavior.
+/// This function is marked as unsafe because it must be called only once
+/// at the start of the kernel. Failing to do so will result in undefined
+/// behavior.
 #[init]
 #[no_mangle]
-#[cfg(not(test))]
-pub unsafe extern "C" fn _start() -> ! {
+pub unsafe extern "C" fn _entry() -> ! {
     // Call the architecture specific setup function
     let info = arch::setup();
 
@@ -52,6 +60,7 @@ pub unsafe extern "C" fn _start() -> ! {
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
-    // FIXME: Use a more reliable stack (this stack will be deallocated in the future)
+    // FIXME: Use a more reliable stack (this stack will be
+    // deallocated in the future)
     future::executor::run();
 }
