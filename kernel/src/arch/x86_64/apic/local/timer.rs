@@ -48,9 +48,13 @@ pub unsafe fn calibrate() {
     // Get the current count and calculate the frequency and the counter
     // to get the desired frequency ([`config::TIMER_HZ`])
     let elapsed = u32::MAX - apic::local::read(Register::CURRENT_COUNT);
-    let counter = (elapsed * 100) / u32::from(config::TIMER_HZ);
+    let counter = elapsed * 100 / u32::from(config::TIMER_HZ);
     let frequency = elapsed * 100;
     let granularity = 1_000_000_000 / frequency;
+
+    log::debug!("APIC: Calibrated Local APIC timer");
+    log::debug!("APIC: Elapsed time: {} ns", frequency);
+    log::debug!("APIC: Counter: {}", counter);
 
     // Verify that the frequency is correct
     if frequency < 25_000_000 {
@@ -95,9 +99,10 @@ pub unsafe fn setup() {
 
 /// Prepare an IRQ to be raised in `ns` nanoseconds.
 ///
-/// This function should not be called by the core that has called [`calibrate`],
-/// since the Local APIC timer is already configured to raise an IRQ at
-/// [`config::TIMER_HZ`] Hz in periodic mode, to keep track of the time.
+/// This function should not be called by the core that has called
+/// [`calibrate`], since the Local APIC timer is already configured
+/// to raise an IRQ at [`config::TIMER_HZ`] Hz in periodic mode, to
+/// keep track of the time.
 ///
 /// # Safety
 /// The caller must ensure that raising an IRQ is safe and that the IRQ
@@ -108,32 +113,35 @@ pub unsafe fn prepare_irq_in(ns: Nanosecond32) {
     let ns = ns.0;
 
     if ns < granularity {
-        log::warn!("APIC: Cannot prepare an IRQ in {ns} ns, granularity is {granularity} ns");
-        log::warn!("APIC: IRQ will be prepared in {granularity} ns");
+        log::warn!(
+            "APIC: Cannot prepare an IRQ in {ns} ns, \
+            granularity is {granularity} ns"
+        );
+        log::warn!("APIC: IRQ will be prepared in {granularity} ns instead");
     }
 
     apic::local::write(Register::INITIAL_COUNT, ns / granularity);
 }
 
-/// Return the internal frequency of the Local APIC timer, which is the rate at
-/// the Local APIC timer counter is decremented.
+/// Return the internal frequency of the Local APIC timer, which is the rate
+/// at the Local APIC timer counter is decremented.
 #[must_use]
 pub fn internal_frequency() -> Hertz32 {
     INTERNAL_FREQUENCY.read()
 }
 
-/// Read the current value of the Local APIC timer counter. This can be useful to
-/// have a precise time reference inside the current tick.
+/// Read the current value of the Local APIC timer counter. This can be useful
+/// to have a precise time reference inside the current tick.
 #[must_use]
 pub fn internal_counter() -> u32 {
-    // SAFETY: Reading the local APIC timer is safe and should not lead to UB
-    // or memory unsafety.
+    // SAFETY: Reading the local APIC timer is safe and should not lead
+    // to UB nor memory unsafety.
     unsafe { apic::local::read(Register::CURRENT_COUNT) }
 }
 
-/// Return the initial counter value of the Local APIC timer, which is the value
-/// that the Local APIC timer counter is set in order to raise an IRQ at the
-/// specified frequency ([`config::TIMER_HZ`]).
+/// Return the initial counter value of the Local APIC timer, which is the
+/// value that the Local APIC timer counter is set in order to raise an IRQ
+/// at the specified frequency ([`config::TIMER_HZ`]).
 #[must_use]
 pub fn initial_counter() -> u32 {
     INITIAL_COUNTER.read()
@@ -147,8 +155,8 @@ pub const fn own_irq(irq: u8) -> bool {
 
 /// Handle the Local APIC timer interrupt.
 pub fn handle_irq() {
-    // The boot CPU is the only one that increments the jiffies counter to
-    // keep track of the time
+    // The boot CPU is the only one that increments the jiffies
+    // counter to keep track of the time
     if smp::is_bsp() {
         JIFFIES.fetch_add(1, Ordering::Relaxed);
         if JIFFIES.load(Ordering::Relaxed) % 1000 == 0 {
