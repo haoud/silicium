@@ -16,6 +16,10 @@
 //      - const_trait_impl
 //      - prelude_import
 //      - effects
+// - Reduce the number of crates by integrating some of them into the
+//   kernel crate. This will simply the code when a crate will depend
+//   on a feature of the kernel crate, thus creating a circular dependency...
+// -
 
 extern crate alloc;
 

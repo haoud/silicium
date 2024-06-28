@@ -25,10 +25,10 @@ pub mod tss;
 /// Initializes the `x86_64` architecture.
 ///
 /// # Safety
-/// This function is unsafe because it must only be called once and only during the
-/// initialization of the kernel. Before calling this function, the boot memory
-/// allocator must be initialized to allow this function to dynamically allocate
-/// memory.
+/// This function is unsafe because it must only be called once and only during
+/// the initialization of the kernel. Before calling this function, the boot
+/// memory allocator must be initialized to allow this function to dynamically
+/// allocate memory.
 #[macros::init]
 pub unsafe fn setup() {
     // Initialized the per-cpu variable for this core and setup the

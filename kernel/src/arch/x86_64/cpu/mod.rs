@@ -9,9 +9,9 @@ pub mod cr4;
 pub mod rflags;
 pub mod xcr0;
 
-/// The interrupt frame that is pushed to the stack when an interrupt is triggered.
-/// This structure is used to save the state of the CPU before the interrupt
-/// handler is called.
+/// The interrupt frame that is pushed to the stack when an interrupt is
+/// triggered. This structure is used to save the state of the CPU before
+/// the interrupt handler is called.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 #[repr(C, align(16))]
 pub struct InterruptFrame {
@@ -47,9 +47,9 @@ pub struct InterruptFrame {
     /// - System call
     pub trap: u64,
 
-    /// The error code. It is either pushed by the CPU automatically when certain
-    /// exceptions are triggered or pushed by the interrupt handler. In the last
-    /// case, the error code is set to 0.
+    /// The error code. It is either pushed by the CPU automatically when
+    /// certain exceptions are triggered or pushed by the interrupt handler.
+    /// In the last case, the error code is set to 0.
     pub error: u64,
 
     // Pushed by the CPU automatically when an interrupt is triggered

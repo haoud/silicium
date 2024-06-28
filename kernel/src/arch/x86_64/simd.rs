@@ -4,12 +4,12 @@ use crate::arch::x86_64::{
 };
 use macros::init;
 
-/// The extended state of the CPU, which includes the x87 FPU, MMX, and SSE registers.
-/// The size of the buffer is 4096 bytes, which should be the maximum size of the
-/// extended state.
+/// The extended state of the CPU, which includes the x87 FPU, MMX, and SSE
+/// registers. The size of the buffer is 4096 bytes, which should be the
+/// maximum size of the extended state.
 ///
-/// TODO: To reduce the memory footprint of the kernel, the size of the buffer should
-/// be computed at runtime.
+/// TODO: To reduce the memory footprint of the kernel, the size of the buffer
+/// should be computed at runtime.
 #[derive(Debug, Clone)]
 #[repr(C, align(64))]
 pub struct ExtendedState {
@@ -19,8 +19,9 @@ pub struct ExtendedState {
 impl ExtendedState {
     /// Restore the extended state of the CPU from the buffer.
     pub fn xrstor(&self) {
-        // SAFETY: The buffer is valid and contains the extended state of the CPU.
-        // The `xrstor` instruction support was checked during the setup of the CPU.
+        // SAFETY: The buffer is valid and contains the extended state of the
+        // CPU. The `xrstor` instruction support was checked during the setup
+        // of the CPU.
         unsafe {
             opcode::xrstor(self.as_ptr());
         }
@@ -28,9 +29,9 @@ impl ExtendedState {
 
     /// Save the extended state of the CPU into the buffer.
     pub fn xsave(&mut self) {
-        // SAFETY: The buffer is valid and has enough space to store the extended
-        // state of the CPU. The `xsave` instruction support was checked during
-        // the setup of the CPU.
+        // SAFETY: The buffer is valid and has enough space to store the
+        // extended state of the CPU. The `xsave` instruction support was
+        // checked during the setup of the CPU.
         unsafe {
             opcode::xsave(self.as_mut_ptr());
         }
@@ -59,11 +60,12 @@ impl Default for ExtendedState {
 /// applications.
 ///
 /// # Panics
-/// This function will panic if the `xsave` instruction is not supported by the CPU.
+/// This function will panic if the `xsave` instruction is not supported by the
+/// CPU.
 ///
 /// # Safety
-/// The caller must ensure that this function is only called during the initialization
-/// of the kernel and called once per CPU core
+/// The caller must ensure that this function is only called during the
+/// initialization of the kernel and called once per CPU core
 #[init]
 pub unsafe fn setup() {
     assert!(
@@ -76,6 +78,10 @@ pub unsafe fn setup() {
     cpu::cr0::enable(cr0::Features::MP);
 
     // Enable x87 FPU and SSE with exception support
-    cpu::cr4::enable(cr4::Features::OSXMMEXCPT | cr4::Features::OSXSAVE | cr4::Features::OSFXSR);
+    cpu::cr4::enable(
+        cr4::Features::OSXMMEXCPT
+            | cr4::Features::OSXSAVE
+            | cr4::Features::OSFXSR,
+    );
     cpu::xcr0::enable(xcr0::Features::X87 | xcr0::Features::SSE);
 }

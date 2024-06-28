@@ -1,22 +1,24 @@
 use crate::arch::x86_64::{gdt, idt};
 
-/// Enable interrupts on the current CPU core, allowing the current workflow to be interrupted by
-/// hardware interrupts. If interrupts are already enabled, this function will have no effect.
+/// Enable interrupts on the current CPU core, allowing the current workflow
+/// to be interrupted by hardware interrupts. If interrupts are already
+/// enabled, this function will have no effect.
 ///
 /// # Safety
-/// This function is unsafe because this function make some assumptions about the state of the
-/// system. The caller must ensure that the current CPU core is in a state where it is safe to
-/// enable interrupts, and that the core can handle the interrupts that will be generated without
-/// triple faulting.
+/// This function is unsafe because this function make some assumptions about
+/// the state of the system. The caller must ensure that the current CPU core
+/// is in a state where it is safe to enable interrupts, and that the core can
+/// handle the interrupts that will be generated without triple faulting.
 /// Failing to meet these requirements can result in undefined behavior.
 #[inline]
 pub unsafe fn sti() {
     core::arch::asm!("sti");
 }
 
-/// Disable interrupts on the current CPU core. This will prevent the CPU from receiving any
-/// interrupts until they are re-enabled. If the same interrupt is received multiple times while
-/// interrupts are disabled, it will only be handled once interrupts are re-enabled.
+/// Disable interrupts on the current CPU core. This will prevent the CPU from
+/// receiving any interrupts until they are re-enabled. If the same interrupt
+/// is received multiple times while interrupts are disabled, it will only be
+/// handled once interrupts are re-enabled.
 ///
 /// If interrupts are already disabled, this function will have no effect.
 #[inline]
@@ -28,13 +30,14 @@ pub fn cli() {
     }
 }
 
-/// Halt the CPU until the next interrupt is received. If interrupts are disabled, this will
-/// effectively halt the CPU indefinitely.
+/// Halt the CPU until the next interrupt is received. If interrupts are
+/// disabled, this will effectively halt the CPU indefinitely.
 #[inline]
 pub fn hlt() {
-    // SAFETY: This is safe because waiting for an interrupt should not break
-    // Rust's safety guarantees. If interrupts are disabled, this will effectively
-    // halt the CPU indefinitely, but again, this is not a memory safety issue.
+    // SAFETY: This is safe because waiting for an interrupt should not
+    // break Rust's safety guarantees. If interrupts are disabled, this
+    // will effectively halt the CPU indefinitely, but again, this is not
+    // a memory safety issue.
     unsafe {
         core::arch::asm!("hlt");
     }
@@ -43,8 +46,9 @@ pub fn hlt() {
 /// Write an 8 bit value from a port.
 ///
 /// # Safety
-/// This function is unsafe because writing to a port can have side effects, including causing
-/// the hardware to do something unexpected and possibly violating memory safety.
+/// This function is unsafe because writing to a port can have side effects,
+/// including causing the hardware to do something unexpected and possibly
+/// violating memory safety.
 #[inline]
 pub unsafe fn outb(port: u16, value: u8) {
     core::arch::asm!("out dx, al", in("dx") port, in("al") value);
@@ -53,8 +57,9 @@ pub unsafe fn outb(port: u16, value: u8) {
 /// Write an 16 bit value to a port.
 ///
 /// # Safety
-/// This function is unsafe because writing to a port can have side effects, including causing
-/// the hardware to do something unexpected and possibly violating memory safety.
+/// This function is unsafe because writing to a port can have side effects,
+/// including causing the hardware to do something unexpected and possibly
+/// violating memory safety.
 #[inline]
 pub unsafe fn outw(port: u16, value: u16) {
     core::arch::asm!("out dx, ax", in("dx") port, in("ax") value);
@@ -63,8 +68,9 @@ pub unsafe fn outw(port: u16, value: u16) {
 /// Write an 32 bit value to a port.
 ///
 /// # Safety
-/// This function is unsafe because writing to a port can have side effects, including causing
-/// the hardware to do something unexpected and possibly violating memory safety.
+/// This function is unsafe because writing to a port can have side effects,
+/// including causing the hardware to do something unexpected and possibly
+/// violating memory safety.
 #[inline]
 pub unsafe fn outd(port: u16, value: u32) {
     core::arch::asm!("out dx, eax", in("dx") port, in("eax") value);
@@ -73,8 +79,9 @@ pub unsafe fn outd(port: u16, value: u32) {
 /// Read an 8 bit value from a port.
 ///
 /// # Safety
-/// This function is unsafe because reading from a port can have side effects, including causing
-/// the hardware to do something unexpected and possibly violating memory safety.
+/// This function is unsafe because reading from a port can have side effects,
+/// including causing the hardware to do something unexpected and possibly
+/// violating memory safety.
 #[inline]
 #[must_use]
 pub unsafe fn inb(port: u16) -> u8 {
@@ -86,8 +93,8 @@ pub unsafe fn inb(port: u16) -> u8 {
 /// Read an 16 bit value from a port.
 ///
 /// # Safety
-/// This function is unsafe because reading from a port can have side effects, including causing
-/// the hardware to do something unexpected and possibly violating memory safety.
+/// This function is unsafe because reading from a port can have side effects,
+/// including causing the hardware to do something unexpected and possibly violating memory safety.
 #[inline]
 #[must_use]
 pub unsafe fn inw(port: u16) -> u16 {
@@ -99,8 +106,9 @@ pub unsafe fn inw(port: u16) -> u16 {
 /// Read an 32 bit value from a port.
 ///
 /// # Safety
-/// This function is unsafe because reading from a port can have side effects, including causing
-/// the hardware to do something unexpected and possibly violating memory safety.
+/// This function is unsafe because reading from a port can have side effects,
+/// including causing the hardware to do something unexpected and possibly
+/// violating memory safety.
 #[inline]
 #[must_use]
 pub unsafe fn ind(port: u16) -> u32 {
@@ -109,29 +117,35 @@ pub unsafe fn ind(port: u16) -> u32 {
     value
 }
 
-/// Load the Global Descriptor Table (GDT) register with the provided GDT register value.
+/// Load the Global Descriptor Table (GDT) register with the provided GDT
+/// register value.
 ///
 /// # Safety
-/// The caller must ensure that the provided GDT reigster value is valid and reference a
-/// valid GDT that must stay in memory while it is loaded into the GDT register.Failing
-/// to meet these requirements can result in undefined behavior, memory unsafety or crashes.
+/// The caller must ensure that the provided GDT reigster value is valid and
+/// reference a valid GDT that must stay in memory while it is loaded into the
+/// GDT register.Failing to meet these requirements can result in undefined
+/// behavior, memory unsafety or crashes.
 ///
-/// However, the GDT register structure can be dropped as soon as the function returns
-/// because the CPU will keep a copy of the GDT register in its internal state.
+/// However, the GDT register structure can be dropped as soon as the function
+/// returns because the CPU will keep a copy of the GDT register in its
+/// internal state.
 #[inline]
 pub unsafe fn lgdt(gdtr: &gdt::Register) {
     core::arch::asm!("lgdt [{}]", in(reg) gdtr);
 }
 
-/// Load the Interrupt Descriptor Table (IDT) register with the provided IDT register value.
+/// Load the Interrupt Descriptor Table (IDT) register with the provided IDT
+/// register value.
 ///
 /// # Safety
-/// The caller must ensure that the provided IDT reigster value is valid and reference a
-/// valid IDT that must stay in memory while it is loaded into the IDT register.Failing
-/// to meet these requirements can result in undefined behavior, memory unsafety or crashes.
+/// The caller must ensure that the provided IDT reigster value is valid and
+/// reference a valid IDT that must stay in memory while it is loaded into the
+/// IDT register. Failing to meet these requirements can result in undefined
+/// behavior, memory unsafety or crashes.
 ///
-/// However, the IDT register structure can be dropped as soon as the function returns
-/// because the CPU will keep a copy of the IDT register in its internal state.
+/// However, the IDT register structure can be dropped as soon as the function
+/// returns because the CPU will keep a copy of the IDT register in its
+/// internal state.
 #[inline]
 pub unsafe fn lidt(idtr: &idt::Register) {
     core::arch::asm!("lidt [{}]", in(reg) idtr);
@@ -140,10 +154,11 @@ pub unsafe fn lidt(idtr: &idt::Register) {
 /// Load the Task State Segment (TSS) register with the provided TSS selector.
 ///
 /// # Safety
-/// The caller must ensure that the provided TSS selector is valid and reference a valid
-/// TSS inside the GDT. The TSS entry and the TSS itself must stay in memory while it is
-/// loaded into the TSS register. Failing to meet these requirements can result in undefined
-/// behavior, memory unsafety or crashes.
+/// The caller must ensure that the provided TSS selector is valid and
+/// reference a valid TSS inside the GDT. The TSS entry and the TSS itself
+/// must stay in memory while it is loaded into the TSS register. Failing
+/// to meet these requirements can result in undefined behavior, memory
+/// unsafety or crashes.
 #[inline]
 pub unsafe fn ltr(selector: u16) {
     core::arch::asm!("ltr ax", in("ax") selector);
@@ -163,11 +178,13 @@ pub fn invlpg(address: usize) {
     }
 }
 
-/// Set the value of the Extended Control Register (XCR0) to the provided value.
+/// Set the value of the Extended Control Register (XCR0) to the provided
+/// value.
 ///
 /// # Safety
-/// The caller must ensure that the `xsetbv` instruction is supported by the CPU,
-/// and that the provided value is valid and will not cause UB or memory unsafety.
+/// The caller must ensure that the `xsetbv` instruction is supported by the
+/// CPU, and that the provided value is valid and will not cause UB or memory
+/// unsafety.
 #[inline]
 pub unsafe fn xsetbv(index: u32, value: u64) {
     core::arch::asm!(
@@ -178,10 +195,12 @@ pub unsafe fn xsetbv(index: u32, value: u64) {
     );
 }
 
-/// Get the value of the Extended Control Register (XCR0) for the provided index.
+/// Get the value of the Extended Control Register (XCR0) for the provided
+/// index.
 ///
 /// # Safety
-/// The caller must ensure that the `xgetbv` instruction is supported by the CPU.
+/// The caller must ensure that the `xgetbv` instruction is supported by the
+/// CPU.
 #[inline]
 #[must_use]
 pub unsafe fn xgetbv(index: u32) -> u64 {
@@ -198,9 +217,9 @@ pub unsafe fn xgetbv(index: u32) -> u64 {
 /// Save the extended state of the CPU into the provided buffer.
 ///
 /// # Safety
-/// The caller must ensure that the provided buffer is valid and has enough space
-/// to store the extended state of the CPU. The caller must also ensure that the
-/// `xsave` instruction is supported by the CPU.
+/// The caller must ensure that the provided buffer is valid and has enough
+/// space to store the extended state of the CPU. The caller must also ensure
+/// that the `xsave` instruction is supported by the CPU.
 #[inline]
 pub unsafe fn xsave(buffer: *mut u8) {
     core::arch::asm!(
@@ -211,8 +230,8 @@ pub unsafe fn xsave(buffer: *mut u8) {
     );
 }
 
-/// Restore the extended state of the CPU from the provided buffer using features
-/// specified in the `xCR0`
+/// Restore the extended state of the CPU from the provided buffer using
+/// features specified in the `xCR0`
 ///
 /// # Safety
 /// The caller must ensure that the provided buffer is valid and contains the
@@ -229,8 +248,8 @@ pub unsafe fn xrstor(buffer: *const u8) {
     );
 }
 
-/// Read the Time Stamp Counter (TSC) from the CPU. The TSC is a 64-bit register
-/// that counts the number of cycles since the CPU was last reset.
+/// Read the Time Stamp Counter (TSC) from the CPU. The TSC is a 64-bit
+/// register that counts the number of cycles since the CPU was last reset.
 #[inline]
 #[must_use]
 pub fn rdtsc() -> u64 {

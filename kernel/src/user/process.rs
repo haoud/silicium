@@ -5,11 +5,12 @@ use spin::Spinlock;
 /// Processes that are running on the system
 pub static PROCESSES: Spinlock<Vec<Arc<Process>>> = Spinlock::new(Vec::new());
 
-/// A process running on the system. A proces is a container in which threads are allowed
-/// to run and to share resources, such as memory, handles, privileges, etc.
-/// Each thread contains a reference to the process it belongs to, and the process is
-/// automatically destroyed when the last thread belonging to it exits (or is killed): a
-/// process cannot exist without at least one thread, except during its creation.
+/// A process running on the system. A proces is a container in which threads
+/// are allowed to run and to share resources, such as memory, handles,
+/// privileges, etc. Each thread contains a reference to the process it belongs
+/// to, and the process is automatically destroyed when the last thread
+/// belonging to it exits (or is killed): a process cannot exist without at
+/// least one thread, except during its creation.
 #[derive(Debug)]
 pub struct Process {
     /// The identifier of the process

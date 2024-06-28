@@ -23,9 +23,10 @@ impl Register {
 /// Write the given value to the given MSR.
 ///
 /// # Safety
-/// This function is unsafe because writing to an MSR can cause unexpected side effects and
-/// potentially violate memory safety. It can also cause undefined behavior or memory
-/// unsafety if the MSR is not supported by the CPU.
+/// This function is unsafe because writing to an MSR can cause unexpected
+/// side effects and potentially violate memory safety. It can also cause
+/// undefined behavior or memory unsafety if the MSR is not supported by the
+/// CPU.
 #[allow(clippy::cast_possible_truncation)]
 pub unsafe fn write(msr: Register, value: u64) {
     core::arch::asm!(
@@ -39,9 +40,10 @@ pub unsafe fn write(msr: Register, value: u64) {
 /// Read the current value of the given MSR.
 ///
 /// # Safety
-/// This function is unsafe because reading from an MSR can cause unexpected side effects and
-/// potentially violate memory safety. It can also cause undefined behavior or memory
-/// unsafety if the MSR is not supported by the CPU
+/// This function is unsafe because reading from an MSR can cause unexpected
+/// side effects and potentially violate memory safety. It can also cause
+/// undefined behavior or memory unsafety if the MSR is not supported by the
+/// CPU.
 #[must_use]
 pub unsafe fn read(msr: Register) -> u64 {
     let low: u32;
@@ -60,9 +62,9 @@ pub unsafe fn read(msr: Register) -> u64 {
 /// Clear the given bits in the given MSR.
 ///
 /// # Safety
-/// This function is unsafe because writing to an MSR can cause unexpected side effects and
-/// potentially violate memory safety. It can also cause undefined behavior or memory
-/// unsafety if the MSR is not supported by the CPU.
+/// This function is unsafe because writing to an MSR can cause unexpected side
+/// effects and potentially violate memory safety. It can also cause undefined
+/// behavior or memory unsafety if the MSR is not supported by the CPU.
 pub unsafe fn clear_bits(msr: Register, bits: u64) {
     write(msr, read(msr) & !bits);
 }
@@ -70,9 +72,9 @@ pub unsafe fn clear_bits(msr: Register, bits: u64) {
 /// Set the given bits in the given MSR.
 ///
 /// # Safety
-/// This function is unsafe because writing to an MSR can cause unexpected side effects and
-/// potentially violate memory safety. It can also cause undefined behavior or memory
-/// unsafety if the MSR is not supported by the CPU.
+/// This function is unsafe because writing to an MSR can cause unexpected side
+/// effects and potentially violate memory safety. It can also cause undefined
+/// behavior or memory unsafety if the MSR is not supported by the CPU.
 pub unsafe fn set_bits(msr: Register, bits: u64) {
     write(msr, read(msr) | bits);
 }

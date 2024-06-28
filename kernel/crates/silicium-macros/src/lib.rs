@@ -1,9 +1,10 @@
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, ItemFn, ItemStatic};
 
-/// A macro that can be used on static variables to make them per-CPU. This macro will wrap
-/// the variable in a [`PerCpu`] struct, which will allow each CPU to have its own copy of
-/// the variable. For more information, see the [`PerCpu`] documentation.
+/// A macro that can be used on static variables to make them per-CPU. This
+/// macro will wrap the variable in a [`PerCpu`] struct, which will allow
+/// each CPU to have its own copy of the variable. For more information, see
+/// the [`PerCpu`] documentation.
 ///
 /// # Example
 /// ```rust
@@ -31,14 +32,16 @@ pub fn per_cpu(_: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(quote::quote!(#var))
 }
 
-/// A macro to indicate that a function is only used during the initialization of the kernel.
-/// This macro will this attribute are put in a separate .init section. When the kernel has
-/// been initialized, this section will be discarded and the memory will be freed, allowing
-/// the kernel to reduce its memory footprint.
+/// A macro to indicate that a function is only used during the initialization
+/// of the kernel. This macro will this attribute are put in a separate .init
+/// section. When the kernel has been initialized, this section will be
+/// discarded and the memory will be freed, allowing the kernel to reduce
+/// its memory footprint.
 ///
 /// # Safety
-/// If an function with this attribute is called after the kernel has been initialized, the
-/// behavior is undefined and will probably cause a kernel panic.
+/// If an function with this attribute is called after the kernel has been
+/// initialized, the behavior is undefined and will probably cause a kernel
+/// panic.
 #[proc_macro_attribute]
 pub fn init(_: TokenStream, item: TokenStream) -> TokenStream {
     let mut input_fn = parse_macro_input!(item as ItemFn);
@@ -55,7 +58,8 @@ pub fn init(_: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// A macro to indicate that a function is atomic. Therefor, it will deny
-/// the use of async/await, and interruption will be disabled to enforce atomicity.
+/// the use of async/await, and interruption will be disabled to enforce
+/// atomicity.
 #[proc_macro_attribute]
 pub fn atomic(_: TokenStream, item: TokenStream) -> TokenStream {
     let mut input_fn = parse_macro_input!(item as ItemFn);

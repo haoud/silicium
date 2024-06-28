@@ -13,15 +13,20 @@ pub struct TaskWaker {
 }
 
 impl TaskWaker {
-    /// Create a new task waker for the given task identifier. The task waker will push
-    /// the task identifier to the given queue when the task will be woken up.
+    /// Create a new task waker for the given task identifier. The task waker
+    /// will push the task identifier to the given queue when the task will be
+    /// woken up.
     #[must_use]
-    pub fn new(queue: Arc<ArrayQueue<task::Identifier>>, id: task::Identifier) -> Self {
+    pub fn new(
+        queue: Arc<ArrayQueue<task::Identifier>>,
+        id: task::Identifier,
+    ) -> Self {
         Self { queue, id }
     }
 
-    /// Create a new waker for the given task identifier. The task waker will push
-    /// the task identifier to the given queue when the task will be woken up.
+    /// Create a new waker for the given task identifier. The task waker will
+    /// push the task identifier to the given queue when the task will be woken
+    /// up.
     #[must_use]
     pub fn waker(
         queue: Arc<ArrayQueue<task::Identifier>>,

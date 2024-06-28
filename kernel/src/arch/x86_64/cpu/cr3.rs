@@ -1,7 +1,7 @@
 use addr::Frame;
 
-/// Read the current value of the CR3 register. This will return the current page
-/// table base physical address.
+/// Read the current value of the CR3 register. This will return the current
+/// page table base physical address.
 #[inline]
 #[must_use]
 pub fn read() -> Frame {
@@ -31,12 +31,13 @@ pub unsafe fn write(cr3: Frame) {
     core::arch::asm!("mov cr3, {}", in(reg) u64::from(cr3));
 }
 
-/// Reload the CR3 register. This will read the current value of the CR3 register
-/// and write it back to the CR3 register, effectively reloading the page table
-/// base pointer. This will cause the CPU too flush all non-global TLB entries.
+/// Reload the CR3 register. This will read the current value of the CR3
+/// register and write it back to the CR3 register, effectively reloading
+/// the page table base pointer. This will cause the CPU too flush all
+/// non-global TLB entries.
 ///
-/// This is safe to use because flushing the TLB has no side effects except for
-/// the performance impact of flushing the TLB.
+/// This is safe to use because flushing the TLB has no side effects except
+/// for the performance impact of flushing the TLB.
 #[inline]
 pub fn reload() {
     // SAFETY: This is safe because the value read from the CR3 register is

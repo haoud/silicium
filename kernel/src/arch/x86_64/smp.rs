@@ -6,11 +6,12 @@ use crate::{
 use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use macros::init;
 
-/// The SMP request to Limine. This will order Limine to fetch information about
-/// the APs and start them for us. We will only need to write their entry point
-/// at a specific address and they will automatically jump to it. God bless the
-/// authors of Limine.
-static SMP_REQUEST: limine::request::SmpRequest = limine::request::SmpRequest::new();
+/// The SMP request to Limine. This will order Limine to fetch information
+/// about the APs and start them for us. We will only need to write their
+/// entry point at a specific address and they will automatically jump to it.
+/// God bless the authors of Limine.
+static SMP_REQUEST: limine::request::SmpRequest =
+    limine::request::SmpRequest::new();
 
 /// The number of CPUs in the system
 static CPU_COUNT: AtomicUsize = AtomicUsize::new(1);
@@ -72,8 +73,8 @@ pub fn is_bsp() -> bool {
 #[must_use]
 pub fn core_id() -> u64 {
     let id: u64;
-    // SAFETY: This is safe because the gs points to the per-cpu data, and gs:8
-    // contains the lapic_id of the current core
+    // SAFETY: This is safe because the gs points to the per-cpu data,
+    // and gs:8 contains the lapic_id of the current core
     unsafe {
         core::arch::asm!("mov {}, gs:8", out(reg) id);
     }

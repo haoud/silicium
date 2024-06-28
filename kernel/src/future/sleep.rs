@@ -11,8 +11,8 @@ pub struct SleepFuture {
     /// The time when the sleep should expire.
     expire: Timespec,
 
-    /// The timer guard that is used to cancel the timer if the future is dropped
-    /// or the sleep is completed without the timer being triggered.
+    /// The timer guard that is used to cancel the timer if the future is
+    /// dropped or the sleep is completed without the timer being triggered.
     guard: Option<timer::Guard>,
 }
 
@@ -36,9 +36,9 @@ impl Future for SleepFuture {
     ) -> core::task::Poll<Self::Output> {
         if arch::time::current_timespec() < self.expire {
             if self.guard.is_none() {
-                // Register the timer to wake up the task if it hasn't been registered
-                // yet. The timer will wake up the task by calling `wake_by_ref` on the
-                // waker.
+                // Register the timer to wake up the task if it hasn't been
+                // registered yet. The timer will wake up the task by calling
+                // `wake_by_ref` on the waker.
                 self.get_mut().guard = Some(Timer::register(
                     self.expire,
                     Box::new(cx.waker().clone()),
@@ -60,8 +60,9 @@ impl Future for SleepFuture {
     }
 }
 
-/// Sleeps for at least the given duration. Due to the timer resolution, the actual
-/// sleep time may be longer than the requested duration, but it will never be shorter.
+/// Sleeps for at least the given duration. Due to the timer resolution, the
+/// actual sleep time may be longer than the requested duration, but it will
+/// never be shorter.
 pub async fn sleep(duration: impl Into<Nanosecond>) {
     SleepFuture::new(arch::time::current_timespec() + duration.into()).await
 }

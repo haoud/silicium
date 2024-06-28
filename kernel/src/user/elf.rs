@@ -17,8 +17,8 @@ use elf::{endian::NativeEndian, segment::ProgramHeader, ElfBytes};
 /// Returns an `LoadError` if the the ELF file could not be loaded.
 ///
 /// # Panics
-/// Panics if the kernel ran out of memory when loading the ELF file or if the ELF
-/// file contains overlapping segments
+/// Panics if the kernel ran out of memory when loading the ELF file or if the
+/// ELF file contains overlapping segments
 #[allow(clippy::cast_possible_truncation)]
 pub fn load(process: Arc<Process>, file: &[u8]) -> Result<Thread, LoadError> {
     let elf = check_elf(ElfBytes::<NativeEndian>::minimal_parse(file)?)?;
@@ -52,7 +52,9 @@ pub fn load(process: Arc<Process>, file: &[u8]) -> Result<Thread, LoadError> {
                 let mapped_frame = mm::physical::ALLOCATOR
                     .lock()
                     .allocate(Flags::empty())
-                    .expect("failed to allocate frame for mapping an ELF segment");
+                    .expect(
+                        "failed to allocate frame for mapping an ELF segment",
+                    );
 
                 paging::map(
                     &mut process.page_table().lock(),
@@ -63,9 +65,10 @@ pub fn load(process: Arc<Process>, file: &[u8]) -> Result<Thread, LoadError> {
                 )
                 .expect("Failed to map an ELF segment");
 
-                // The start offset of the writing in the page: it is needed to handle
-                // the case where the segment is not page aligned, and therefore the
-                // first page of the segment is not fully filled.
+                // The start offset of the writing in the page: it is needed
+                // to handle the case where the segment is not page aligned,
+                // and therefore the first page of the segment is not fully
+                // filled.
                 let start_offset = usize::from(page) & 0xFFF;
 
                 // The source address in the ELF file
@@ -74,8 +77,8 @@ pub fn load(process: Arc<Process>, file: &[u8]) -> Result<Thread, LoadError> {
                     .offset(isize::try_from(phdr.p_offset)?)
                     .offset(isize::try_from(segment_offset)?);
 
-                // The destination address in the virtual address space (use the HHDM
-                // to directly write to the physical frame)
+                // The destination address in the virtual address space
+                // (use the HHDM to directly write to the physical frame)
                 let dst = arch::physical::translate(mapped_frame)
                     .as_mut_ptr::<u8>()
                     .offset(isize::try_from(start_offset)?);
@@ -86,14 +89,15 @@ pub fn load(process: Arc<Process>, file: &[u8]) -> Result<Thread, LoadError> {
                     .checked_sub(segment_offset as u64)
                     .map_or(0, |v| v as usize);
 
-                // The number of bytes to copy in this iteration: the minimum between
-                // the remaining bytes to copy and the remaining bytes in the page
-                // from the current start offset
+                // The number of bytes to copy in this iteration: the minimum
+                // between the remaining bytes to copy and the remaining bytes
+                // in the page from the current start offset
                 let size = min(remaning, usize::from(PAGE_SIZE) - start_offset);
                 core::ptr::copy_nonoverlapping(src, dst, size);
 
                 // Advance to the next page
-                page = Virtual::new(usize::from(page) + usize::from(PAGE_SIZE)).page_align_down();
+                page = Virtual::new(usize::from(page) + usize::from(PAGE_SIZE))
+                    .page_align_down();
                 segment_offset += size;
             }
         }
@@ -137,7 +141,9 @@ fn section_paging_flags(phdr: &ProgramHeader) -> paging::MapRights {
 }
 
 /// Verify that the ELF file is valid and can be run on the system.
-fn check_elf(elf: ElfBytes<NativeEndian>) -> Result<ElfBytes<NativeEndian>, LoadError> {
+fn check_elf(
+    elf: ElfBytes<NativeEndian>,
+) -> Result<ElfBytes<NativeEndian>, LoadError> {
     Ok(elf)
 }
 
@@ -150,8 +156,8 @@ pub enum LoadError {
     /// The ELF file contains an invalid address (e.g. in the kernel space)
     InvalidAddress,
 
-    /// The ELF file contains an invalid offset (e.g. an overflow when computing
-    /// the end address or overlapping with kernel space)
+    /// The ELF file contains an invalid offset (e.g. an overflow when
+    /// computing the end address or overlapping with kernel space)
     InvalidOffset,
 
     /// The ELF file contains overlapping segments

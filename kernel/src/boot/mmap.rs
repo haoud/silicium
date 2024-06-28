@@ -60,8 +60,9 @@ pub enum Kind {
 }
 
 impl Kind {
-    /// Returns `true` if the memory region is regular memory, and `false` otherwise. Regular
-    /// memory is memory that is available for allocation and is not reserved by the hardware:
+    /// Returns `true` if the memory region is regular memory, and `false`
+    /// otherwise. Regular memory is memory that is available for allocation
+    /// and is not reserved by the hardware:
     /// - [`Kind::Usable`]
     /// - [`Kind::Kernel`]
     /// - [`Kind::AcpiReclaimable`]
@@ -70,7 +71,10 @@ impl Kind {
     pub const fn regular_memory(self) -> bool {
         matches!(
             self,
-            Self::Usable | Self::Kernel | Self::AcpiReclaimable | Self::BootloaderReclaimable
+            Self::Usable
+                | Self::Kernel
+                | Self::AcpiReclaimable
+                | Self::BootloaderReclaimable
         )
     }
 }
@@ -79,8 +83,12 @@ impl From<limine::memory_map::EntryType> for Kind {
     fn from(entry_type: limine::memory_map::EntryType) -> Self {
         match entry_type {
             limine::memory_map::EntryType::USABLE => Self::Usable,
-            limine::memory_map::EntryType::ACPI_RECLAIMABLE => Self::AcpiReclaimable,
-            limine::memory_map::EntryType::BOOTLOADER_RECLAIMABLE => Self::BootloaderReclaimable,
+            limine::memory_map::EntryType::ACPI_RECLAIMABLE => {
+                Self::AcpiReclaimable
+            }
+            limine::memory_map::EntryType::BOOTLOADER_RECLAIMABLE => {
+                Self::BootloaderReclaimable
+            }
             limine::memory_map::EntryType::BAD_MEMORY => Self::BadMemory,
             limine::memory_map::EntryType::KERNEL_AND_MODULES => Self::Kernel,
             _ => Self::Reserved,

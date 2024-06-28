@@ -9,12 +9,12 @@ bitflags! {
         /// disarmed with the `clc` instruction.
         const CF = 1 << 0;
 
-        /// Parity flag. Set if the least-significant byte of the result contains
-        /// an even number of 1 bits; cleared otherwise.
+        /// Parity flag. Set if the least-significant byte of the result
+        /// contains an even number of 1 bits; cleared otherwise.
         const PF = 1 << 2;
 
         /// Adjust flag. Set if an arithmetic operation generates a carry or a
-        /// borrow out of bit 3 and into bit 4 of the result; cleared otherwise.
+        /// borrow out of bit 3 into bit 4 of the result, cleared otherwise.
         /// This flag is used by the BCD (binary-coded decimal) arithmetic, and
         /// that's probably all it's used for.
         const AF = 1 << 4;
@@ -23,9 +23,9 @@ bitflags! {
         /// otherwise.
         const ZF = 1 << 6;
 
-        /// Sign flag. Set equal to the most-significant bit of the result, which
-        /// is the sign bit of a signed integer. (0 indicates a positive value
-        /// and 1 indicates a negative value).
+        /// Sign flag. Set equal to the most-significant bit of the result,
+        /// which is the sign bit of a signed integer. (0 indicates a positive
+        /// value and 1 indicates a negative value).
         const SF = 1 << 7;
 
         /// Trap flag. Set to enable single-step mode for debugging; cleared
@@ -37,15 +37,16 @@ bitflags! {
         /// instruction and disarmed with the `cli` instruction.
         const IF = 1 << 9;
 
-        /// Direction flag. Set to enable automatic decrementing of the `rdi` and
-        /// `rsi` registers during string instructions; cleared to enable
-        /// automatic incrementing of those registers. The system V ABI requires
-        /// this flag to be cleared on function entry (used by the kernel).
+        /// Direction flag. Set to enable automatic decrementing of the `rdi`
+        /// and `rsi` registers during string instructions; cleared to enable
+        /// automatic incrementing of those registers. The system V ABI
+        /// require s this flag to be cleared on function entry (used by
+        /// the kernel).
         const DF = 1 << 10;
 
         /// Overflow flag. Set if an signed arithmetic operation generates a
-        /// result too large to be represented in the destination operand; cleared
-        /// otherwise.
+        /// result too large to be represented in the destination operand,
+        /// cleared otherwise.
         const OF = 1 << 11;
 
         /// I/O privilege bit 0. This flags is used in conjunction with the I/O
@@ -69,8 +70,9 @@ bitflags! {
         /// debug environment.
         const RF = 1 << 16;
 
-        /// Virtual 8086 mode flag. Set to enable the virtual 8086 mode; cleared
-        /// to return to protected mode. This flags is not supported on `x86_64`.
+        /// Virtual 8086 mode flag. Set to enable the virtual 8086 mode,
+        /// cleared to return to protected mode. This flags is not supported
+        /// on `x86_64`.
         const VM = 1 << 17;
 
         /// Alignment check. Set if the alignment check is enabled; cleared

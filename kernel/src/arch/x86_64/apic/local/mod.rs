@@ -6,8 +6,8 @@ pub mod timer;
 /// The base address of the LAPIC MMIO
 pub const LAPIC_BASE: Virtual = Virtual::new(0xFFFF_8000_FEE0_0000);
 
-/// A register in the local APIC. The register value must be added to the LAPIC base
-/// address in order to access the register.
+/// A register in the local APIC. The register value must be added to the
+/// LAPIC base address in order to access the register.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Register(usize);
@@ -113,15 +113,21 @@ pub unsafe fn setup() {
 
 /// Send an Inter-Processor Interrupt (IPI) to the given destination.
 ///
-/// An IPI is a message sent between cores in a multi-core system. It can be used
-/// to trigger an interrupt on another core, or to perform other inter-core communication.
+/// An IPI is a message sent between cores in a multi-core system. It can be
+/// used to trigger an interrupt on another core, or to perform other inter
+/// core communication.
 ///
 /// # Safety
-/// This function is unsafe because triggering an IPI can have side effects that could
-/// cause undefined behavior or memory usafety. The caller must ensure that triggering
-/// an IPI is safe and will not cause any undefined behavior (for example, by ensuring
-/// that the destination core is valid and have a proper interrupt handler).
-pub unsafe fn send_ipi(destination: IpiDestination, priority: IpiPriority, vector: u8) {
+/// This function is unsafe because triggering an IPI can have side effects
+/// that could cause undefined behavior or memory usafety. The caller must
+/// ensure that triggering an IPI is safe and will not cause any undefined
+/// behavior (for example, by ensuring that the destination core is valid
+/// and have a proper interrupt handler).
+pub unsafe fn send_ipi(
+    destination: IpiDestination,
+    priority: IpiPriority,
+    vector: u8,
+) {
     let cmd = match destination {
         IpiDestination::Single(core) => (
             u32::from(core) << 24,
@@ -133,7 +139,9 @@ pub unsafe fn send_ipi(destination: IpiDestination, priority: IpiPriority, vecto
         IpiDestination::AllExcludingSelf => {
             (0, u32::from(vector) | ((priority as u32) << 8) | 3 << 18)
         }
-        IpiDestination::SelfOnly => (0, u32::from(vector) | ((priority as u32) << 8) | 1 << 18),
+        IpiDestination::SelfOnly => {
+            (0, u32::from(vector) | ((priority as u32) << 8) | 1 << 18)
+        }
     };
 
     // Send the IPI
@@ -165,10 +173,10 @@ pub fn end_of_interrupt() {
 ///
 /// # Safety
 /// This function is unsafe because it writes to a memory-mapped I/O register.
-/// This could cause unexpected side effects depending on the register being written to,
-/// and could lead to undefined behavior or memory unsafety in the rest of the program.
-/// The caller must ensure that writing to the given register is valid and will not
-/// cause any undefined behavior.
+/// This could cause unexpected side effects depending on the register being
+/// written to, and could lead to undefined behavior or memory unsafety in the
+/// rest of the program. The caller must ensure that writing to the given
+/// register is valid and will not cause any undefined behavior.
 pub unsafe fn write(reg: Register, value: u32) {
     let ptr = (usize::from(LAPIC_BASE) + reg.0) as *mut u32;
     ptr.write_volatile(value);
@@ -178,10 +186,10 @@ pub unsafe fn write(reg: Register, value: u32) {
 ///
 /// # Safety
 /// This function is unsafe because it reads from a memory-mapped I/O register.
-/// This could cause unexpected side effects depending on the register being read,
-/// and could lead to undefined behavior or memory unsafety in the rest of the program.
-/// The caller must ensure that reading from the given register is valid and will not
-/// cause any undefined behavior.
+/// This could cause unexpected side effects depending on the register being
+/// read, and could lead to undefined behavior or memory unsafety in the rest
+/// of the program. The caller must ensure that reading from the given register
+/// is valid and will not cause any undefined behavior.
 #[must_use]
 pub unsafe fn read(reg: Register) -> u32 {
     let ptr = (usize::from(LAPIC_BASE) + reg.0) as *const u32;

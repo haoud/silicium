@@ -5,8 +5,10 @@ use time::unit::Second;
 
 pub mod timer;
 
-/// Number of days elased since the beginning of the year, excluding the current month.
-const ELAPSED_DAYS_MONTHS: [usize; 12] = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+/// Number of days elased since the beginning of the year, excluding the
+/// current month.
+const ELAPSED_DAYS_MONTHS: [usize; 12] =
+    [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
 
 /// The date at which the kernel was started.
 static STARTUP_DATE: SeqLock<Date> = SeqLock::new(Date::epoch());
@@ -42,8 +44,8 @@ impl Unix {
         Self(Second(0))
     }
 
-    /// Get the current Unix time using the kernel startup time and the number of
-    /// jiffies elapsed since the kernel was started.
+    /// Get the current Unix time using the kernel startup time and the
+    /// number of jiffies elapsed since the kernel was started.
     #[must_use]
     pub fn current() -> Self {
         let startup_time = STARTUP_TIME.read();
@@ -79,9 +81,10 @@ impl Date {
         years % 4 == 0 && (years % 100 != 0 || years % 400 == 0)
     }
 
-    /// Converts the date to a Unix time. If the date is before January 1st, 1970,
-    /// the Unix time returned will be the Unix epoch (January 1st, 1970 at 00:00:00).
-    /// If the year if greater than 2100, this function will also return the Unix epoch.
+    /// Converts the date to a Unix time. If the date is before January 1st,
+    /// 1970, the Unix time returned will be the Unix epoch (January 1st, 1970
+    /// at 00:00:00). If the year if greater than 2100, this function will
+    /// also return the Unix epoch.
     #[must_use]
     pub fn to_unix_time(&self) -> Unix {
         if self.year < 1970 || self.year > 2100 {
@@ -98,8 +101,9 @@ impl Date {
         // Take into account leap years since 1970.
         seconds += (u64::from(self.year) - 1968) / 4 * 86400;
 
-        // If the current year is a leap year and the current month is January or
-        // February, we need to remove one day from the total number of seconds.
+        // If the current year is a leap year and the current month is
+        // January or February, we need to remove one day from the total
+        // number of seconds.
         if self.year % 4 == 0 && self.month <= 2 {
             seconds -= 86400;
         }
@@ -115,8 +119,8 @@ impl From<Unix> for Date {
 }
 
 /// # Safety
-/// The caller must ensure that the function is only called once, and only during the
-/// kernel initialization.
+/// The caller must ensure that the function is only called once, and only
+/// during the kernel initialization.
 #[init]
 pub unsafe fn setup() {
     STARTUP_DATE.write(Date {
@@ -133,8 +137,8 @@ pub unsafe fn setup() {
     log::info!("Time: Unix time: {:?}", STARTUP_TIME.read());
 }
 
-/// Returns the number of days in the given month of the given year. The year is need
-/// to determine if the month of February has 28 or 29 days.
+/// Returns the number of days in the given month of the given year. The year
+/// is needed to determine if the month of February has 28 or 29 days.
 ///
 /// # Panics
 /// This function will panic if the month is not in the range 1..=12.
@@ -154,8 +158,8 @@ pub const fn days_in_month(year: u16, month: u8) -> u8 {
     }
 }
 
-/// Return the number of days elapsed from the beginning of the year to the given month.
-/// The month must be in the range 1..=12.
+/// Return the number of days elapsed from the beginning of the year to the
+/// given month. The month must be in the range 1..=12.
 #[must_use]
 pub fn month_elsapsed_days(year: u16, month: u8) -> u16 {
     let mut days = 0;
@@ -165,9 +169,9 @@ pub fn month_elsapsed_days(year: u16, month: u8) -> u16 {
     days
 }
 
-/// Compute the month in the year from the number of days elapsed since the beginning
-/// of the year. The year is needed to determine if the month of February has 28 or 29
-/// days. The days must be in the range 1..=366.
+/// Compute the month in the year from the number of days elapsed since the
+/// beginning of the year. The year is needed to determine if the month of
+/// February has 28 or 29 days. The days must be in the range 1..365.
 #[must_use]
 pub const fn month_in_year(year: u16, days: u16) -> u8 {
     let mut month_days = 0;
@@ -205,7 +209,8 @@ pub fn unix_time_to_date(unix: Unix) -> Date {
 
     // Compute the current month of the year, and the day of the month
     let month = month_in_year(year as u16, year_days as u16);
-    let day = year_days - u64::from(month_elsapsed_days(year as u16, month)) + 1;
+    let day =
+        year_days - u64::from(month_elsapsed_days(year as u16, month)) + 1;
 
     // Compute the hours, minutes and seconds.
     let hour = (seconds / 3600) % 24;

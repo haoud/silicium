@@ -1,7 +1,9 @@
-# Common code for interrupt handling. This code is called by every interrupt handler located in the
-# `interrupt_handlers` section. It will save the registers and depending if the interrupted code was
-# running in the kernel or in user space, will call `kernel_interrupt` if the kernel was interrupted or
-# `resume_kernel` if the user space was interrupted by the interrupt.
+# Common code for interrupt handling. This code is called by every interrupt
+# handler located in the `interrupt_handlers` section. It will save the 
+# registers and depending if the interrupted code was running in the kernel
+# or in user space, will call `kernel_interrupt` if the kernel was 
+# interrupted or `resume_kernel` if the user space was interrupted by the
+# interrupt.
 interrupt_common:
     # Save scratch registers
     push r11
@@ -30,9 +32,11 @@ interrupt_common:
     swapgs
     jmp resume_kernel
 
-# Called when an interrupt occurs during the execution of the kernel. It will enable interrupts (because
-# it is safe to do so here) and call the interrupt handler with the stack frame as argument. After the
-# completion of the interrupt handler, it will call `interrupt_exit` to restore the interrupted code.
+# Called when an interrupt occurs during the execution of the kernel. It
+# will enable interrupts (because it is safe to do so here) and call the
+# interrupt handler with the stack frame as argument. After the completion
+# of the interrupt handler, it will call `interrupt_exit` to restore the
+# interrupted code.
 kernel_interrupt:
     # Enable interrupts and call the interrupt handler with the
     # stack frame as argument.
@@ -56,8 +60,8 @@ kernel_interrupt:
     jmp interrupt_exit 
 
 
-# Called by the interrupt handler when an interrupt was handled by the kernel. It will disable
-# interrupts temporarily and restore the interrupted code.
+# Called by the interrupt handler when an interrupt was handled by the kernel.
+# It will disable interrupts temporarily and restore the interrupted code.
 interrupt_exit:
     # Disable interrupts
     cli

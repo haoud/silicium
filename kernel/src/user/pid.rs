@@ -2,7 +2,8 @@ use config::MAX_PIDS;
 use spin::Spinlock;
 
 /// The size of the bitmap used to keep track of process identifiers.
-const PID_BITMAP_COUNT: usize = MAX_PIDS as usize / core::mem::size_of::<usize>();
+const PID_BITMAP_COUNT: usize =
+    MAX_PIDS as usize / core::mem::size_of::<usize>();
 
 /// A bitmap used to keep track of process identifiers.
 static PID_ALLOCATOR: Spinlock<id::Generator<PID_BITMAP_COUNT>> =

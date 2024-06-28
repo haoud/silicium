@@ -1,8 +1,8 @@
 use crate::arch::x86_64::{gdt, opcode};
 use macros::{init, per_cpu};
 
-/// The Task State Segment (TSS) for the current CPU core. It is initialized to an
-/// uninitialized TSS and should be initialized before being used.
+/// The Task State Segment (TSS) for the current CPU core. It is initialized to
+/// an uninitialized TSS and should be initialized before being used.
 #[per_cpu]
 static mut TSS: TaskStateSegment = TaskStateSegment::uninitialized();
 
@@ -13,9 +13,9 @@ pub const LTR_SELECTOR: u16 = 0x30;
 pub const GDT_INDEX: usize = 6;
 
 /// The Task State Segment (TSS) is a structure used by the x86 architecture to
-/// store information about a task. On `x86_64`, the TSS is only used to store the
-/// stack pointers for the different privilege levels, the Interrupt Stack Table
-/// (IST) and the I/O port permissions.
+/// store information about a task. On `x86_64`, the TSS is only used to store
+/// the stack pointers for the different privilege levels, the Interrupt Stack
+/// Table (IST) and the I/O port permissions.
 #[repr(C, packed(4))]
 pub struct TaskStateSegment {
     reserved0: u32,
@@ -64,9 +64,9 @@ impl TaskStateSegment {
 /// using the `ltr` instruction.
 ///
 /// # Safety
-/// This function should only called during the initialization of the kernel and
-/// after the per-CPU data has been initialized. Failing to do so will result in
-/// undefined behavior.
+/// This function should only called during the initialization of the kernel
+/// and after the per-CPU data has been initialized. Failing to do so will
+/// result in undefined behavior.
 #[init]
 pub unsafe fn setup() {
     gdt::load_tss(TSS.local().as_ptr());
@@ -83,10 +83,11 @@ pub unsafe fn setup() {
 /// handler will simply use the current stack.
 ///
 /// # Safety
-/// The caller must ensure that the given stack pointer is a valid stack pointer and
-/// points to a valid stack that is big enough to be used as a kernel stack. The
-/// stack must remain valid while this stack pointer is used as the kernel stack.
-/// ***Please remember when passing the rsp argument that the stack grows downwards !***
+/// The caller must ensure that the given stack pointer is a valid stack
+/// pointer and points to a valid stack that is big enough to be used as
+/// a kernel stack. The stack must remain valid while this stack pointer
+/// is used as the kernel stack. ***Please remember when passing the rsp
+/// argument that the stack grows downwards !***
 pub unsafe fn set_kernel_stack(rsp: *mut usize) {
     core::arch::asm!("mov gs:32, {0}", in(reg) rsp as u64);
     TSS.local_mut().rsp0 = rsp as u64;

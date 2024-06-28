@@ -3,54 +3,58 @@ use crate::{
     user::thread::Resume,
 };
 
-/// Divide by zero exception vector. This exception is triggered when the CPU tries to
-/// divide a number by zero.
+/// Divide by zero exception vector. This exception is triggered when the CPU
+/// tries to divide a number by zero.
 pub const DE_VECTOR: u8 = 0;
 
-/// Debug exception vector. This exception is triggered when the CPU is single-stepping
-/// through the code (when the TF flag is set in the RFLAGS register).
+/// Debug exception vector. This exception is triggered when the CPU is
+/// single-stepping through the code (when the TF flag is set in the RFLAGS
+/// register).
 pub const DB_VECTOR: u8 = 1;
 
-/// Non-maskable interrupt vector. This exception is triggered by the hardware when a
-/// unrecoverable hardware error occurs. This exception cannot be masked by the IF flag
-/// in the RFLAGS register.
+/// Non-maskable interrupt vector. This exception is triggered by the hardware
+/// when a unrecoverable hardware error occurs. This exception cannot be masked
+/// by the IF flag in the RFLAGS register.
 pub const NMI_VECTOR: u8 = 2;
 
-/// Breakpoint exception vector. This exception is triggered when the `int3` instruction
-/// is executed. This instruction is used by the debugger to set a breakpoint in the code.
+/// Breakpoint exception vector. This exception is triggered when the `int3`
+/// instruction is executed. This instruction is used by the debugger to set
+/// a breakpoint in the code.
 pub const BP_VECTOR: u8 = 3;
 
-/// Overflow exception vector. This exception is triggered when the `into` instruction is
-/// executed and the OF flag is set in the RFLAGS register.
+/// Overflow exception vector. This exception is triggered when the `into`
+/// instruction is executed and the OF flag is set in the RFLAGS register.
 pub const OF_VECTOR: u8 = 4;
 
-/// Bound range exceeded exception vector. This exception is triggered when the `bound`
-/// instruction is executed and the value is not within the specified range.
+/// Bound range exceeded exception vector. This exception is triggered when
+/// the `bound` instruction is executed and the value is not within the
+/// specified range.
 pub const BR_VECTOR: u8 = 5;
 
-/// Invalid opcode exception vector. This exception is triggered when the CPU tries to
-/// execute an invalid opcode. This can happen when the CPU tries to execute a opcode
-/// that is not implemented.
+/// Invalid opcode exception vector. This exception is triggered when the CPU
+/// tries to execute an invalid opcode. This can happen when the CPU tries to
+/// execute a opcode that is not implemented.
 pub const UD_VECTOR: u8 = 6;
 
-/// Device not available exception vector. This exception is triggered when an FPU
-/// instruction is executed and the EM or TS flags are set in the CR0 register, or when
-/// there is trully no FPU in the system (this should never happen in `x86_64`).
+/// Device not available exception vector. This exception is triggered when an
+/// FPU instruction is executed and the EM or TS flags are set in the CR0
+/// register, or when there is trully no FPU in the system (this should never
+/// happen in `x86_64`).
 pub const NM_VECTOR: u8 = 7;
 
-/// Double fault exception vector. This exception is triggered when an exception is
-/// triggered while the CPU is handling another exception. This exception is used to
-/// prevent infinite loops of exceptions. If an exception is triggered while the CPU
-/// try to invoke the double fault handler, the CPU will trigger a triple fault and
-/// reboot the computer.
+/// Double fault exception vector. This exception is triggered when an
+/// exception is triggered while the CPU is handling another exception.
+/// This exception is used to prevent infinite loops of exceptions. If an
+/// exception is triggered while the CPU try to invoke the double fault
+/// handler, the CPU will trigger a triple fault and reboot the computer.
 pub const DF_VECTOR: u8 = 8;
 
-/// Invalid TSS exception vector. This exception is triggered when the CPU tries to
-/// load a invalid TSS segment.
+/// Invalid TSS exception vector. This exception is triggered when the CPU
+/// tries to load a invalid TSS segment.
 pub const TS_VECTOR: u8 = 10;
 
-/// Segment not present exception vector. This exception is triggered when the CPU tries
-/// to load a segment that is not present in the GDT.
+/// Segment not present exception vector. This exception is triggered when
+/// the CPU tries to load a segment that is not present in the GDT.
 pub const NP_VECTOR: u8 = 11;
 
 /// Stack-segment fault exception vector. This exception can be triggered when:
@@ -59,12 +63,12 @@ pub const NP_VECTOR: u8 = 11;
 /// - When the stack limit is exceeded.
 pub const SS_VECTOR: u8 = 12;
 
-/// General protection fault exception vector. This exception can be triggered for many,
-/// many reasons, including:
-/// - When the CPU tries to access a non-canonical address (an address where the 48-63
-/// bits are not matching the 47th bit).
-/// - Setting a reserved bit in a register or a field, or an invalid combination of
-///  fields.
+/// General protection fault exception vector. This exception can be triggered
+/// for many, many reasons, including:
+/// - When the CPU tries to access a non-canonical address (an address where
+///   the 48-63 bits are not matching the 47th bit).
+/// - Setting a reserved bit in a register or a field, or an invalid
+///   combination of fields.
 /// - When the CPU tries to execute a privileged instruction in user mode.
 /// - Segment errors (privilege level, type, not present...).
 pub const GP_VECTOR: u8 = 13;
@@ -78,31 +82,36 @@ pub const GP_VECTOR: u8 = 13;
 pub const PF_VECTOR: u8 = 14;
 
 /// Floating-point exception vector. This exception is triggered when using any
-/// waiting FPU instruction (including `fwait` and `wait`), when the `NE` flag is
-/// set in the CR0 register and an unmasked x87 FPU exception is pending.
+/// waiting FPU instruction (including `fwait` and `wait`), when the `NE` flag
+/// is set in the CR0 register and an unmasked x87 FPU exception is pending.
 pub const MF_VECTOR: u8 = 16;
 
-/// Alignment check exception vector. This exception is triggered when the CPU detect
-/// an unaligned memory access while the `AC` flag is set in the `EFLAGS` register and
-/// the `AM` flag is set in the `CR0` register.
+/// Alignment check exception vector. This exception is triggered when the CPU
+/// detect an unaligned memory access while the `AC` flag is set in the
+/// `RFLAGS` register and the `AM` flag is set in the `CR0` register.
 pub const AC_VECTOR: u8 = 17;
 
-/// Machine check exception vector. This exception is triggered when the CPU detect a
-/// hardware error that cannot be corrected by the CPU.
+/// Machine check exception vector. This exception is triggered when the CPU
+/// detect a hardware error that cannot be corrected by the CPU.
 pub const MC_VECTOR: u8 = 18;
 
-/// SIMD floating-point exception vector. This exception is triggered when an unmasked
-/// SIMD floating-point exception is pending and the `OSXMMEXCPT` flag is set in the
-/// `XCR0` register. If this flag is not set, the exception will be an invalid opcode
-/// exception (#UD) instead of this exception.
+/// SIMD floating-point exception vector. This exception is triggered when an
+/// unmasked SIMD floating-point exception is pending and the `OSXMMEXCPT`
+/// flag is set in the `XCR0` register. If this flag is not set, the exception
+/// will be an invalid opcode exception (#UD) instead of this exception.
 pub const XF_VECTOR: u8 = 19;
 
-/// Handle an exception. This function should be called when an exception is triggered.
+/// Handle an exception. This function should be called when an exception is
+/// triggered.
 ///
 /// # Panics
-/// Panics if the exception cannot be handled by the kernel or if the exception is not
-/// an exception ([`own_interrupt`] returns false).
-pub fn handler(exception: u8, error: usize, frame: &mut InterruptFrame) -> Resume {
+/// Panics if the exception cannot be handled by the kernel or if the exception
+/// is not an exception ([`own_interrupt`] returns false).
+pub fn handler(
+    exception: u8,
+    error: usize,
+    frame: &mut InterruptFrame,
+) -> Resume {
     match exception {
         DE_VECTOR => {
             panic!("Unhandled divide by zero exception");
@@ -175,8 +184,9 @@ pub fn handler(exception: u8, error: usize, frame: &mut InterruptFrame) -> Resum
     //Resume::Kill(exception as u32)
 }
 
-/// Handle an interrupt. See [`handler`] for more information, since this function only serves
-/// as a wrapper around the [`handler`] function for assembly code.
+/// Handle an interrupt. See [`handler`] for more information, since this
+/// function only serves as a wrapper around the [`handler`] function for
+/// assembly code.
 #[no_mangle]
 pub extern "C" fn exception_handler(frame: &mut InterruptFrame) {
     handler(frame.data as u8, frame.error as usize, frame);

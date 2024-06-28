@@ -7,17 +7,19 @@ use spin::Spinlock;
 pub mod allocator;
 pub mod frame;
 
-/// The global allocator for the physical memory manager. This is used to allocate and deallocate
-/// contiguous physical memory regions.
-pub static ALLOCATOR: Spinlock<allocator::Allocator> = Spinlock::new(allocator::Allocator::new());
+/// The global allocator for the physical memory manager. This is used to
+/// allocate and deallocate contiguous physical memory regions.
+pub static ALLOCATOR: Spinlock<allocator::Allocator> =
+    Spinlock::new(allocator::Allocator::new());
 
-/// The global state of the physical memory manager. This is used to track the state of each frame
-/// in the system.
+/// The global state of the physical memory manager. This is used to track
+/// the state of each frame in the system.
 pub static STATE: Spinlock<State> = Spinlock::new(State::uninitialized());
 
-/// The state of the physical memory manager. This is used to track the state of each frame in the
-/// system. It contains an array of `frame::Info` that is used to track the state of each frame in
-/// the system, and also contains some statistics about the memory usage of the system.
+/// The state of the physical memory manager. This is used to track the state
+/// of each frame in the system. It contains an array of `frame::Info` that is
+/// used to track the state of each frame in the system, and also contains
+/// some statistics about the memory usage of the system.
 pub struct State {
     frames: &'static mut [frame::Info],
 }
@@ -29,8 +31,8 @@ impl State {
         Self { frames: &mut [] }
     }
 
-    /// Creates a new state from the given memory map. It will allocate an array of `frame::Info`
-    /// and initialize it with the given memory map.
+    /// Creates a new state from the given memory map. It will allocate an
+    /// array of `frame::Info` and initialize it with the given memory map.
     #[must_use]
     pub fn new(info: &boot::Info) -> Self {
         let mmap = &info.mmap;
@@ -53,15 +55,25 @@ impl State {
 
         let array_count = array_size / core::mem::size_of::<frame::Info>();
 
-        log::trace!("Physical: Frame info array location: {:?}", array_location);
-        log::trace!("Physical: Frame info array size: {} KiB", array_size / 1024);
+        log::trace!(
+            "Physical: Frame info array location: {:?}",
+            array_location
+        );
+        log::trace!(
+            "Physical: Frame info array size: {} KiB",
+            array_size / 1024
+        );
 
-        // Initialize the frame info array with default values and create it from the
-        // computed location and size
-        // SAFETY: This is sae because the memory region is valid and free to use,
-        // and is properly aligned to the type `frame::Info`.
+        // Initialize the frame info array with default values and create it
+        // from the computed location and size
+        // SAFETY: This is sae because the memory region is valid and free to
+        // use, and is properly aligned to the type `frame::Info`.
         let array = unsafe {
-            arch::physical::init_and_leak_slice(array_location, array_count, frame::Info::default())
+            arch::physical::init_and_leak_slice(
+                array_location,
+                array_count,
+                frame::Info::default(),
+            )
         };
 
         let mut poisoned = array.len();
@@ -114,8 +126,9 @@ impl State {
             }
         }
 
-        // Mark the frame used by the array as used by the kernel. This is done to
-        // prevent the frame used by the info array from being used for allocation
+        // Mark the frame used by the array as used by the kernel. This is
+        // done to prevent the frame used by the info array from being used
+        // for allocation
         let count = (array_size / usize::from(PAGE_SIZE)) + 1;
         let start = array_location.index();
         for frame in array.iter_mut().take(start + count).skip(start) {
@@ -153,9 +166,9 @@ impl State {
         self.frames
     }
 
-    /// Returns the index of the frame info that contains the given physical address.
-    /// If the address does not exists in the system, the index is invalid and should
-    /// not be used.
+    /// Returns the index of the frame info that contains the given physical
+    /// address. If the address does not exists in the system, the index is
+    /// invalid and should not be used.
     pub fn frame_info_index(frame: Physical) -> usize {
         usize::from(frame) / usize::from(PAGE_SIZE)
     }
@@ -164,10 +177,11 @@ impl State {
 /// Initializes the physical memory manager with the given memory map.
 ///
 /// # Safety
-/// This function is unsafe because it can cause undefined behavior if the memory map is
-/// invalid or does not include the memory used by the kernel in a region that must not be
-/// used for allocation. The caller must also ensure that this function is called only once
-/// and during the initialization of the kernel.
+/// This function is unsafe because it can cause undefined behavior if the
+/// memory map is invalid or does not include the memory used by the kernel
+/// in a region that must not be used for allocation. The caller must also
+/// ensure that this function is called only once and during the initialization
+/// of the kernel.
 #[init]
 pub unsafe fn setup(info: &boot::Info) {
     *STATE.lock() = State::new(info);

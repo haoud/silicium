@@ -23,9 +23,9 @@ pub struct State(bool);
 /// portion of code that is executed with interrupts enabled is safe to be
 /// executed concurrently with other code that may also have interrupts
 ///
-/// Even if this doesn't lead to memory unsafety, it can still lead to deadlocks
-/// if the code that is executed with interrupts enabled is not reentrant and
-/// is called from a context where interrupts are disabled.
+/// Even if this doesn't lead to memory unsafety, it can still lead to
+/// deadlocks if the code that is executed with interrupts enabled is not
+/// reentrant and is called from a context where interrupts are disabled.
 #[inline]
 pub unsafe fn enable() {
     opcode::sti();

@@ -6,12 +6,14 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use macros::init;
 
 /// The request that will order the Limine bootloader to provide a memory map.
-static MMAP: spin::Spinlock<Option<ArrayVec<mmap::Entry, 32>>> = spin::Spinlock::new(None);
+static MMAP: spin::Spinlock<Option<ArrayVec<mmap::Entry, 32>>> =
+    spin::Spinlock::new(None);
 
 /// The total amount of memory allocated by the boot allocator.
 static ALLOCATED: AtomicUsize = AtomicUsize::new(0);
 
-/// Initializes the kernel boot memory allocator with the given memory map request.
+/// Initializes the kernel boot memory allocator with the given memory map
+/// request.
 ///
 /// # Panics
 /// If Limine fails to provide a memory map, this function will panic.
@@ -20,11 +22,13 @@ pub fn setup(mmap: ArrayVec<mmap::Entry, 32>) {
     MMAP.lock().replace(mmap);
 }
 
-/// Disable the kernel boot memory allocator and return the memory map request. The memory map
-/// is sanitized to ensure that all usable memory regions base address are aligned to the page size.
+/// Disable the kernel boot memory allocator and return the memory map request.
+/// The memory map is sanitized to ensure that all usable memory regions base
+/// address are aligned to the page size.
 ///
-/// This function should be called before the memory manager is initialized. Calling the
-/// boot allocator after it has been disabled will result in a panic.
+/// This function should be called before the memory manager is initialized.
+/// Calling the boot allocator after it has been disabled will result in a
+/// panic.
 ///
 /// # Panics
 /// This function will panic if the boot allocator has already been disabled.
@@ -42,7 +46,8 @@ pub fn disable() -> ArrayVec<mmap::Entry, 32> {
             let offset = usize::from(region.start) % usize::from(PAGE_SIZE);
             let correction = usize::from(PAGE_SIZE) - offset;
 
-            region.start = Physical::new(usize::from(region.start) - correction);
+            region.start =
+                Physical::new(usize::from(region.start) - correction);
             region.length -= correction;
         });
     mmap
@@ -64,9 +69,9 @@ pub fn allocated_size() -> usize {
 ///
 /// # Safety
 /// This function is unsafe because it is put in the .init section and will be
-/// discarded from memory after the kernel has been initialized. This means that
-/// this function should only be used during the kernel initialization process.
-/// Failure to do so will result in undefined behavior.
+/// discarded from memory after the kernel has been initialized. This means
+/// that this function should only be used during the kernel initialization
+/// process. Failure to do so will result in undefined behavior.
 ///
 /// # Panics
 /// This function will panic if:
@@ -78,23 +83,26 @@ pub fn allocated_size() -> usize {
 #[init]
 #[must_use]
 pub unsafe fn allocate_frame() -> Frame {
-    Frame::from_ptr_unchecked(allocate_align_physical(4096, 4096).as_mut_ptr::<u8>())
+    Frame::from_ptr_unchecked(
+        allocate_align_physical(4096, 4096).as_mut_ptr::<u8>(),
+    )
 }
 
-/// Allocates a memory region of the given size during the kernel initialization,
-/// when there is no memory manager available. However, the memory allocated by
-/// this function cannot be freed due to the simplicity of this allocator. This
-/// should not be a problem since the memory allocated during the boot process is
-/// often used during the entire lifetime of the kernel.
+/// Allocates a memory region of the given size during the kernel
+/// initialization, when there is no memory manager available. However,
+/// the memory allocated by this function cannot be freed due to the
+/// simplicity of this allocator. This should not be a problem since the
+/// memory allocated during the boot process is often used during the
+/// entire lifetime of the kernel.
 ///
 /// The memory allocated is guaranteed to be aligned at least to the requested
 /// alignment, which must be a power of two.
 ///
 /// # Safety
 /// This function is unsafe because it is put in the .init section and will be
-/// discarded from memory after the kernel has been initialized. This means that
-/// this function should only be used during the kernel initialization process.
-/// Failure to do so will result in undefined behavior.
+/// discarded from memory after the kernel has been initialized. This means
+/// that this function should only be used during the kernel initialization
+/// process. Failure to do so will result in undefined behavior.
 ///
 /// # Panics
 /// This function will panic if:

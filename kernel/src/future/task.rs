@@ -90,21 +90,22 @@ pub enum Priority {
     Normal,
 
     /// The high priority is used for tasks that are critical and should be
-    /// executed as soon as possible, but not in a real-time manner. For example,
-    /// a video game because a missed deadline will not cause a critical failure.
+    /// executed as soon as possible, but not in a real-time manner. For
+    /// example, a video game because a missed deadline will not cause a
+    /// critical failure.
     High,
 
     /// The realtime priority is the highest priority. It should be used for
-    /// tasks that are critical and must be executed in a real-time manner. Silicium
-    /// does not support hard real-time, but only a poor soft real-time. Silicium
-    /// will probably never be used in a place where a missed deadline will cause
-    /// a critical failure, so it's fine.
+    /// tasks that are critical and must be executed in a real-time manner.
+    /// Silicium does not support hard real-time, but only a poor soft
+    /// real-time. Silicium will probably never be used in a place where a
+    /// missed deadline will cause a critical failure, so it's fine.
     Realtime,
 }
 
-/// A future that yield the current task and put it at the end of the task queue.
-/// The first pool of this future will always return `Poll::Pending`, to ensure
-/// that the task is put at the end of the task queue.
+/// A future that yield the current task and put it at the end of the task
+/// queue. The first pool of this future will always return `Poll::Pending`,
+/// to ensure that the task is put at the end of the task queue.
 #[derive(Debug)]
 pub struct YieldFuture {
     polled: bool,

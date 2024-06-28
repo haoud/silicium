@@ -11,7 +11,8 @@ bitflags! {
           const MP = 1 << 1;
 
           /// Force all x87 FPU and MMX instructions to cause an #NE exception,
-          /// allowing the software to emulate FPU/MMX/SSE/SSE2/SSE3 instructions
+          /// allowing the software to emulate FPU/MMX/SSE/SSE2/SSE3
+          /// instructions
           const EM = 1 << 2;
 
           /// When set, using x87 FPU or MMX instructions will cause an # NM
@@ -41,8 +42,8 @@ bitflags! {
           /// Disable some processor cache (model-dependent).
           const CD = 1 << 30;
 
-          /// Enable paging. This bit required the `Self::PG` bit to be set. This
-          /// bit is also required to enable long mode.
+          /// Enable paging. This bit required the `Self::PG` bit to be set.
+          /// This bit is also required to enable long mode.
           const PG = 1 << 31;
       }
 }

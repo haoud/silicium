@@ -8,8 +8,8 @@ extern "C" {
     fn execute_thread(register: &Registers);
 }
 
-/// The context of a user process. It contains the saved state of an user thread
-/// when it is not running on the CPU.
+/// The context of a user process. It contains the saved state of an user
+/// thread when it is not running on the CPU.
 #[derive(Debug)]
 pub struct Context {
     /// The saved register state of this context.
@@ -49,12 +49,13 @@ impl Context {
         &self.registers
     }
 
-    /// Return a mutable pointer to the kernel stack of this context. Silicium use
-    /// a very small kernel stack for each thread that is only used when the thread
-    /// enters the kernel. The kernel will save its state on this stack before
-    /// switching to the per-core kernel stack. This allow to save memory when creating
-    /// a kernel thread and to have a bigger kernel stack for each core that will allow
-    /// use to use more stack memory and avoid stack overflow.
+    /// Return a mutable pointer to the kernel stack of this context. Silicium
+    /// use a very small kernel stack for each thread that is only used when
+    /// the thread enters the kernel. The kernel will save its state on this
+    /// stack before switching to the per-core kernel stack. This allow to save
+    /// memory when creating a kernel thread and to have a bigger kernel stack
+    /// for each core that will allow use to use more stack memory and avoid
+    /// stack overflow.
     #[must_use]
     pub fn kstack_rsp(&self) -> *mut usize {
         unsafe {
@@ -70,19 +71,21 @@ impl Context {
 /// kernel mode. We can simply use the same structure for both.
 pub type Registers = InterruptFrame;
 
-/// Run the context until a trap occurs. This function will execute the user thread and
-/// let it run until a trap occurs. A trap is an event that occurs during the execution
-/// of the thread that requires the kernel to handle it. This can be an exception, an
-/// interrupt or a system call.
+/// Run the context until a trap occurs. This function will execute the user
+/// thread and let it run until a trap occurs. A trap is an event that occurs
+/// during the execution of the thread that requires the kernel to handle it.
+/// This can be an exception, an interrupt or a system call.
 ///
-/// This function will return the trap type that occurred and the data associated with it.
+/// This function will return the trap type that occurred and the data
+/// associated with it.
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
 pub fn run(context: &mut Context) -> Trap {
-    // SAFETY: This is safe becayse we ensure that the kernel stack is valid and big
-    // enough to handle the execution of the thread before switching to the per-core
-    // kernel stack. The `execute_thread` function is safe to call but we still need
-    // to put in a unsafe block because it is an external function, written in assembly.
+    // SAFETY: This is safe becayse we ensure that the kernel stack is valid
+    // and big enough to handle the execution of the thread before switching
+    // to the per-core kernel stack. The `execute_thread` function is safe to
+    // call but we still need to put in a unsafe block because it is an
+    // external function, written in assembly.
     unsafe {
         tss::set_kernel_stack(context.kstack_rsp());
         execute_thread(&context.registers);

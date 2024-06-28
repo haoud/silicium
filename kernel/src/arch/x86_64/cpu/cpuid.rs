@@ -191,16 +191,18 @@ bitflags! {
 /// Initialize the CPUID subsystem.
 ///
 /// # Safety
-/// This function is unsafe because it must only be called once and only during the
-/// initialization of the kernel.
-#[rustfmt::skip]
+/// This function is unsafe because it must only be called once and only
+/// during the initialization of the kernel.
 pub unsafe fn setup() {
     let vendor_bytes = vendor();
     let vendor = core::str::from_utf8(&vendor_bytes).unwrap_or("Unknown");
 
     log::trace!("CPUID: supported features are {:?}", supported_features());
     log::trace!("CPUID: highest supported leaf is 0x{:08X}", leaf_max());
-    log::trace!("CPUID: highest supported extended leaf is 0x{:08X}",leaf_extended_max());
+    log::trace!(
+        "CPUID: highest supported extended leaf is 0x{:08X}",
+        leaf_extended_max()
+    );
     log::trace!("CPUID: vendor string is `{}`", vendor);
 }
 
@@ -246,7 +248,9 @@ pub fn has_feature(feature: Features) -> bool {
 #[must_use]
 pub fn supported_features() -> Features {
     let cpuid = cpuid(1);
-    Features::from_bits_truncate(u64::from(cpuid.edx) | (u64::from(cpuid.ecx) << 32))
+    Features::from_bits_truncate(
+        u64::from(cpuid.edx) | (u64::from(cpuid.ecx) << 32),
+    )
 }
 
 /// Execute the `cpuid` instruction with the given leaf and return the result.
@@ -254,7 +258,7 @@ pub fn supported_features() -> Features {
 /// on the current CPU.
 #[must_use]
 pub fn cpuid(leaf: u32) -> Result {
-    // SAFETY: This is safe because the `cpuid` instruction is safe to call at
-    // any time and is always present on x86_64.
+    // SAFETY: This is safe because the `cpuid` instruction is safe to call
+    // at any time and is always present on x86_64.
     unsafe { core::arch::x86_64::__cpuid(leaf) }
 }

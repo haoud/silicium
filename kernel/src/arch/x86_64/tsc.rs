@@ -42,11 +42,12 @@ pub unsafe fn setup() {
 ///
 /// # Note
 /// This function is an abstraction over the `rdtsc` opcode. However, the
-/// `rdtsc` opcode is not a serializing instruction, and it does not necessarily
-/// wait for previous instructions to complete before reading the TSC. Therefore,
-/// it is possible that the TSC will be read before previous instructions have
-/// completed. To ensure that the TSC is read after previous instructions have
-/// completed, use the [`rdtscp`] function instead.
+/// `rdtsc` opcode is not a serializing instruction, and it does not
+/// necessarily wait for previous instructions to complete before reading
+/// the TSC. Therefore, it is possible that the TSC will be read before
+/// previous instructions have completed. To ensure that the TSC is read
+/// after previous instructions have completed, use the [`rdtscp`] function
+/// instead.
 #[inline]
 #[must_use]
 pub fn rdtsc() -> u64 {
@@ -55,11 +56,11 @@ pub fn rdtsc() -> u64 {
 
 /// Read the Time Stamp Counter (TSC) and the processor ID.
 ///
-/// This function does all the same things as `rdtsc`, but execute an additional
-/// `cpuid` instruction to serialize the instruction stream. This can be useful
-/// to ensure that the TSC is read after previous instructions have completed,
-/// which is not guaranteed by the `rdtsc` instruction because it is not a
-/// serializing instruction.
+/// This function does all the same things as `rdtsc`, but execute an
+/// additional `cpuid` instruction to serialize the instruction stream.
+/// This can be useful to ensure that the TSC is read after previous
+/// instructions have completed, which is not guaranteed by the `rdtsc`
+/// instruction because it is not a serializing instruction.
 #[inline]
 #[must_use]
 pub fn rdtscp() -> u64 {

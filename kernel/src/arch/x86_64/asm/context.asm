@@ -42,9 +42,10 @@ execute_thread:
     swapgs 
     iretq
 
-# Resume the kernel. This function is called when an exception, an interrupt or a syscall
-# occurs. It will restore the kernel stack pointer and the callee-saved registers before
-# returning to the caller, allowing the kernel to resume its execution.
+# Resume the kernel. This function is called when an exception, an interrupt
+# or a syscall occurs. It will restore the kernel stack pointer and the callee
+# saved registers before returning to the caller, allowing the kernel to resume
+# its execution.
 resume_kernel:
   mov rsp, gs:24
   pop rbp

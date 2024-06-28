@@ -1,3 +1,5 @@
+use time::unit::Nanosecond;
+
 pub mod executor;
 pub mod sleep;
 pub mod task;
@@ -16,4 +18,21 @@ pub use waker::TaskWaker;
 #[init]
 pub unsafe fn setup() {
     executor::setup();
+    executor::spawn(Task::new(tic()));
+    executor::spawn(Task::new(tac()));
+}
+
+pub async fn tic() {
+    loop {
+        log::info!("Tic");
+        sleep::sleep(Nanosecond::new(2_000_000)).await;
+    }
+}
+
+pub async fn tac() {
+    loop {
+        sleep::sleep(Nanosecond::new(1_000_000)).await;
+        log::info!("Tac");
+        sleep::sleep(Nanosecond::new(1_000_000)).await;
+    }
 }

@@ -20,15 +20,15 @@ impl Register {
     pub const ARBITRATION_ID: Register = Register(0x02);
     pub const REDIRECTION_TABLE_BASE: Register = Register(0x10);
 
-    /// Compute the register address for the given redirection entry. The result
-    /// will always to read the low 32 bits of the entry.
+    /// Compute the register address for the given redirection entry.
+    /// The result will always to read the low 32 bits of the entry.
     #[must_use]
     pub const fn redirection_low(n: u8) -> Register {
         Register(Self::REDIRECTION_TABLE_BASE.0 + (n as u32) * 2)
     }
 
-    /// Compute the register address for the given redirection entry. The result
-    /// will always to read the high 32 bits of the entry.
+    /// Compute the register address for the given redirection entry.
+    /// The result will always to read the high 32 bits of the entry.
     #[must_use]
     pub const fn redirection_high(n: u8) -> Register {
         Register(Self::REDIRECTION_TABLE_BASE.0 + (n as u32) * 2 + 1)
@@ -64,7 +64,9 @@ pub unsafe fn setup() {
 /// the IRQ is safe and will not cause undefined behavior.
 pub unsafe fn enable_irq(vector: u8) {
     if !is_irq(vector) {
-        log::warn!("IOAPIC: Trying to enable IRQ {vector} not owned by the IOAPIC");
+        log::warn!(
+            "IOAPIC: Trying to enable IRQ {vector} not owned by the IOAPIC"
+        );
         return;
     }
 
@@ -84,7 +86,9 @@ pub unsafe fn enable_irq(vector: u8) {
 /// behavior.
 pub unsafe fn disable_irq(vector: u8) {
     if !is_irq(vector) {
-        log::warn!("IOAPIC: Trying to disable IRQ {vector} not owned by the IOAPIC");
+        log::warn!(
+            "IOAPIC: Trying to disable IRQ {vector} not owned by the IOAPIC"
+        );
         return;
     }
 
@@ -98,15 +102,17 @@ pub unsafe fn disable_irq(vector: u8) {
 /// this will return 0.
 #[must_use]
 pub fn entry_count() -> u8 {
-    // SAFETY: IRQ_COUNT is set in `setup` and never modified afterwards, and we
-    // don't creat mutable references to it, so it's safe to read it.
+    // SAFETY: IRQ_COUNT is set in `setup` and never modified afterwards,
+    // and we don't creat mutable references to it, so it's safe to read it.
     unsafe { IRQ_COUNT }
 }
 
 /// Check if an interrupt is an IRQ from the IOAPIC
 #[must_use]
 pub fn is_irq(vector: u8) -> bool {
-    entry_count() != 0 && vector >= IOAPIC_IRQ_BASE && vector < IOAPIC_IRQ_BASE + entry_count()
+    entry_count() != 0
+        && vector >= IOAPIC_IRQ_BASE
+        && vector < IOAPIC_IRQ_BASE + entry_count()
 }
 
 /// Write a value to a register in the IOAPIC
@@ -135,7 +141,7 @@ pub unsafe fn write(reg: Register, value: u32) {
 #[must_use]
 pub unsafe fn read(reg: Register) -> u32 {
     // Tell IOREGSEL what register we want to read from
+    // And then read the value from IOWIN
     IOAPIC_BASE.as_mut_ptr::<u32>().write_volatile(reg.0);
-    // Read the value from IOWIN
     IOAPIC_BASE.as_ptr::<u32>().byte_add(0x10).read_volatile()
 }
