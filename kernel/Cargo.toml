@@ -17,11 +17,8 @@ all = "warn"
 
 [workspace.dependencies]
 macros = { path = "crates/silicium-macros", package = "silicium-macros" }
-bitmap = { path = "crates/silicium-bitmap", package = "silicium-bitmap" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
-align = { path = "crates/silicium-align", package = "silicium-align" }
 hal = { path = "crates/silicium-hal", package = "silicium-hal" }
-id = { path = "crates/silicium-id", package = "silicium-id" }
 
 crossbeam = { version = "0.8.0", default-features = false, features = ["alloc"] }
 futures = { version = "0.3.30", default-features = false, features = ["alloc"] }
@@ -47,15 +44,12 @@ zerocopy = { workspace = true }
 futures = { workspace = true }
 limine = { workspace = true }
 macros = { workspace = true }
-bitmap = { workspace = true }
 cfg-if = { workspace = true }
 config = { workspace = true }
-align = { workspace = true }
 talc = { workspace = true }
 elf = { workspace = true }
 hal = { workspace = true }
 log = { workspace = true }
-id = { workspace = true }
 lock_api = "0.4.12"
 
 [features]

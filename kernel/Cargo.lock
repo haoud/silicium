@@ -154,11 +154,8 @@ dependencies = [
  "limine",
  "lock_api",
  "log",
- "silicium-align",
- "silicium-bitmap",
  "silicium-config",
  "silicium-hal",
- "silicium-id",
  "silicium-macros",
  "tailcall",
  "talc",
@@ -227,14 +224,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
-name = "silicium-align"
-version = "0.1.0"
-
-[[package]]
-name = "silicium-bitmap"
-version = "0.1.0"
-
-[[package]]
 name = "silicium-config"
 version = "0.1.0"
 dependencies = [
@@ -246,14 +235,6 @@ name = "silicium-hal"
 version = "0.1.0"
 dependencies = [
  "bitflags",
-]
-
-[[package]]
-name = "silicium-id"
-version = "0.1.0"
-dependencies = [
- "silicium-bitmap",
- "static_assertions",
 ]
 
 [[package]]
