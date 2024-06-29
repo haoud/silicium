@@ -161,8 +161,5 @@ pub fn handle_irq() {
     // counter to keep track of the time
     if smp::is_bsp() {
         JIFFIES.fetch_add(1, Ordering::Relaxed);
-        if JIFFIES.load(Ordering::Relaxed) % 1000 == 0 {
-            log::debug!("Jiffies: {}", JIFFIES.load(Ordering::Relaxed));
-        }
     }
 }

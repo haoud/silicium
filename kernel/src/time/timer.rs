@@ -31,11 +31,15 @@ impl Timer {
     /// `ignore` method was not called on the guard before the timer
     /// expiration.
     #[must_use]
-    pub fn register<T>(deadline: Instant, data: Data, callback: T) -> Guard
+    pub fn register<T>(
+        deadline: Instant,
+        data: Data,
+        callback: T,
+    ) -> Option<Guard>
     where
         T: FnMut(&mut Timer) + Send + 'static,
     {
-        let guard = Guard {
+        let mut guard = Guard {
             active: Arc::new(AtomicBool::new(true)),
             ignore: false,
         };
@@ -47,8 +51,14 @@ impl Timer {
             data,
         };
 
-        timer.activate();
-        guard
+        if deadline <= Instant::now() {
+            timer.execute();
+            guard.ignore();
+            None
+        } else {
+            TIMERS.lock_irq_safe().push(timer);
+            Some(guard)
+        }
     }
 
     /// Returns true if the timer has expired.
@@ -70,22 +80,12 @@ impl Timer {
         &mut self.data
     }
 
-    /// Activates the timer. If the timer has expired, it will be executed
-    /// immediately, otherwise it will be pushed to the active timers list.
-    fn activate(self) {
-        if self.expired() {
-            self.execute();
-        } else {
-            TIMERS.lock_irq_safe().push(self);
-        }
-    }
-
     /// Executes the timer callback if the timer guard is still active.
     ///
     /// # Panics
     /// Panics if the timer callback has already been called.
     fn execute(mut self) {
-        if !self.guard.ignore {
+        if self.guard.active() {
             let mut callback =
                 self.callback.take().expect("Timer callback already called");
             (callback)(&mut self);
@@ -139,7 +139,7 @@ impl Drop for Guard {
     }
 }
 
-/// Eecute all expired timers and remove them from the list of active timers.
+/// Execute all expired timers and remove them from the list of active timers.
 /// Inactive timers will also be removed.
 pub fn handle() {
     TIMERS.with_irq_safe(|timers| {
@@ -147,8 +147,6 @@ pub fn handle() {
         while i < timers.len() {
             if timers[i].expired() {
                 timers.swap_remove(i).execute();
-            } else if !timers[i].active() {
-                timers.swap_remove(i);
             } else {
                 i += 1;
             }

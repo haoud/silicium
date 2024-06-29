@@ -34,15 +34,12 @@ impl Future for SleepFuture {
         self: core::pin::Pin<&mut Self>,
         cx: &mut core::task::Context,
     ) -> core::task::Poll<Self::Output> {
-        if Instant::now() < self.expire {
-            log::trace!("Sleep timer not expired yet");
-            log::debug!("Sleep timer expires at {:?}", self.expire);
-            log::debug!("Current time is {:?}", Instant::now());
+        if self.expire > Instant::now() {
             if self.guard.is_none() {
                 // Register the timer to wake up the task if it hasn't been
                 // registered yet. The timer will wake up the task by calling
                 // `wake_by_ref` on the waker.
-                self.get_mut().guard = Some(Timer::register(
+                let guard = Timer::register(
                     self.expire,
                     Box::new(cx.waker().clone()),
                     |timer| {
@@ -52,7 +49,16 @@ impl Future for SleepFuture {
                             .unwrap()
                             .wake_by_ref();
                     },
-                ));
+                );
+
+                // If no guard was returned, the timer has already expired
+                // and the callback has been executed. In this case, return
+                // `Poll::Ready(())` immediately.
+                if let Some(guard) = guard {
+                    self.get_mut().guard = Some(guard);
+                } else {
+                    return core::task::Poll::Ready(());
+                }
             }
             core::task::Poll::Pending
         } else {

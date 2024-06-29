@@ -119,10 +119,6 @@ pub fn spawn(task: Task) {
         .spawn(task);
 }
 
-pub fn change_priority(_task_id: task::Identifier, _priority: task::Priority) {
-    unimplemented!()
-}
-
 /// Run the executor. This function will run the executor in a loop, polling
 /// tasks forever. Since this function will never return, it is marked as `!`.
 ///

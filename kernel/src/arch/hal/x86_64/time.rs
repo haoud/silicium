@@ -42,7 +42,7 @@ pub fn jiffies_nano_offset() -> Duration {
 /// memory read), but on other architectures, it may be way more expensive.
 #[must_use]
 pub fn since_boot() -> Duration {
-    let seconds = get_jiffies() / jiffies_frequency();
+    let millis = get_jiffies() * (1000 / jiffies_frequency());
     let nanos = jiffies_nano_offset();
-    Duration::from_secs(seconds) + nanos
+    Duration::from_millis(millis) + nanos
 }

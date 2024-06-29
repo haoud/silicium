@@ -11,9 +11,6 @@
 #![allow(internal_features)]
 
 // TODO::
-// - The executor/timer system/sleep future does not work properly. I don't
-//   really know why, but it seems that sometime a task will never be woken up
-//   and will be stuck forever. This is a major issue that need to be fixed.
 // - Remove some very unstable features:
 //      - const_trait_impl
 //      - prelude_import

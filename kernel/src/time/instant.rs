@@ -4,7 +4,25 @@ use core::{
     time::Duration,
 };
 
-/// TODO:
+/// A point in time, relative to the Unix epoch. It is guaranteed to behave as
+/// a monotonically non-decreasing clock and is guaranteed to be not less than
+/// any previously `Instant` value created. This is especially useful for
+/// tasks such as measuring benchmarks or timing how long an operation takes.
+///
+/// Note, however, that instants are not guaranteed to be steady. In other
+/// words, each tick of the underlying clock might not be the same length
+/// (e.g. some seconds may be longer than others). An instant may jump forwards
+/// or experience time dilation (slow down or speed up), but it will never go
+/// backwards.
+///
+/// # Panics
+/// Operations such as `Add` and AddAssign` will panic if the resulting
+/// instant would overflow. However, this only happens after more than
+/// 292 billion years of time since the Unix epoch, and is probably a bug
+/// in the program.
+/// However, `Sub` and `SubAssign` will panic if the resulting instant would
+/// be negative (i.e. if the right-hand side instant is later than the
+/// left-hand)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Instant(Duration);
 
