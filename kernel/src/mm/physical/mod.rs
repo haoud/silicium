@@ -1,11 +1,13 @@
 use crate::{
-    arch,
-    arch::x86_64::addr::{Frame, Physical},
+    arch::{
+        self,
+        x86_64::addr::{Frame, Physical},
+    },
     boot,
+    library::spin::Spinlock,
 };
 use config::PAGE_SIZE;
 use macros::init;
-use spin::Spinlock;
 
 pub mod allocator;
 pub mod frame;

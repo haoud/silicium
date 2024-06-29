@@ -152,6 +152,7 @@ dependencies = [
  "elf",
  "futures",
  "limine",
+ "lock_api",
  "log",
  "silicium-align",
  "silicium-bitmap",
@@ -159,8 +160,6 @@ dependencies = [
  "silicium-hal",
  "silicium-id",
  "silicium-macros",
- "silicium-seqlock",
- "silicium-spin",
  "tailcall",
  "talc",
  "zerocopy",
@@ -177,9 +176,9 @@ dependencies = [
 
 [[package]]
 name = "lock_api"
-version = "0.4.11"
+version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c168f8615b12bc01f9c17e2eb0cc07dcae1940121185446edc3744920e8ef45"
+checksum = "07af8b9cdd281b7915f413fa73f29ebd5d55d0d3f0155584dade1ff18cea1b17"
 dependencies = [
  "autocfg",
  "scopeguard",
@@ -264,20 +263,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.52",
-]
-
-[[package]]
-name = "silicium-seqlock"
-version = "0.1.0"
-dependencies = [
- "silicium-spin",
-]
-
-[[package]]
-name = "silicium-spin"
-version = "0.1.0"
-dependencies = [
- "lock_api",
 ]
 
 [[package]]

@@ -1,23 +1,25 @@
-use crate::arch::x86_64::{
-    apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
-    pit, smp,
+use crate::{
+    arch::x86_64::{
+        apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
+        pit, smp,
+    },
+    library::seq::Seqlock,
 };
 use core::{
     sync::atomic::{AtomicU64, Ordering},
     time::Duration,
 };
 use macros::init;
-use seqlock::SeqLock;
 
 /// The IRQ vector used by the Local APIC timer interrupt
 pub const IRQ_VECTOR: u8 = IOAPIC_IRQ_BASE;
 
 /// The internal frequency of the Local APIC timer, in Hz
-pub static INTERNAL_FREQUENCY: SeqLock<u32> = SeqLock::new(0);
+pub static INTERNAL_FREQUENCY: Seqlock<u32> = Seqlock::new(0);
 
 /// The internal counter value of the Local APIC timer to raise an IRQ
 /// at the specified frequency ([`config::TIMER_HZ`])
-pub static INITIAL_COUNTER: SeqLock<u32> = SeqLock::new(0);
+pub static INITIAL_COUNTER: Seqlock<u32> = Seqlock::new(0);
 
 /// The number of jiffies since the kernel has started
 pub static JIFFIES: AtomicU64 = AtomicU64::new(0);

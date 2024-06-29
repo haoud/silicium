@@ -2,12 +2,11 @@ use super::{
     task::{self, Task},
     waker::TaskWaker,
 };
-use crate::arch;
+use crate::{arch, library::spin::Spinlock};
 use alloc::collections::BTreeMap;
 use config::MAX_TASKS;
 use core::task::{Context, Poll, Waker};
 use crossbeam::queue::ArrayQueue;
-use spin::Spinlock;
 
 /// The global executor that will run all async tasks
 static EXECUTOR: Spinlock<Option<Executor>> = Spinlock::new(None);

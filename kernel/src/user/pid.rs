@@ -1,5 +1,5 @@
+use crate::library::spin::Spinlock;
 use config::MAX_PIDS;
-use spin::Spinlock;
 
 /// The size of the bitmap used to keep track of process identifiers.
 const PID_BITMAP_COUNT: usize =

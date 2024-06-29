@@ -1,6 +1,5 @@
-use crate::arch;
+use crate::{arch, library::seq::Seqlock};
 use macros::init;
-use seqlock::SeqLock;
 
 pub mod instant;
 pub mod timer;
@@ -11,10 +10,10 @@ const ELAPSED_DAYS_MONTHS: [usize; 12] =
     [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
 
 /// The date at which the kernel was started.
-static STARTUP_DATE: SeqLock<Date> = SeqLock::new(Date::epoch());
+static STARTUP_DATE: Seqlock<Date> = Seqlock::new(Date::epoch());
 
 /// The Unix time at which the kernel was started.
-static STARTUP_TIME: SeqLock<Unix> = SeqLock::new(Unix::epoch());
+static STARTUP_TIME: Seqlock<Unix> = Seqlock::new(Unix::epoch());
 
 /// Represents a date in the Gregorian calendar.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

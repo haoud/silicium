@@ -1,6 +1,7 @@
 use crate::{
     arch::x86_64::addr::{Frame, Physical},
     boot::mmap,
+    library::spin::Spinlock,
 };
 use arrayvec::ArrayVec;
 use config::PAGE_SIZE;
@@ -8,8 +9,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use macros::init;
 
 /// The request that will order the Limine bootloader to provide a memory map.
-static MMAP: spin::Spinlock<Option<ArrayVec<mmap::Entry, 32>>> =
-    spin::Spinlock::new(None);
+static MMAP: Spinlock<Option<ArrayVec<mmap::Entry, 32>>> = Spinlock::new(None);
 
 /// The total amount of memory allocated by the boot allocator.
 static ALLOCATED: AtomicUsize = AtomicUsize::new(0);

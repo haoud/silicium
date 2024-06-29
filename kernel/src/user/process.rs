@@ -1,6 +1,5 @@
 use super::pid::Pid;
-use crate::arch::paging::PageTable;
-use spin::Spinlock;
+use crate::{arch::paging::PageTable, library::spin::Spinlock};
 
 /// Processes that are running on the system
 pub static PROCESSES: Spinlock<Vec<Arc<Process>>> = Spinlock::new(Vec::new());

@@ -1,6 +1,8 @@
-use crate::arch::x86_64::serial::{Port, Serial};
+use crate::{
+    arch::x86_64::serial::{Port, Serial},
+    library::spin::Spinlock,
+};
 use core::fmt::Write;
-use spin::Spinlock;
 
 /// The logger for the `x86_64` architecture. This logger writes messages to
 /// the serial port COM1. If the serial port is not available, the logger does

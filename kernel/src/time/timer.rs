@@ -1,9 +1,8 @@
-use super::instant::Instant;
+use crate::{library::spin::Spinlock, time::instant::Instant};
 use core::{
     any::Any,
     sync::atomic::{AtomicBool, Ordering},
 };
-use spin::Spinlock;
 
 /// The list of active timers.
 static TIMERS: Spinlock<Vec<Timer>> = Spinlock::new(Vec::new());

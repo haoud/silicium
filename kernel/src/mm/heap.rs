@@ -1,9 +1,9 @@
 use crate::{
     arch,
+    library::spin::Spinlock,
     mm::physical::{self, allocator::Flags},
 };
 use config::PAGE_SHIFT;
-use spin::Spinlock;
 
 /// The global heap allocator. This allocator is used to allocate memory on
 /// the kernel heap. However, the kernel heap should only used to allocate

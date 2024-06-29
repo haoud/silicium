@@ -4,11 +4,6 @@ use core::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-#[cfg(not(target_arch = "x86_64"))]
-compile_error!(
-    "The `silicium-spin` crate only supports the x86_64 architecture."
-);
-
 /// A simple spinlock implementation that allow exclusive access to the inner
 /// data. The lock is acquired by spinning until it is free, and it is
 /// released when the guard is dropped.

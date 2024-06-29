@@ -1,5 +1,5 @@
+use crate::library::spin::Spinlock;
 use config::MAX_TIDS;
-use spin::Spinlock;
 
 /// The size of the bitmap used to keep track of thread identifiers.
 const TID_BITMAP_COUNT: usize =
