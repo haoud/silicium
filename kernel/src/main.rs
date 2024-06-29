@@ -1,20 +1,12 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
 #![feature(panic_info_message)]
-#![feature(const_trait_impl)]
 #![feature(const_mut_refs)]
 #![feature(negative_impls)]
 #![feature(prelude_import)]
-#![feature(new_uninit)]
-#![feature(const_for)]
-#![feature(effects)]
 #![allow(internal_features)]
 
 // TODO::
-// - Remove some very unstable features:
-//      - const_trait_impl
-//      - prelude_import
-//      - effects
 // - Reduce the number of crates by integrating some of them into the
 //   kernel crate. This will simply the code when a crate will depend
 //   on a feature of the kernel crate, thus creating a circular dependency...
