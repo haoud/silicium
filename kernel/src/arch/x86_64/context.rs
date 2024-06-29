@@ -1,11 +1,10 @@
-use super::{cpu::InterruptFrame, tss};
-use crate::user::thread::Trap;
+use super::cpu::InterruptFrame;
 use core::pin::Pin;
 
 core::arch::global_asm!(include_str!("asm/context.asm"));
 
 extern "C" {
-    fn execute_thread(register: &Registers);
+    pub fn execute_thread(register: &Registers);
 }
 
 /// The context of a user process. It contains the saved state of an user
@@ -71,7 +70,7 @@ impl Context {
 /// kernel mode. We can simply use the same structure for both.
 pub type Registers = InterruptFrame;
 
-/// Run the context until a trap occurs. This function will execute the user
+/*/// Run the context until a trap occurs. This function will execute the user
 /// thread and let it run until a trap occurs. A trap is an event that occurs
 /// during the execution of the thread that requires the kernel to handle it.
 /// This can be an exception, an interrupt or a system call.
@@ -98,4 +97,4 @@ pub fn run(context: &mut Context) -> Trap {
         2 => Trap::Syscall(registers.data as u32),
         _ => unreachable!("Unknown trap type"),
     }
-}
+}*/

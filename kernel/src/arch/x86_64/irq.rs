@@ -5,7 +5,6 @@ use crate::{
         opcode,
     },
     time,
-    user::thread::{Resume, Thread},
 };
 
 /// The state of the interrupts.
@@ -106,20 +105,6 @@ pub fn without<T, F: FnOnce() -> T>(f: F) -> T {
         }
     }
     object
-}
-
-pub fn user_handler(thread: &mut Thread, irq: u8) -> Resume {
-    irq_handler(irq);
-
-    if apic::local::timer::own_irq(irq) {
-        thread.decrement_quantum();
-    }
-
-    if thread.needs_reschedule() {
-        Resume::Yield
-    } else {
-        Resume::Continue
-    }
 }
 
 /// The interrupt handler. This function is called by the CPU when an interrupt

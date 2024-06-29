@@ -1,7 +1,4 @@
-use crate::{
-    arch::x86_64::cpu::{self, InterruptFrame},
-    user::thread::Resume,
-};
+use crate::arch::x86_64::cpu::{self, InterruptFrame};
 
 /// Divide by zero exception vector. This exception is triggered when the CPU
 /// tries to divide a number by zero.
@@ -107,11 +104,7 @@ pub const XF_VECTOR: u8 = 19;
 /// # Panics
 /// Panics if the exception cannot be handled by the kernel or if the exception
 /// is not an exception ([`own_interrupt`] returns false).
-pub fn handler(
-    exception: u8,
-    error: usize,
-    frame: &mut InterruptFrame,
-) -> Resume {
+pub fn handler(exception: u8, error: usize, frame: &mut InterruptFrame) {
     match exception {
         DE_VECTOR => {
             panic!("Unhandled divide by zero exception");
@@ -180,8 +173,6 @@ pub fn handler(
             panic!("Unhandled exception: {}", exception);
         }
     }
-
-    //Resume::Kill(exception as u32)
 }
 
 /// Handle an interrupt. See [`handler`] for more information, since this

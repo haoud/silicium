@@ -1,7 +1,6 @@
 pub mod executor;
 pub mod sleep;
 pub mod task;
-pub mod thread;
 pub mod waker;
 
 use core::time::Duration;

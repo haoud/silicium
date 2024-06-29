@@ -24,7 +24,6 @@ pub mod library;
 pub mod mm;
 pub mod prelude;
 pub mod time;
-pub mod user;
 
 #[allow(unused_imports)]
 #[prelude_import]
@@ -52,9 +51,6 @@ pub unsafe extern "C" fn _entry() -> ! {
 
     // Setup the async runtime
     future::setup();
-
-    // Setup the user mode
-    user::setup();
 
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
