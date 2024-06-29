@@ -23,7 +23,6 @@ config = { path = "crates/silicium-config", package = "silicium-config" }
 align = { path = "crates/silicium-align", package = "silicium-align" }
 addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
-time = { path = "crates/silicium-time", package = "silicium-time" }
 hal = { path = "crates/silicium-hal", package = "silicium-hal" }
 id = { path = "crates/silicium-id", package = "silicium-id" }
 
@@ -34,7 +33,7 @@ talc = { version = "4.3.1", features = ["counters"] }
 elf = { version = "0.7.4", default-features = false }
 static_assertions = "1.1.0"
 zerocopy = "0.7.32"
-bitfield = "0.14.0"
+bitfield = "0.15.0"
 bitflags = "2.4.2"
 tailcall = "1.0.1"
 cfg-if = "1.0.0"
@@ -59,7 +58,6 @@ align = { workspace = true }
 addr = { workspace = true }
 spin = { workspace = true }
 talc = { workspace = true }
-time = { workspace = true }
 elf = { workspace = true }
 hal = { workspace = true }
 log = { workspace = true }

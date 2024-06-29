@@ -11,7 +11,9 @@
 #![allow(internal_features)]
 
 // TODO::
-// - Set the indentation to maximum 80 characters per line
+// - The executor/timer system/sleep future does not work properly. I don't
+//   really know why, but it seems that sometime a task will never be woken up
+//   and will be stuck forever. This is a major issue that need to be fixed.
 // - Remove some very unstable features:
 //      - const_trait_impl
 //      - prelude_import
@@ -19,7 +21,10 @@
 // - Reduce the number of crates by integrating some of them into the
 //   kernel crate. This will simply the code when a crate will depend
 //   on a feature of the kernel crate, thus creating a circular dependency...
-// -
+// - The APIC timer calibration is not very precise and can sometimes be
+//   off by a factor of 10 !! Probably because it use the PIT timer to
+//   calibrate the APIC timer. We should find a way to calibrate the APIC
+//   timer without using the PIT timer.
 
 extern crate alloc;
 

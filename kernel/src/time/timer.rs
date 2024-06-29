@@ -1,10 +1,9 @@
-use crate::arch;
+use super::instant::Instant;
 use core::{
     any::Any,
     sync::atomic::{AtomicBool, Ordering},
 };
 use spin::Spinlock;
-use time::Timespec;
 
 /// The list of active timers.
 static TIMERS: Spinlock<Vec<Timer>> = Spinlock::new(Vec::new());
@@ -19,7 +18,7 @@ type Data = Box<dyn Any + Send>;
 /// guard is still active.
 pub struct Timer {
     callback: Option<Callback>,
-    deadline: Timespec,
+    deadline: Instant,
     guard: Guard,
     data: Data,
 }
@@ -32,7 +31,7 @@ impl Timer {
     /// `ignore` method was not called on the guard before the timer
     /// expiration.
     #[must_use]
-    pub fn register<T>(deadline: Timespec, data: Data, callback: T) -> Guard
+    pub fn register<T>(deadline: Instant, data: Data, callback: T) -> Guard
     where
         T: FnMut(&mut Timer) + Send + 'static,
     {
@@ -55,7 +54,7 @@ impl Timer {
     /// Returns true if the timer has expired.
     #[must_use]
     pub fn expired(&self) -> bool {
-        self.deadline <= arch::time::current_timespec()
+        self.deadline <= Instant::now()
     }
 
     /// Returns true if the timer is active. If the timer was deactivated

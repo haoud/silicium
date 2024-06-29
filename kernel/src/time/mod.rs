@@ -1,8 +1,8 @@
 use crate::arch;
 use macros::init;
 use seqlock::SeqLock;
-use time::unit::Second;
 
+pub mod instant;
 pub mod timer;
 
 /// Number of days elased since the beginning of the year, excluding the
@@ -30,18 +30,24 @@ pub struct Date {
 /// Represents the unix time, which is the number of seconds elapsed since
 /// January 1st, 1970.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Unix(pub Second);
+pub struct Unix(pub u64);
 
 impl Unix {
     #[must_use]
     pub const fn new(seconds: u64) -> Self {
-        Self(Second(seconds))
+        Self(seconds)
     }
 
     /// Get the Unix epoch, which is January 1st, 1970 at 00:00:00.
     #[must_use]
     pub const fn epoch() -> Self {
-        Self(Second(0))
+        Self(0)
+    }
+
+    /// Get the Unix time at which the kernel was started.
+    #[must_use]
+    pub fn boot() -> Self {
+        STARTUP_TIME.read()
     }
 
     /// Get the current Unix time using the kernel startup time and the
@@ -51,7 +57,13 @@ impl Unix {
         let startup_time = STARTUP_TIME.read();
         let jiffies = arch::time::get_jiffies();
         let jiffies_frequency = arch::time::jiffies_frequency();
-        Self::new(startup_time.0 .0 + (jiffies / jiffies_frequency))
+        Self::new(startup_time.0 + (jiffies / jiffies_frequency))
+    }
+}
+
+impl From<Unix> for u64 {
+    fn from(unix: Unix) -> Self {
+        unix.0
     }
 }
 
@@ -108,7 +120,7 @@ impl Date {
             seconds -= 86400;
         }
 
-        Unix(Second(seconds))
+        Unix(seconds)
     }
 }
 
@@ -186,12 +198,12 @@ pub const fn month_in_year(year: u16, days: u16) -> u8 {
 /// Converts a Unix time to a date.
 #[must_use]
 pub fn unix_time_to_date(unix: Unix) -> Date {
-    let seconds = unix.0 .0;
+    let seconds = unix.0;
 
     // Compute the number of days since January 1st, 1970 and Compute
     // the year with the number of days without taking into account the
     // leap years.
-    let unix_days = unix.0 .0 / 86400;
+    let unix_days = unix.0 / 86400;
     let year = 1970 + (unix_days / 365);
 
     // Compute the number of leap years since 1970. Then we compute the days

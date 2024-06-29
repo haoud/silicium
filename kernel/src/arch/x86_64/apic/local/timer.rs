@@ -2,16 +2,18 @@ use crate::arch::x86_64::{
     apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
     pit, smp,
 };
-use core::sync::atomic::{AtomicU64, Ordering};
+use core::{
+    sync::atomic::{AtomicU64, Ordering},
+    time::Duration,
+};
 use macros::init;
 use seqlock::SeqLock;
-use time::{frequency::Hertz32, unit::Nanosecond32};
 
 /// The IRQ vector used by the Local APIC timer interrupt
 pub const IRQ_VECTOR: u8 = IOAPIC_IRQ_BASE;
 
 /// The internal frequency of the Local APIC timer, in Hz
-pub static INTERNAL_FREQUENCY: SeqLock<Hertz32> = SeqLock::new(Hertz32::new(0));
+pub static INTERNAL_FREQUENCY: SeqLock<u32> = SeqLock::new(0);
 
 /// The internal counter value of the Local APIC timer to raise an IRQ
 /// at the specified frequency ([`config::TIMER_HZ`])
@@ -66,7 +68,7 @@ pub unsafe fn calibrate() {
     log::debug!("APIC: Timer configured at {} Hz", config::TIMER_HZ);
     log::debug!("APIC: Internal timer granularity is {} ns", granularity);
 
-    INTERNAL_FREQUENCY.write(Hertz32::new(frequency));
+    INTERNAL_FREQUENCY.write(frequency);
     INITIAL_COUNTER.write(counter);
 
     // Configure the Local APIC timer with the calculated counter
@@ -108,9 +110,9 @@ pub unsafe fn setup() {
 /// The caller must ensure that raising an IRQ is safe and that the IRQ
 /// vector is correctly configured in the IDT and will not lead to UB or
 /// memory unsafety.
-pub unsafe fn prepare_irq_in(ns: Nanosecond32) {
-    let granularity = 1_000_000_000 / INTERNAL_FREQUENCY.read().0;
-    let ns = ns.0;
+pub unsafe fn prepare_irq_in(ns: Duration) {
+    let granularity = 1_000_000_000 / INTERNAL_FREQUENCY.read();
+    let ns = u32::try_from(ns.as_nanos()).unwrap();
 
     if ns < granularity {
         log::warn!(
@@ -126,7 +128,7 @@ pub unsafe fn prepare_irq_in(ns: Nanosecond32) {
 /// Return the internal frequency of the Local APIC timer, which is the rate
 /// at the Local APIC timer counter is decremented.
 #[must_use]
-pub fn internal_frequency() -> Hertz32 {
+pub fn internal_frequency() -> u32 {
     INTERNAL_FREQUENCY.read()
 }
 
