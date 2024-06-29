@@ -1,4 +1,4 @@
-use crate::Frame;
+use super::Frame;
 
 /// A physical address. This is a newtype around `usize` that represents a
 /// physical address in the `x86_64` architecture that enforces the maximum

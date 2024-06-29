@@ -1,5 +1,5 @@
+use super::addr::{Frame, Virtual};
 use crate::arch::x86_64::{bump, cpu, physical};
-use addr::{Frame, Virtual};
 use macros::init;
 use pml4::{MissingEntry, Pml4};
 

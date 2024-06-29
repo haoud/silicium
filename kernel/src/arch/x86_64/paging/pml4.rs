@@ -1,5 +1,6 @@
 use crate::{
     arch::x86_64::{
+        addr::{Frame, Virtual},
         cpu,
         paging::{
             page,
@@ -10,7 +11,6 @@ use crate::{
     },
     boot, mm,
 };
-use addr::{Frame, Virtual};
 use macros::init;
 use tailcall::tailcall;
 

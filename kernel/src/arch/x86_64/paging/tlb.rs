@@ -1,11 +1,11 @@
 use crate::arch::x86_64::{
+    addr::Virtual,
     apic::{
         self,
         local::{IpiDestination, IpiPriority},
     },
     cpu, opcode,
 };
-use addr::Virtual;
 
 /// The vector number for the TLB shootdown interrupt.
 pub const SHOOTDOWN_VECTOR: u8 = 0xA0;

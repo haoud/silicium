@@ -1,3 +1,4 @@
+pub mod addr;
 pub mod apic;
 pub mod bump;
 pub mod cmos;

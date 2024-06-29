@@ -1,4 +1,4 @@
-use addr::Virtual;
+use crate::arch::x86_64::addr::Virtual;
 
 /// Read the value of the CR2 register.
 #[must_use]

@@ -3,10 +3,9 @@ use super::{
     thread::{self, Thread},
 };
 use crate::{
-    arch::{self, paging},
+    arch::{self, paging, x86_64::addr::Virtual},
     mm::{self, physical::allocator::Flags},
 };
-use addr::Virtual;
 use config::PAGE_SIZE;
 use core::{cmp::min, num::TryFromIntError};
 use elf::{endian::NativeEndian, segment::ProgramHeader, ElfBytes};

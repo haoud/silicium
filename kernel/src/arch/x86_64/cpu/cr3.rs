@@ -1,4 +1,4 @@
-use addr::Frame;
+use crate::arch::x86_64::addr::Frame;
 
 /// Read the current value of the CR3 register. This will return the current
 /// page table base physical address.

@@ -1,4 +1,4 @@
-use addr::Frame;
+use crate::arch::x86_64::addr::Frame;
 
 bitflags::bitflags! {
     /// Represents the flags of a page table entry. See Intel Vol. 3A,

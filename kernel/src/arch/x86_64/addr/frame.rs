@@ -1,4 +1,4 @@
-use crate::phys::Physical;
+use crate::arch::x86_64::addr::Physical;
 use config::PAGE_SHIFT;
 
 /// A frame is a physical address that represents a page in memory. This

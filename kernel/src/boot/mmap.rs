@@ -1,4 +1,4 @@
-use addr::Physical;
+use crate::arch::x86_64::addr::Physical;
 use arrayvec::ArrayVec;
 
 /// A memory map entry

@@ -1,5 +1,7 @@
-use crate::{arch::x86_64::physical, boot};
-use addr::Frame;
+use crate::{
+    arch::x86_64::{addr::Frame, physical},
+    boot,
+};
 use macros::init;
 
 /// Allocate a memory region using the boot allocator.

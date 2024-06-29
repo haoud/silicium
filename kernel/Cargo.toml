@@ -21,7 +21,6 @@ macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 bitmap = { path = "crates/silicium-bitmap", package = "silicium-bitmap" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
 align = { path = "crates/silicium-align", package = "silicium-align" }
-addr = { path = "crates/silicium-addr", package = "silicium-addr" }
 spin = { path = "crates/silicium-spin", package = "silicium-spin" }
 hal = { path = "crates/silicium-hal", package = "silicium-hal" }
 id = { path = "crates/silicium-id", package = "silicium-id" }
@@ -55,7 +54,6 @@ bitmap = { workspace = true }
 cfg-if = { workspace = true }
 config = { workspace = true }
 align = { workspace = true }
-addr = { workspace = true }
 spin = { workspace = true }
 talc = { workspace = true }
 elf = { workspace = true }

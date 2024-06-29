@@ -1,5 +1,7 @@
-use crate::mm::physical::{frame, STATE};
-use addr::Frame;
+use crate::{
+    arch::x86_64::addr::Frame,
+    mm::physical::{frame, STATE},
+};
 
 pub struct Allocator;
 

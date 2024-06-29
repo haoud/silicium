@@ -1,5 +1,8 @@
-use crate::{arch, boot};
-use addr::{Frame, Physical};
+use crate::{
+    arch,
+    arch::x86_64::addr::{Frame, Physical},
+    boot,
+};
 use config::PAGE_SIZE;
 use macros::init;
 use spin::Spinlock;

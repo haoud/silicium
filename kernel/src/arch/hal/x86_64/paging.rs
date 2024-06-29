@@ -1,5 +1,7 @@
-use crate::arch::x86_64::paging::{self, page, pml4::Pml4};
-use addr::{Frame, Virtual};
+use crate::arch::x86_64::{
+    addr::{Frame, Virtual},
+    paging::{self, page, pml4::Pml4},
+};
 use hal::paging::{MapError, UnmapError};
 
 pub use hal::paging::{MapFlags, MapRights};

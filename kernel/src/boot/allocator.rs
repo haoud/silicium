@@ -1,5 +1,7 @@
-use crate::boot::mmap;
-use addr::{Frame, Physical};
+use crate::{
+    arch::x86_64::addr::{Frame, Physical},
+    boot::mmap,
+};
 use arrayvec::ArrayVec;
 use config::PAGE_SIZE;
 use core::sync::atomic::{AtomicUsize, Ordering};

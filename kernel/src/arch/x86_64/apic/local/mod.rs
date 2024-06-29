@@ -1,4 +1,4 @@
-use addr::Virtual;
+use crate::arch::x86_64::addr::Virtual;
 use macros::init;
 
 pub mod timer;

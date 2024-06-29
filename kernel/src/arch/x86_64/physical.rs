@@ -1,4 +1,4 @@
-use addr::{Frame, Physical, Virtual};
+use crate::arch::x86_64::addr::{Frame, Physical, Virtual};
 use zerocopy::FromBytes;
 
 /// The start of the HHDM region. Since the kernel does not use the 5 level

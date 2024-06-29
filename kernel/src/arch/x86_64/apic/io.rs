@@ -1,5 +1,4 @@
-use crate::arch::x86_64::apic;
-use addr::Virtual;
+use crate::arch::x86_64::{addr::Virtual, apic};
 
 /// The base address of the IOAPIC MMIO
 pub const IOAPIC_BASE: Virtual = Virtual::new(0xFFFF_8000_FEC0_0000);
