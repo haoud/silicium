@@ -1,8 +1,8 @@
-use crate::arch::x86_64::addr::Virtual;
+use crate::arch::x86_64::addr::{virt::Kernel, Virtual};
 
 /// Read the value of the CR2 register.
 #[must_use]
-pub fn read() -> Virtual {
+pub fn read() -> Virtual<Kernel> {
     let value: usize;
 
     // SAFETY: This is safe because reading the cr2 register should not break

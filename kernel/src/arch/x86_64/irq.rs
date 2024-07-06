@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// The state of the interrupts.
-#[derive(Default, Debug, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct State(bool);
 
 /// Enable interrupts on the current core.

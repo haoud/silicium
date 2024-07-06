@@ -1,3 +1,4 @@
+use super::addr::virt::Kernel;
 use crate::arch::x86_64::addr::{Frame, Physical, Virtual};
 use zerocopy::FromBytes;
 
@@ -5,7 +6,8 @@ use zerocopy::FromBytes;
 /// paging, the HHDM region starts at `0xFFFF_8000_0000_0000`. In theory, we
 /// should use the value given by Limine in the HHDM response but with the
 /// current implementation, the value is always `0xFFFF_8000_0000_0000`.
-const HHDM_START: Virtual = Virtual::new(0xFFFF_8000_0000_0000);
+const HHDM_START: Virtual<Kernel> =
+    Virtual::<Kernel>::new(0xFFFF_8000_0000_0000);
 
 /// Obtain an mutable reference to the object located at the given physical
 /// address during the execution of the given closure.
@@ -127,7 +129,7 @@ pub unsafe fn init_and_leak_slice<T: Copy>(
 /// address will be correctly used and that it will not break Rust's aliasing
 /// and mutability rules.
 #[inline]
-pub fn map<T>(frame: Frame, f: impl FnOnce(Virtual) -> T) -> T {
+pub fn map<T>(frame: Frame, f: impl FnOnce(Virtual<Kernel>) -> T) -> T {
     f(translate(frame))
 }
 
@@ -139,7 +141,7 @@ pub fn map<T>(frame: Frame, f: impl FnOnce(Virtual) -> T) -> T {
 /// address and to no break Rust's aliasing and mutability rules.
 #[inline]
 #[must_use]
-pub fn translate(phys: impl Into<Physical>) -> Virtual {
+pub fn translate(phys: impl Into<Physical>) -> Virtual<Kernel> {
     // SAFETY: This is safe since the HHDM_START is a valid canonical address,
     // and in the `x86_64` architecture, the physical address is at most 52
     // bits. Therefore, the addition of the physical address to the HHDM_START

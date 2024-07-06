@@ -50,9 +50,9 @@ impl talc::OomHandler for OomHandler {
         let memory = unsafe {
             arch::physical::leak_slice::<u8>(frames, Self::ALLOCATION_SIZE)
         };
+        let start = memory.as_mut_ptr();
         let end =
             unsafe { memory.as_mut_ptr().byte_add(Self::ALLOCATION_SIZE) };
-        let start = memory.as_mut_ptr();
 
         // SAFETY: The given span is valid, does not overlapp with any other
         // span, is not in use anywhere else in the system and is valid for

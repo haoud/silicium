@@ -1,5 +1,6 @@
 use crate::arch::x86_64::addr::Physical;
 use arrayvec::ArrayVec;
+use limine::memory_map::EntryType;
 
 /// A memory map entry
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -22,7 +23,7 @@ impl Entry {
     /// Panics if the end address is not representable as a `Physical` address
     #[must_use]
     pub fn end(&self) -> Physical {
-        Physical::new(usize::from(self.start) + self.length)
+        self.start + self.length
     }
 }
 
@@ -30,8 +31,8 @@ impl Default for Entry {
     fn default() -> Self {
         Self {
             start: Physical::new(0),
-            length: 0,
             kind: Kind::Reserved,
+            length: 0,
         }
     }
 }
@@ -82,15 +83,11 @@ impl Kind {
 impl From<limine::memory_map::EntryType> for Kind {
     fn from(entry_type: limine::memory_map::EntryType) -> Self {
         match entry_type {
-            limine::memory_map::EntryType::USABLE => Self::Usable,
-            limine::memory_map::EntryType::ACPI_RECLAIMABLE => {
-                Self::AcpiReclaimable
-            }
-            limine::memory_map::EntryType::BOOTLOADER_RECLAIMABLE => {
-                Self::BootloaderReclaimable
-            }
-            limine::memory_map::EntryType::BAD_MEMORY => Self::BadMemory,
-            limine::memory_map::EntryType::KERNEL_AND_MODULES => Self::Kernel,
+            EntryType::BOOTLOADER_RECLAIMABLE => Self::BootloaderReclaimable,
+            EntryType::ACPI_RECLAIMABLE => Self::AcpiReclaimable,
+            EntryType::KERNEL_AND_MODULES => Self::Kernel,
+            EntryType::BAD_MEMORY => Self::BadMemory,
+            EntryType::USABLE => Self::Usable,
             _ => Self::Reserved,
         }
     }

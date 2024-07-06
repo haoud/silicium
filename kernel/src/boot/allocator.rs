@@ -43,14 +43,13 @@ pub fn disable() -> ArrayVec<mmap::Entry, 32> {
     // Align all usable memory regions to the page size
     mmap.iter_mut()
         .filter(|region| region.kind == mmap::Kind::Usable)
-        .filter(|region| !region.start.is_page_aligned())
+        .filter(|region| !region.start.is_aligned_to(usize::from(PAGE_SIZE)))
         .for_each(|region| {
             let offset = usize::from(region.start) % usize::from(PAGE_SIZE);
             let correction = usize::from(PAGE_SIZE) - offset;
 
-            region.start =
-                Physical::new(usize::from(region.start) - correction);
             region.length -= correction;
+            region.start -= correction;
         });
     mmap
 }

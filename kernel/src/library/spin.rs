@@ -4,6 +4,8 @@ use core::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
+use crate::arch::irq;
+
 /// A simple spinlock implementation that allow exclusive access to the inner
 /// data. The lock is acquired by spinning until it is free, and it is
 /// released when the guard is dropped.
@@ -65,7 +67,7 @@ impl<T> Spinlock<T> {
     /// if an exception is raised while the guard is held.
     #[must_use]
     pub fn lock_irq_safe(&self) -> SpinlockIrqGuard<T> {
-        let irq = irq_save_and_disable();
+        let irq = irq::save_and_disable();
         loop {
             if let Some(lock) = self.try_lock_weak_irq(irq) {
                 break lock;
@@ -119,7 +121,10 @@ impl<T> Spinlock<T> {
     }
 
     #[must_use]
-    fn try_lock_weak_irq(&self, irq: bool) -> Option<SpinlockIrqGuard<T>> {
+    fn try_lock_weak_irq(
+        &self,
+        irq: irq::State,
+    ) -> Option<SpinlockIrqGuard<T>> {
         self.lock
             .compare_exchange_weak(
                 false,
@@ -183,7 +188,7 @@ impl<'a, T> Drop for SpinlockGuard<'a, T> {
 pub struct SpinlockIrqGuard<'a, T> {
     lock: &'a AtomicBool,
     inner: &'a mut T,
-    irq: bool,
+    irq: irq::State,
 }
 
 impl<'a, T> Deref for SpinlockIrqGuard<'a, T> {
@@ -203,12 +208,7 @@ impl<'a, T> DerefMut for SpinlockIrqGuard<'a, T> {
 impl<'a, T> Drop for SpinlockIrqGuard<'a, T> {
     fn drop(&mut self) {
         self.lock.store(false, Ordering::Release);
-        // SAFETY: Restoring the IRQ state here should be safe, we assume that
-        // if the IRQ was enabled before acquiring the lock, it should be safe
-        // to restore it here.
-        unsafe {
-            irq_restore(self.irq);
-        }
+        irq::restore(self.irq);
     }
 }
 
@@ -245,47 +245,5 @@ unsafe impl lock_api::RawMutex for Spinlock<()> {
     /// Check if the lock is held.
     fn is_locked(&self) -> bool {
         Self::is_locked(self)
-    }
-}
-
-/// Save the current IRQ state and disable interrupts, returning the
-/// previous state that can be used to restore the IRQ state.
-#[inline]
-#[must_use]
-fn irq_save_and_disable() -> bool {
-    // SAFETY: Reading the RFLAGS register is safe.
-    let irq = unsafe {
-        let mut flags: u32;
-        core::arch::asm!("
-            pushfq
-            pop {0:r}",
-            out(reg) flags
-        );
-        flags & (1 << 9) != 0
-    };
-
-    // SAFETY: Disabling interrupts is 100% safe.
-    unsafe {
-        core::arch::asm!("cli");
-    }
-    irq
-}
-
-/// Restore the IRQ state to the previous value.
-///
-/// # Safety
-/// The caller must ensure that restoring the IRQ state is safe and will not
-/// cause any undefined behavior or memory unsafety, especially when the IRQ
-/// was enabled before calling `irq_save_and_disable`.
-#[inline]
-#[allow(clippy::undocumented_unsafe_blocks)]
-unsafe fn irq_restore(state: bool) {
-    match state {
-        true => unsafe {
-            core::arch::asm!("sti");
-        },
-        false => unsafe {
-            core::arch::asm!("cli");
-        },
     }
 }

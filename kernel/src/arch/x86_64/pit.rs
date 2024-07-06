@@ -1,4 +1,4 @@
-pub use crate::arch::x86_64::io::Port;
+use crate::arch::x86_64::io::Port;
 
 static CHANNEL_0: Port<u8> = Port::new(0x40);
 static CHANNEL_1: Port<u8> = Port::new(0x41);

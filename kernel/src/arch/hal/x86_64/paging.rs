@@ -1,5 +1,5 @@
 use crate::arch::x86_64::{
-    addr::{Frame, Virtual},
+    addr::{self, Frame, Virtual},
     paging::{self, page, pml4::Pml4},
 };
 use hal::paging::{MapError, UnmapError};
@@ -60,9 +60,9 @@ impl Default for PageTable {
 /// and will not cause any undefined behavior (for example, by mapping the same
 /// kernel frame to two different addresses, potentially causing multiple
 /// mutable aliasing or data races, potentially causing undefined behavior).
-pub unsafe fn map(
+pub unsafe fn map<T: addr::virt::Type>(
     table: &mut PageTable,
-    addr: Virtual,
+    addr: Virtual<T>,
     frame: Frame,
     flags: MapFlags,
     rights: MapRights,
@@ -87,9 +87,9 @@ pub unsafe fn map(
 /// The caller must also ensure that the address that will be unmapped is not
 /// used anymore by the kernel. The caller is responsible for freeing (or not)
 /// the frame returned by this function.
-pub unsafe fn unmap(
+pub unsafe fn unmap<T: addr::virt::Type>(
     table: &mut PageTable,
-    addr: Virtual,
+    addr: Virtual<T>,
 ) -> Result<Frame, UnmapError> {
     paging::unmap(&mut table.0, addr).map_err(|e| match e {
         paging::UnmapError::NotMapped => UnmapError::NotMapped,
@@ -99,7 +99,10 @@ pub unsafe fn unmap(
 /// Translates a virtual address to a physical frame. The virtual address is
 /// not required to be page aligned, and the function will return the frame
 /// containing the address if it is mapped, or `None` if it is not.
-pub fn translate(table: &mut PageTable, addr: Virtual) -> Option<Frame> {
+pub fn translate<T: addr::virt::Type>(
+    table: &mut PageTable,
+    addr: Virtual<T>,
+) -> Option<Frame> {
     // SAFETY: This is safe since we can assume that the page table is valid
     // and correctly formed if the [`map`] and [`unmap`] functions are used
     // correctly.

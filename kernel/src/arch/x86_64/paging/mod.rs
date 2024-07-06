@@ -1,4 +1,4 @@
-use super::addr::{Frame, Virtual};
+use super::addr::{self, Frame, Virtual};
 use crate::arch::x86_64::{bump, cpu, physical};
 use macros::init;
 use pml4::{MissingEntry, Pml4};
@@ -96,9 +96,9 @@ pub unsafe fn load_kernel_pml4() {
 /// kernel frame to two different addresses, potentially causing multiple
 /// multable aliasing or data races).
 /// Failure to do so will result in undefined behavior.
-pub unsafe fn map(
+pub unsafe fn map<T: addr::virt::Type>(
     pml4: &mut Pml4,
-    addr: Virtual,
+    addr: Virtual<T>,
     frame: Frame,
     flags: page::Flags,
 ) -> Result<(), MapError> {
@@ -130,9 +130,9 @@ pub unsafe fn map(
 /// used anymore. The caller is responsible for freeing (or not) the frame
 /// returned by this function.
 /// Failure to do so will result in undefined behavior.
-pub unsafe fn unmap(
+pub unsafe fn unmap<T: addr::virt::Type>(
     pml4: &mut Pml4,
-    addr: Virtual,
+    addr: Virtual<T>,
 ) -> Result<Frame, UnmapError> {
     let (level, entry) = pml4
         .fetch_last_entry(addr, MissingEntry::Fail)
@@ -156,7 +156,10 @@ pub unsafe fn unmap(
 /// to a table is correctly allocated and initialized and belongs to the PML4.
 /// Failure to do so will result in undefined behavior, likely a page fault.
 #[must_use]
-pub unsafe fn translate(pml4: &mut Pml4, addr: Virtual) -> Option<Frame> {
+pub unsafe fn translate<T: addr::virt::Type>(
+    pml4: &mut Pml4,
+    addr: Virtual<T>,
+) -> Option<Frame> {
     let (level, entry) =
         pml4.fetch_last_entry(addr, MissingEntry::Fail).ok()?;
     let base = entry.address()?;

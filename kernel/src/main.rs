@@ -4,17 +4,22 @@
 #![feature(const_mut_refs)]
 #![feature(negative_impls)]
 #![feature(prelude_import)]
+#![feature(const_option)]
+#![feature(step_trait)]
 #![allow(internal_features)]
 
-// TODO::
-// - Reduce the number of crates by integrating some of them into the
-//   kernel crate. This will simply the code when a crate will depend
-//   on a feature of the kernel crate, thus creating a circular dependency...
+// TODO:
 // - The APIC timer calibration is not very precise and can sometimes be
 //   off by a factor of 10 !! Probably because it use the PIT timer to
 //   calibrate the APIC timer. We should find a way to calibrate the APIC
 //   timer without using the PIT timer.
-
+// - Maybe add more async code into the kernel ?
+//      - Writing to the serial port could be done asynchronously
+//        with interrupts and without busy waiting
+// - Create a `x86_64` crate that contains all the x86_64 specific code
+//   that does not depend on the kernel crate. This will allow to use the
+//   x86_64 specific code in other projects without having to depend on
+//   the kernel crate.
 extern crate alloc;
 
 pub mod arch;
@@ -55,7 +60,7 @@ pub unsafe extern "C" fn _entry() -> ! {
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
-    // FIXME: Use a more reliable stack (this stack will be
+    // TODO: Use a more reliable stack (this stack will be
     // deallocated in the future)
     future::executor::run();
 }

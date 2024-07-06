@@ -1,10 +1,11 @@
-use crate::arch::x86_64::addr::Virtual;
+use crate::arch::x86_64::addr::{virt::Kernel, Virtual};
 use macros::init;
 
 pub mod timer;
 
 /// The base address of the LAPIC MMIO
-pub const LAPIC_BASE: Virtual = Virtual::new(0xFFFF_8000_FEE0_0000);
+pub const LAPIC_BASE: Virtual<Kernel> =
+    Virtual::<Kernel>::new(0xFFFF_8000_FEE0_0000);
 
 /// A register in the local APIC. The register value must be added to the
 /// LAPIC base address in order to access the register.

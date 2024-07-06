@@ -1,5 +1,3 @@
-#![cfg_attr(not(test), no_std)]
-
 macro_rules! align_impl {
     ($name:ident, $align:literal) => {
         /// A wrapper type that ensures that the inner type is aligned **at

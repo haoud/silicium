@@ -1,6 +1,6 @@
 use crate::{
     arch::x86_64::{
-        addr::{Frame, Virtual},
+        addr::{self, virt::Kernel, Frame, Virtual},
         cpu,
         paging::{
             page,
@@ -87,9 +87,9 @@ impl Pml4 {
     /// caller must ensure that the frame allocator is correctly initialized
     /// and that it is safe to allocate a new frame.
     /// Failing to do so will result in undefined behavior.
-    pub unsafe fn fetch_last_entry(
+    pub unsafe fn fetch_last_entry<T: addr::virt::Type>(
         &mut self,
-        addr: Virtual,
+        addr: Virtual<T>,
         behavior: MissingEntry,
     ) -> Result<(table::Level, &mut page::Entry), FetchError> {
         Self::fetch_entry(
@@ -101,9 +101,9 @@ impl Pml4 {
     }
 
     #[tailcall]
-    unsafe fn fetch_entry(
+    unsafe fn fetch_entry<T: addr::virt::Type>(
         table: &mut [page::Entry],
-        addr: Virtual,
+        addr: Virtual<T>,
         level: table::Level,
         behavior: MissingEntry,
     ) -> Result<(table::Level, &mut page::Entry), FetchError> {
@@ -185,7 +185,7 @@ impl Pml4 {
             self.frame = Some(
                 translate(
                     self,
-                    Virtual::from_ptr_unchecked(self.table.as_ptr()),
+                    Virtual::<Kernel>::from_ptr_unchecked(self.table.as_ptr()),
                 )
                 .expect("Failed to translate the PML4 virtual address"),
             );

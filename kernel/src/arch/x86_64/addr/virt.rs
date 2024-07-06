@@ -1,157 +1,262 @@
+use core::{iter::Step, marker::PhantomData};
+
+/// The type of a virtual address. It can either be a user-space address or a
+/// kernel-space address.
+pub trait Type: Copy {}
+
+/// A user-space virtual address.
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct User;
+impl Type for User {}
+
+/// A kernel-space virtual address.
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Kernel;
+impl Type for Kernel {}
+
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
-pub struct Virtual(pub(crate) usize);
+pub struct Virtual<T>(usize, PhantomData<T>);
 
-impl Virtual {
-    /// Creates a new `Virtual` address
-    ///
-    /// # Panics
-    /// Panics if the given address is not canonical, which means that the
-    /// most significant 16 bits of the address must be either all ones or
-    /// all zeros. Put more simply, the address can't be between
-    /// `0x0000_8000_0000_0000` and `0xFFFF_7FFF_FFFF_FFFF` (inclusive).
-    #[must_use]
-    pub const fn new(addr: usize) -> Self {
-        match Self::try_new(addr) {
-            None => panic!("Virtual address is not canonical"),
-            Some(addr) => addr,
-        }
-    }
-
-    /// Creates a new `Virtual` address if the given address is canonical.
-    /// Returns `None` if the address is not canonical.
-    ///
-    /// For an definition of what is a canonical address, see the
-    /// documentation for the [`new`] method.
-    #[must_use]
-    pub const fn try_new(addr: usize) -> Option<Self> {
-        match (addr & 0xFFFF_8000_0000_0000) >> 47 {
-            0 | 0x1FFFF => Some(Self(addr)),
-            _ => None,
-        }
-    }
-
-    /// Create a new `Virtual` address without checking if the address is
-    /// canonical.
+impl<T: Type> Virtual<T> {
+    /// Create a new virtual address without performing any checks.
     ///
     /// # Safety
-    /// The caller must ensure that the given address is canonical. For an
-    /// definition of what is a canonical address, see the documentation for
-    /// the [`new`] method.
+    /// The caller must ensure that the virtual address is valid according to
+    /// the requested variant (`KERNEL` or `USER`)
     #[must_use]
     pub const unsafe fn new_unchecked(addr: usize) -> Self {
-        Self(addr)
+        Self(addr, PhantomData)
     }
 
-    /// Creates a new `Virtual` address from a pointer.
-    ///
-    /// # Panics
-    /// Panics if the given pointer is not canonical. For an definition of
-    /// what is a canonical address, see the documentation for the [`new`]
-    /// method.
-    #[must_use]
-    pub fn from_ptr<T>(ptr: *const T) -> Self {
-        Self::new(ptr as usize)
-    }
-
-    /// Creates a new `Virtual` address from a pointer without checking if
-    /// the address is canonical.
+    /// Create a new virtual address from a pointer without performing any
+    /// checks.
     ///
     /// # Safety
-    /// The caller must ensure that the given pointer is canonical. For an
-    /// definition of what is a canonical address, see the documentation for
-    /// the [`new`] method. If the provided pointer point to a valid object,
-    /// then the address should be canonical. In practice, this method should
-    /// be safe to use in most cases.
+    /// The caller must ensure that the virtual address is valid according to
+    /// the requested variant (`KERNEL` or `USER`)
     #[must_use]
-    pub unsafe fn from_ptr_unchecked<T>(ptr: *const T) -> Self {
+    pub unsafe fn from_ptr_unchecked<P>(ptr: *const P) -> Self {
         Self::new_unchecked(ptr as usize)
     }
 
-    /// Returns the address as a mutable pointer to the specified type.
+    /// Return the physical address as a mutable pointer.
     #[must_use]
-    pub const fn as_mut_ptr<T>(self) -> *mut T {
-        self.0 as *mut T
+    pub const fn as_mut_ptr<P>(&self) -> *mut P {
+        self.0 as *mut P
     }
 
-    /// Returns the address as a pointer to the specified type.
+    /// Return the physical address as a const pointer.
     #[must_use]
-    pub const fn as_ptr<T>(self) -> *const T {
-        self.0 as *const T
+    pub const fn as_ptr<P>(&self) -> *const P {
+        self.0 as *const P
     }
 
-    /// If the address is page-aligned, returns `true`. Otherwise, returns
-    /// `false`. For reference, the default page size on the `x86_64`
-    /// architecture is 4096 bytes.
+    /// Return the address as a `usize`.
     #[must_use]
-    pub const fn is_page_aligned(&self) -> bool {
-        (self.0 & 0xFFF) == 0
+    pub const fn as_usize(&self) -> usize {
+        self.0
     }
 
-    /// Align the address to the previous page aligned address. If the
-    /// address is already page-aligned, the same address is returned.
+    /// Return the address as a `u64`.
     #[must_use]
-    pub const fn page_align_down(&self) -> Self {
-        Self(self.0 & !0xFFF)
+    pub const fn as_u64(&self) -> u64 {
+        self.0 as u64
     }
 
-    /// Align the address to the next page aligned address. If the address
-    /// is already page-aligned, the same address is returned.
+    /// Check if the address is zero.
+    #[must_use]
+    pub const fn is_zero(&self) -> bool {
+        self.0 == 0
+    }
+}
+
+impl Virtual<User> {
+    /// The minimum valid user virtual address, assuming a 39-bit virtual
+    /// address space.
+    pub const START: Self = Self(0x0000_0000_0000_0000, PhantomData);
+
+    /// The maximum valid user virtual address, assuming a 39-bit virtual
+    /// address space.
+    pub const END: Self = Self(0x0000_7FFF_FFFF_FFFF, PhantomData);
+
+    /// Create a new user virtual address.
+    ///
+    /// # Panics
+    /// This function will panic if the address is not in the user
+    /// address space (as defined by [`START`] and [`END`]).
+    #[must_use]
+    pub const fn new(addr: usize) -> Self {
+        match Self::try_new(addr) {
+            None => panic!("User virtual address out of bounds"),
+            Some(v) => v,
+        }
+    }
+
+    /// Attempt to create a new user virtual address. If the address is not
+    /// in the user address space (as defined by [`START`] and [`END`]), then
+    /// `None` is returned.
+    #[must_use]
+    pub const fn try_new(addr: usize) -> Option<Self> {
+        if addr <= Self::END.0 {
+            Some(Self(addr, PhantomData))
+        } else {
+            None
+        }
+    }
+}
+
+impl Step for Virtual<User> {
+    /// The number of steps between two user virtual addresses is simply the
+    /// difference between the two addresses.
+    fn steps_between(start: &Self, end: &Self) -> Option<usize> {
+        if end >= start {
+            Some(end.0 - start.0)
+        } else {
+            None
+        }
+    }
+
+    fn forward_checked(start: Self, count: usize) -> Option<Self> {
+        Self::try_new(start.0 + count)
+    }
+
+    fn backward_checked(start: Self, count: usize) -> Option<Self> {
+        Self::try_new(start.0 - count)
+    }
+}
+
+impl Virtual<Kernel> {
+    /// The minimum valid kernel virtual address, assuming a 39-bit virtual
+    /// address space.
+    pub const START: Self = Self(0xFFFF_8000_0000_0000, PhantomData);
+
+    /// The maximum valid kernel virtual address, assuming a 39-bit virtual
+    /// address space.
+    pub const END: Self = Self(0xFFFF_FFFF_FFFF_FFFF, PhantomData);
+
+    /// Create a new kernel virtual address.
+    ///
+    /// # Panics
+    /// This function will panic if the address is not in the kernel
+    /// address space (as defined by [`START`] and [`END`]).
+    #[must_use]
+    pub const fn new(addr: usize) -> Self {
+        match Self::try_new(addr) {
+            None => panic!("Kernel virtual address out of bounds"),
+            Some(v) => v,
+        }
+    }
+
+    /// Attempt to create a new kernel virtual address. If the address is not
+    /// in the kernel address space (as defined by [`START`] and [`END`]),
+    /// then `None` is returned.
+    #[must_use]
+    pub const fn try_new(addr: usize) -> Option<Self> {
+        if addr >= Self::START.0 {
+            Some(Self(addr, PhantomData))
+        } else {
+            None
+        }
+    }
+
+    /// Create a new kernel virtual address from a pointer.
+    ///
+    /// # Panics
+    /// This function will panic if the address is not in the kernel
+    /// address space (as defined by [`START`] and [`END`]).
+    #[must_use]
+    pub fn from_ptr<P>(ptr: *const P) -> Self {
+        Self::new(ptr as usize)
+    }
+
+    /// Align the address up to the nearest page boundary. If the address is
+    /// already page aligned, then it is returned as is.
+    ///
+    /// # Panics
+    /// This function will panic if the resulting address cannot fit into an
+    /// `u64` (the address is greater than [`MAX`]).
     #[must_use]
     pub const fn page_align_up(&self) -> Self {
-        Self((self.0 + 0xFFF) & !0xFFF)
+        Self::new((self.0 + 4096 - 1) & !(4096 - 1))
     }
 }
 
-impl From<Virtual> for usize {
-    fn from(addr: Virtual) -> usize {
-        addr.0
+impl<T: Type> From<Virtual<T>> for usize {
+    fn from(addr: Virtual<T>) -> Self {
+        addr.as_usize()
     }
 }
 
-impl From<Virtual> for u64 {
-    fn from(addr: Virtual) -> u64 {
-        addr.0 as u64
+impl<T: Type> From<Virtual<T>> for u64 {
+    fn from(addr: Virtual<T>) -> Self {
+        addr.as_u64()
     }
 }
 
-impl core::fmt::Binary for Virtual {
+impl Step for Virtual<Kernel> {
+    /// The number of steps between two kernel virtual addresses is
+    /// simply the difference between the two addresses.
+    fn steps_between(start: &Self, end: &Self) -> Option<usize> {
+        if end >= start {
+            Some(end.0 - start.0)
+        } else {
+            None
+        }
+    }
+
+    /// Advances the virtual address by `count` bytes. If the resulting
+    /// address is not in the kernel address space or overflows, then
+    /// `None` is returned.
+    fn forward_checked(start: Self, count: usize) -> Option<Self> {
+        Self::try_new(start.0.checked_add(count)?)
+    }
+
+    /// Retreats the virtual address by `count` bytes. If the resulting
+    /// address is not in the kernel address space or underflows, then
+    /// `None` is returned.
+    fn backward_checked(start: Self, count: usize) -> Option<Self> {
+        Self::try_new(start.0.checked_sub(count)?)
+    }
+}
+
+impl<T: Type> core::fmt::Binary for Virtual<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#b}", self.0)
     }
 }
 
-impl core::fmt::Octal for Virtual {
+impl<T: Type> core::fmt::Octal for Virtual<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#o}", self.0)
     }
 }
 
-impl core::fmt::LowerHex for Virtual {
+impl<T: Type> core::fmt::LowerHex for Virtual<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#x}", self.0)
     }
 }
 
-impl core::fmt::UpperHex for Virtual {
+impl<T: Type> core::fmt::UpperHex for Virtual<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#X}", self.0)
     }
 }
 
-impl core::fmt::Pointer for Virtual {
+impl<T: Type> core::fmt::Pointer for Virtual<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#x}", self.0)
     }
 }
 
-impl core::fmt::Debug for Virtual {
+impl<T: Type> core::fmt::Debug for Virtual<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Virtual({:#x})", self.0)
     }
 }
 
-impl core::fmt::Display for Virtual {
+impl<T: Type> core::fmt::Display for Virtual<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:#x}", self.0)
     }

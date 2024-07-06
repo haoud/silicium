@@ -1,7 +1,11 @@
-use crate::arch::x86_64::{addr::Virtual, apic};
+use crate::arch::x86_64::{
+    addr::{virt::Kernel, Virtual},
+    apic,
+};
 
 /// The base address of the IOAPIC MMIO
-pub const IOAPIC_BASE: Virtual = Virtual::new(0xFFFF_8000_FEC0_0000);
+pub const IOAPIC_BASE: Virtual<Kernel> =
+    Virtual::<Kernel>::new(0xFFFF_8000_FEC0_0000);
 
 /// The base IRQ number for the IOAPIC
 pub const IOAPIC_IRQ_BASE: u8 = 32;

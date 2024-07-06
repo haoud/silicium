@@ -1,5 +1,5 @@
 use crate::arch::x86_64::{
-    addr::Virtual,
+    addr::{self, Virtual},
     apic::{
         self,
         local::{IpiDestination, IpiPriority},
@@ -16,7 +16,7 @@ pub const SHOOTDOWN_VECTOR: u8 = 0xA0;
 /// This should be used sparingly, for exemple when an entry in the page
 /// table is changed.
 #[inline]
-pub fn invalidate(address: Virtual) {
+pub fn invalidate<T: addr::virt::Type>(address: Virtual<T>) {
     opcode::invlpg(usize::from(address));
 }
 
@@ -43,7 +43,7 @@ pub fn own_irq(irq: u8) -> bool {
 /// - Only invalidate the TLB entries that are needed.
 /// - Only send an IPI to the cores that need to invalidate their TLB.
 /// - Lazy TLB invalidation.
-pub fn shootdown(address: Virtual) {
+pub fn shootdown<T: addr::virt::Type>(address: Virtual<T>) {
     // SAFETY: This is safe because send an IPI to others core should be safe
     // since we can assume that the IDT is correctly initialized and that the
     // interrupt will not cause UB or memory unsafety.

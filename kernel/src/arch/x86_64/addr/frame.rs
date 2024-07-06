@@ -11,15 +11,10 @@ use config::PAGE_SHIFT;
 pub struct Frame(pub(crate) Physical);
 
 impl Frame {
-    /// The maximum frame index supported by the `x86_64` architecture. This
-    /// is because physical addresses are 52 bits wide in the `x86_64`
-    /// architecture.
-    pub const MAX_INDEX: usize = Self::MAX.0 .0 >> PAGE_SHIFT;
-
     /// The maximum frame address supported by the `x86_64` architecture.
     /// This is because physical addresses are 52 bits wide in the `x86_64`
     /// architecture.
-    pub const MAX: Frame = Frame(Physical(0x000F_FFFF_FFFF_0000));
+    pub const MAX: Frame = Frame(Physical::new(0x000F_FFFF_FFFF_0000));
 
     /// Creates a new `Frame` from the given address.
     ///
@@ -43,7 +38,7 @@ impl Frame {
     pub const fn try_new(addr: usize) -> Option<Self> {
         match Physical::try_new(addr) {
             Some(addr) => {
-                if addr.is_page_aligned() {
+                if addr.is_aligned_to(4096) {
                     Some(Frame(addr))
                 } else {
                     None
@@ -106,19 +101,19 @@ impl Frame {
     /// 1 for each frame.
     #[must_use]
     pub const fn index(&self) -> usize {
-        self.0 .0 >> PAGE_SHIFT as usize
+        self.0.as_usize() >> PAGE_SHIFT as usize
     }
 }
 
 impl From<Frame> for usize {
     fn from(frame: Frame) -> usize {
-        frame.0 .0
+        frame.0.as_usize()
     }
 }
 
 impl From<Frame> for u64 {
     fn from(frame: Frame) -> u64 {
-        frame.0 .0 as u64
+        frame.0.as_u64()
     }
 }
 
