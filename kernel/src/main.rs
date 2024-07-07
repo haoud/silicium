@@ -12,6 +12,7 @@ extern crate alloc;
 
 pub mod arch;
 pub mod boot;
+pub mod drivers;
 pub mod future;
 pub mod library;
 pub mod mm;
