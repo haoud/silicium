@@ -9,6 +9,7 @@ pub mod percpu;
 pub mod physical;
 pub mod time;
 
+#[cfg(not(test))]
 pub mod lang;
 
 /// Request for the `HHDM` (High Half Direct Mapping) feature. This will order
