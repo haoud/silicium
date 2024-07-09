@@ -46,6 +46,9 @@ pub unsafe extern "C" fn _entry() -> ! {
     // Setup the async runtime
     future::setup();
 
+    // Setup the framebuffer
+    drivers::fb::setup();
+
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully");
 
