@@ -1,5 +1,16 @@
-use crate::library::spin::Spinlock;
+use embedded_graphics::{
+    pixelcolor::Rgb888, prelude::*, primitives::Rectangle,
+};
 
+/// A framebuffer object that provides a high-level interface to a
+/// framebuffer buffer. It provides a safe interface to draw pixels
+/// and shapes to the framebuffer buffer.
+///
+/// # Limitations
+/// Currently, the framebuffer only supports 32-bit framebuffers with
+/// 8-bit red, green, and blue masks. This is the most common format
+/// for framebuffers, but may not work on older systems when 24-bit
+/// framebuffers are used to save memory.
 #[derive(Default)]
 pub struct Framebuffer<'a> {
     /// The width of the framebuffer, in pixels.
@@ -103,106 +114,46 @@ impl Framebuffer<'_> {
     }
 }
 
+impl Dimensions for Framebuffer<'_> {
+    /// Get the bounding box of the framebuffer. This is a rectangle
+    /// with the top-left corner at `(0, 0)` and the bottom-right corner
+    /// at `(width, height)`.
+    fn bounding_box(&self) -> Rectangle {
+        let height = self.height as u32;
+        let width = self.width as u32;
+        Rectangle::new(Point::zero(), Size::new(width, height))
+    }
+}
+
+impl DrawTarget for Framebuffer<'_> {
+    type Color = Rgb888;
+    type Error = core::convert::Infallible;
+
+    /// Draw pixels to the framebuffer. This function is called by the
+    /// embedded-graphics library to draw pixels to the framebuffer.
+    fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
+    where
+        I: IntoIterator<Item = Pixel<Self::Color>>,
+    {
+        for Pixel(point, color) in pixels {
+            self.draw_pixel(
+                point.x as usize,
+                point.y as usize,
+                Color {
+                    r: color.r(),
+                    g: color.g(),
+                    b: color.b(),
+                },
+            );
+        }
+
+        Ok(())
+    }
+}
+
 impl core::fmt::Debug for Framebuffer<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("Framebuffer")
-            .field("width", &self.width)
-            .field("height", &self.height)
-            .field("bpp", &self.bpp)
-            .finish()
-    }
-}
-
-pub struct Pixel<'a> {
-    framebuffer: &'a mut Framebuffer<'a>,
-    x: usize,
-    y: usize,
-}
-
-impl<'a> Pixel<'a> {
-    /// Create a new pixel object from a framebuffer and coordinates.
-    ///
-    /// # Panics
-    /// This function panics if the coordinates are out of bounds.
-    #[must_use]
-    pub fn get(
-        framebuffer: &'a mut Framebuffer<'a>,
-        x: usize,
-        y: usize,
-    ) -> Self {
-        assert!(y < framebuffer.height, "y coordinate out of bounds");
-        assert!(x < framebuffer.width, "x coordinate out of bounds");
-        Pixel { framebuffer, x, y }
-    }
-
-    /// Get the offset of the pixel in the framebuffer buffer.
-    #[must_use]
-    pub fn offset(&self) -> usize {
-        self.y * self.framebuffer.width + self.x
-    }
-
-    /// Get the red component of the pixel.
-    #[must_use]
-    pub fn red(&self) -> u8 {
-        ((self.data() & self.framebuffer.red_mask)
-            >> self.framebuffer.red_mask.trailing_zeros()) as u8
-    }
-
-    /// Get the green component of the pixel.
-    #[must_use]
-    pub fn green(&self) -> u8 {
-        ((self.data() & self.framebuffer.green_mask)
-            >> self.framebuffer.green_mask.trailing_zeros()) as u8
-    }
-
-    /// Get the blue component of the pixel.
-    #[must_use]
-    pub fn blue(&self) -> u8 {
-        ((self.data() & self.framebuffer.blue_mask)
-            >> self.framebuffer.blue_mask.trailing_zeros()) as u8
-    }
-
-    /// Set the red component of the pixel.
-    pub fn set_red(&mut self, value: u8) {
-        let shift = self.framebuffer.red_mask.trailing_zeros();
-        self.set(
-            self.data() & !self.framebuffer.red_mask
-                | (u32::from(value) << shift & self.framebuffer.red_mask),
-        );
-    }
-
-    /// Set the green component of the pixel.
-    pub fn set_green(&mut self, value: u8) {
-        let shift = self.framebuffer.green_mask.trailing_zeros();
-        self.set(
-            self.data() & !self.framebuffer.green_mask
-                | (u32::from(value) << shift & self.framebuffer.green_mask),
-        );
-    }
-
-    /// Set the blue component of the pixel.
-    pub fn set_blue(&mut self, value: u8) {
-        let shift = self.framebuffer.blue_mask.trailing_zeros();
-        self.set(
-            self.data() & !self.framebuffer.blue_mask
-                | (u32::from(value) << shift & self.framebuffer.blue_mask),
-        );
-    }
-
-    /// Set the color of the pixel.
-    pub fn set_color(&mut self, color: Color) {
-        self.set(self.framebuffer.make_pixel(color));
-    }
-
-    /// Set the raw 32-bit data of the pixel.
-    pub fn set(&mut self, data: u32) {
-        self.framebuffer.buffer[self.offset()] = data;
-    }
-
-    /// Get the raw 32-bit data of the pixel.
-    #[must_use]
-    pub fn data(&self) -> u32 {
-        self.framebuffer.buffer[self.offset()]
+        f.debug_struct("Framebuffer").finish()
     }
 }
 
@@ -214,12 +165,22 @@ pub struct Color {
     pub b: u8,
 }
 
+impl Color {
+    pub const BLACK: Self = Self { r: 0, g: 0, b: 0 };
+    pub const WHITE: Self = Self {
+        r: 255,
+        g: 255,
+        b: 255,
+    };
+}
+
+/// A request to get the framebuffer from the bootloader.
 static FB_REQUEST: limine::request::FramebufferRequest =
     limine::request::FramebufferRequest::new();
 
-static FRAMEBUFFER: Spinlock<Framebuffer> = Spinlock::new(Framebuffer::none());
-
-pub fn setup() {
+/// Setup the framebuffer by getting the framebuffer response from the
+/// bootloader and create a framebuffer object from the response.
+pub fn setup() -> Framebuffer<'static> {
     let response = FB_REQUEST
         .get_response()
         .expect("Failed to get framebuffer response");
@@ -256,11 +217,12 @@ pub fn setup() {
         )
     };
 
+    // Compute the red, green, and blue masks from the framebuffer
     let green_mask = ((1 << fb.green_mask_size()) - 1) << fb.green_mask_shift();
     let blue_mask = ((1 << fb.blue_mask_size()) - 1) << fb.blue_mask_shift();
     let red_mask = ((1 << fb.red_mask_size()) - 1) << fb.red_mask_shift();
 
-    let mut framebuffer = Framebuffer {
+    Framebuffer {
         height: fb.height() as usize,
         width: fb.width() as usize,
         bpp: fb.bpp() as usize / 8,
@@ -268,12 +230,5 @@ pub fn setup() {
         blue_mask,
         red_mask,
         buffer,
-    };
-
-    framebuffer.clear(Color {
-        r: 32,
-        g: 144,
-        b: 255,
-    });
-    *FRAMEBUFFER.lock() = framebuffer;
+    }
 }

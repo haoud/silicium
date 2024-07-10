@@ -47,10 +47,14 @@ pub unsafe extern "C" fn _entry() -> ! {
     future::setup();
 
     // Setup the framebuffer
-    drivers::fb::setup();
+    let fb = drivers::fb::setup();
+    let mut tty = drivers::tty::VirtualTerminal::new(fb);
+    tty.write_str("Silicium booted successfully\n");
+    tty.write_str("Welcome to Silicium !\n");
+    tty.flush();
 
     // Log that the kernel has successfully booted
-    log::info!("Silicium booted successfully");
+    log::info!("Silicium booted successfully !");
 
     // TODO: Use a more reliable stack (this stack will be
     // deallocated in the future)

@@ -35,6 +35,7 @@ limine = "0.2"
 log = "0.4.20"
 
 [dependencies]
+embedded-graphics = "0.8.1"
 crossbeam = { workspace = true }
 arrayvec = { workspace = true }
 bitfield = { workspace = true }
@@ -65,5 +66,5 @@ logging = []
 
 [profile.release]
 codegen-units = 1
-opt-level = "s"
+opt-level = 2
 lto = true
