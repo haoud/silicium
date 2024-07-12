@@ -193,6 +193,7 @@ dependencies = [
  "limine",
  "lock_api",
  "log",
+ "pc-keyboard",
  "silicium-config",
  "silicium-hal",
  "silicium-macros",
@@ -240,6 +241,12 @@ checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
 ]
+
+[[package]]
+name = "pc-keyboard"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed089a1fbffe3337a1a345501c981f1eb1e47e69de5a40e852433e12953c3174"
 
 [[package]]
 name = "pin-project-lite"

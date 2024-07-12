@@ -51,7 +51,7 @@ impl Default for PageTable {
 ///
 /// # Errors
 /// - `MapError::OutOfMemory` if the kernel ran out of memory while trying to
-///  allocate a new table.
+///   allocate a new table.
 /// - `MapError::AlreadyMapped` if the address is already mapped to a frame.
 ///
 /// # Safety

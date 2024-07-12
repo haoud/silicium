@@ -1,0 +1,22 @@
+{
+    "lsp": {
+        "rust-analyzer": {
+            "initialization_options": {
+                "cargo": {
+                    "target": "x86_64-unknown-none",
+                    "unsetTest": ["kernel"]
+                },
+                "check": {
+                    "command": "clippy",
+                    "allTargets": false
+                },
+                "procMacro": {
+                    "attribute": {
+                        "enable": true
+                    },
+                    "enable": true
+                }
+            }
+        }
+    }
+}

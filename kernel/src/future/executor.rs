@@ -111,6 +111,7 @@ pub unsafe fn setup() {
 /// Spawn a new task in the executor. The task will be polled when the
 /// executor will be run with the `run` function.
 pub fn spawn(task: Task) {
+    log::trace!("Spaning a new future (size: {})", task.future_size());
     EXECUTOR
         .lock()
         .as_mut()

@@ -74,6 +74,7 @@ pub unsafe fn enable_irq(vector: u8) {
     }
 
     let irq = vector - IOAPIC_IRQ_BASE;
+    log::debug!("IOAPIC: Enabling IRQ {irq} with vector {vector}");
 
     // Enable the IRQ by setting the vector and unmasking it
     write(Register::redirection_high(irq), 0);

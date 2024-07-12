@@ -4,7 +4,7 @@ use crate::{
         cpu::{self, rflags::Flags},
         opcode,
     },
-    time,
+    drivers, time,
 };
 
 /// The state of the interrupts.
@@ -116,6 +116,10 @@ pub extern "C" fn irq_handler(irq: u8) {
         apic::local::end_of_interrupt();
         if apic::local::timer::own_irq(irq) {
             apic::local::timer::handle_irq();
+        } else if drivers::kbd::own_irq(irq) {
+            drivers::kbd::handle_irq();
+        } else {
+            log::warn!("Unhandled interrupt: {:?}", irq);
         }
     } else if paging::tlb::own_irq(irq) {
         paging::tlb::flush();
