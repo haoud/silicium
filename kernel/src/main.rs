@@ -6,6 +6,7 @@
 #![feature(prelude_import)]
 #![feature(const_option)]
 #![feature(step_trait)]
+#![feature(new_uninit)]
 #![allow(internal_features)]
 
 extern crate alloc;

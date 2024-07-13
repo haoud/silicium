@@ -75,4 +75,7 @@ pub fn setup() -> boot::Info {
 pub fn late_setup() {
     // Register the local APIC timer
     arch::x86_64::apic::local::timer::register_irq();
+
+    // Start the APs
+    arch::x86_64::smp::setup();
 }
