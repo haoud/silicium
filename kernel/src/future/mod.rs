@@ -6,7 +6,7 @@ pub mod task;
 pub mod timeout;
 pub mod waker;
 
-pub use executor::Executor;
+pub use executor::{block_on, Executor};
 pub use task::Task;
 pub use waker::TaskWaker;
 
@@ -23,14 +23,14 @@ pub unsafe fn setup() {
     executor::spawn(Task::new(timeout_test()));
 }
 
-pub async fn tic() {
+async fn tic() {
     loop {
         log::info!("Tic");
         sleep::sleep(Duration::from_secs(2)).await;
     }
 }
 
-pub async fn tac() {
+async fn tac() {
     loop {
         sleep::sleep(Duration::from_secs(1)).await;
         log::info!("Tac");
@@ -38,7 +38,7 @@ pub async fn tac() {
     }
 }
 
-pub async fn timeout_test() {
+async fn timeout_test() {
     let duration = Duration::from_secs(2);
     let timeout = Duration::from_millis(1500);
 

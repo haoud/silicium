@@ -1,6 +1,6 @@
 use super::{
     task::{self, Task},
-    waker::TaskWaker,
+    waker::{NoopWaker, TaskWaker},
 };
 use crate::{arch, library::spin::Spinlock};
 use alloc::collections::BTreeMap;
@@ -117,6 +117,22 @@ pub fn spawn(task: Task) {
         .as_mut()
         .expect("Executor not initialized")
         .spawn(task);
+}
+
+/// Block the current thread until the provided future is resolved. It will
+/// simply poll the future until it is ready repeatedly, consuming CPU cycles.
+///
+/// This function is very useful for running async tasks in a synchronous
+/// context, like during the kernel initialization.
+pub fn block_on<F: core::future::Future>(future: F) -> F::Output {
+    let waker = Waker::from(Arc::new(NoopWaker));
+    let mut context = Context::from_waker(&waker);
+    let mut pin = core::pin::pin!(future);
+    loop {
+        if let Poll::Ready(value) = pin.as_mut().poll(&mut context) {
+            return value;
+        }
+    }
 }
 
 /// Run the executor. This function will run the executor in a loop, polling
