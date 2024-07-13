@@ -106,8 +106,7 @@ pub async fn shell(mut tty: drivers::tty::VirtualTerminal<'_>) {
                 Some(DecodedKey::Unicode(c)) => c,
                 _ => continue,
             };
-            tty.write(char);
-            tty.flush();
+            tty.write_char(char);
         }
     }
 }

@@ -5,7 +5,7 @@ use embedded_graphics::{
     pixelcolor::Rgb888,
     prelude::*,
     primitives::{Line, PrimitiveStyle, StyledDrawable},
-    text::Text,
+    text::{renderer::CharacterStyle, Text},
 };
 
 /// A virtual terminal. This structure represents a terminal that can be
@@ -21,6 +21,9 @@ pub struct VirtualTerminal<'a> {
 
     /// The framebuffer to render to
     renderer: TerminalRenderer<'a>,
+
+    /// The position of the cursor in the framebuffer
+    drawn_cursor: Position,
 
     /// The cursor position in the grid
     cursor: Position,
@@ -43,6 +46,7 @@ impl<'a> VirtualTerminal<'a> {
         Self {
             character: vec![' '; height * width],
             renderer: TerminalRenderer::new(framebuffer),
+            drawn_cursor: Position { x: 0, y: 0 },
             cursor: Position { x: 0, y: 0 },
             height,
             width,
@@ -92,18 +96,25 @@ impl<'a> VirtualTerminal<'a> {
     }
 
     /// Write a string to the terminal and update the cursor position
-    /// accordingly
+    /// accordingly.
     pub fn write_str(&mut self, string: &str) {
         for character in string.chars() {
             self.write(character);
         }
-        self.renderer.redraw_cursor_at(self.cursor);
+        self.update_cursor();
+    }
+
+    /// Write a character to the terminal and update the cursor position
+    /// accordingly.
+    pub fn write_char(&mut self, character: char) {
+        self.write(character);
+        self.update_cursor();
     }
 
     /// Flush the terminal and redraw the screen
     pub fn flush(&mut self) {
         self.renderer.clear();
-        self.renderer.redraw_cursor_at(self.cursor);
+        self.renderer.redraw_cursor_at(self.drawn_cursor);
         for (i, character) in self.character.iter().enumerate() {
             self.renderer.draw_char(
                 Position {
@@ -113,6 +124,17 @@ impl<'a> VirtualTerminal<'a> {
                 *character,
             );
         }
+    }
+
+    /// Update the cursor position into the framebuffer. The cursor currently
+    /// drawn on the screen will be erased and redrawn at the new position.
+    fn update_cursor(&mut self) {
+        let offset = self.drawn_cursor.y * self.width + self.drawn_cursor.x;
+        let char = self.character[offset];
+
+        self.renderer.clear_cursor(self.drawn_cursor, char);
+        self.renderer.redraw_cursor_at(self.cursor);
+        self.drawn_cursor = self.cursor;
     }
 }
 
@@ -165,9 +187,23 @@ impl<'a> TerminalRenderer<'a> {
             .expect("Failed to draw character");
     }
 
+    /// Clear the character at the specified position.
+    pub fn clear_char(&mut self, position: Position) {
+        let mut style = MonoTextStyle::new(&FONT_10X20, Rgb888::BLACK);
+        let point = Point {
+            x: self.x_border as i32 + position.x as i32 * 10,
+            y: self.y_border as i32 + position.y as i32 * 20 + 20,
+        };
+        style.set_background_color(Some(Rgb888::BLACK));
+        Text::new(" ", point, style)
+            .draw(&mut self.framebuffer)
+            .expect("Failed to draw character");
+    }
+
     /// Remove the cursor at the specified position and replace it with
     /// the specified character.
     pub fn clear_cursor(&mut self, cursor: Position, character: char) {
+        self.clear_char(cursor);
         self.draw_char(cursor, character);
     }
 
