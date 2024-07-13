@@ -66,9 +66,9 @@ pub fn handle_irq() {
 /// cases, you should only use one instance of this struct across the entire
 /// kernel.
 #[derive(Default, Debug)]
-pub struct KeyboardStream {}
+pub struct KeyboardScancodeStream {}
 
-impl KeyboardStream {
+impl KeyboardScancodeStream {
     /// Create a new keyboard stream.
     #[must_use]
     pub const fn new() -> Self {
@@ -76,7 +76,7 @@ impl KeyboardStream {
     }
 }
 
-impl Stream for KeyboardStream {
+impl Stream for KeyboardScancodeStream {
     type Item = u8;
 
     /// Poll the next scancode from the stream and return it if available. If

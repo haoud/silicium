@@ -7,6 +7,10 @@ use embedded_graphics::{
     primitives::{Line, PrimitiveStyle, StyledDrawable},
     text::{renderer::CharacterStyle, Text},
 };
+use futures::StreamExt;
+use input::TerminalInput;
+
+pub mod input;
 
 /// A virtual terminal. This structure represents a terminal that can be
 /// written to and flushed to a framebuffer. It is a simple implementation
@@ -21,6 +25,9 @@ pub struct VirtualTerminal<'a> {
 
     /// The framebuffer to render to
     renderer: TerminalRenderer<'a>,
+
+    /// The terminal input
+    input: TerminalInput,
 
     /// The position of the cursor in the framebuffer
     drawn_cursor: Position,
@@ -39,7 +46,7 @@ impl<'a> VirtualTerminal<'a> {
     /// Create a new virtual terminal that will use the provided framebuffer
     /// to render the text.
     #[must_use]
-    pub fn new(framebuffer: Framebuffer<'a>) -> Self {
+    pub fn new(framebuffer: Framebuffer<'a>, input: TerminalInput) -> Self {
         let height = framebuffer.height / 20;
         let width = framebuffer.width / 10;
         log::trace!("Creating virtual terminal with size {}x{}", width, height);
@@ -50,7 +57,34 @@ impl<'a> VirtualTerminal<'a> {
             cursor: Position { x: 0, y: 0 },
             height,
             width,
+            input,
         }
+    }
+
+    /// Read a line from the input stream.
+    pub async fn readline(&mut self) -> String {
+        let mut line = String::new();
+        loop {
+            match self.input.stream.as_mut().next().await {
+                Some(Ok('\x08')) => {
+                    // Only erase if there is a character to erase in the
+                    // line to avoid cursor glitches
+                    if line.pop().is_some() {
+                        self.erase_char();
+                    }
+                }
+                Some(Ok(char)) => {
+                    self.write_char(char);
+                    line.push(char);
+                    if char == '\n' {
+                        break;
+                    }
+                }
+                None => todo!("Handle EOF"),
+                _ => break,
+            }
+        }
+        line
     }
 
     /// Write a character to the terminal. This function will _NOT_ update
@@ -100,6 +134,26 @@ impl<'a> VirtualTerminal<'a> {
         }
     }
 
+    /// Erase the character just before the cursor and update the cursor
+    /// position accordingly. If the cursor is at the beginning of a line,
+    /// the cursor will be moved to the end of the previous line. If the
+    /// cursor is at the beginning of the first line, nothing will happen.
+    pub fn erase_char(&mut self) {
+        if self.cursor.x == 0 {
+            if self.cursor.y > 0 {
+                self.cursor.y -= 1;
+                self.cursor.x = self.width - 1;
+            }
+        } else {
+            self.cursor.x -= 1;
+        }
+
+        let position = self.cursor.y * self.width + self.cursor.x;
+        self.character[position] = ' ';
+        self.renderer.clear_char(self.cursor);
+        self.update_cursor();
+    }
+
     /// Write a string to the terminal and update the cursor position
     /// accordingly.
     pub fn write_str(&mut self, string: &str) {
@@ -140,6 +194,13 @@ impl<'a> VirtualTerminal<'a> {
         self.renderer.clear_cursor(self.drawn_cursor, char);
         self.renderer.redraw_cursor_at(self.cursor);
         self.drawn_cursor = self.cursor;
+    }
+}
+
+impl core::fmt::Write for VirtualTerminal<'_> {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        self.write_str(s);
+        Ok(())
     }
 }
 
