@@ -89,9 +89,14 @@ impl<'a> VirtualTerminal<'a> {
         }
 
         // If we go out of the screen, we need to scroll the screen
-        // to make the cursor visible.
+        // to make the cursor visible. We must move all the characters
+        // one line up and remove the last line.
         if self.cursor.y >= self.height {
-            todo!("Scroll the screen")
+            self.character.copy_within(self.width.., 0);
+            self.character.truncate(self.width * (self.height - 1));
+            self.character.extend((0..self.width).map(|_| ' '));
+            self.cursor.y = self.height - 1;
+            self.flush();
         }
     }
 
