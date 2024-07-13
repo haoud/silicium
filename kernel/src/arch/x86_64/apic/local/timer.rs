@@ -1,7 +1,11 @@
 use crate::{
-    arch::x86_64::{
-        apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
-        pit, smp,
+    arch::{
+        self,
+        irq::{InterruptVector, IrqNumber},
+        x86_64::{
+            apic::{self, io::IOAPIC_IRQ_BASE, local::Register},
+            pit, smp,
+        },
     },
     library::seq::Seqlock,
 };
@@ -12,7 +16,7 @@ use core::{
 use macros::init;
 
 /// The IRQ vector used by the Local APIC timer interrupt
-pub const IRQ_VECTOR: u8 = IOAPIC_IRQ_BASE;
+pub const IRQ_VECTOR: InterruptVector = InterruptVector::new(IOAPIC_IRQ_BASE);
 
 /// The internal frequency of the Local APIC timer, in Hz
 pub static INTERNAL_FREQUENCY: Seqlock<u32> = Seqlock::new(0);
@@ -35,13 +39,13 @@ pub static JIFFIES: AtomicU64 = AtomicU64::new(0);
 #[init]
 pub unsafe fn calibrate() {
     // Enable the IRQ vector
-    apic::io::enable_irq(IRQ_VECTOR);
+    apic::io::enable_irq(IRQ_VECTOR.0);
 
     // Configure the Local APIC timer, respectivelly:
     // - Set the IRQ vector to 32, use periodic mode
     // - Set the divide configuration to 0011 (divide by 16)
     // - Set the initial count to the maximum value
-    apic::local::write(Register::LVT_TIMER, u32::from(IRQ_VECTOR) | 0x20000);
+    apic::local::write(Register::LVT_TIMER, u32::from(IRQ_VECTOR.0) | 0x20000);
     apic::local::write(Register::DIVIDE_CONFIGURATION, 0b0011);
     apic::local::write(Register::INITIAL_COUNT, u32::MAX);
 
@@ -77,6 +81,20 @@ pub unsafe fn calibrate() {
     apic::local::write(Register::INITIAL_COUNT, counter);
 }
 
+// Register the Local APIC timer interrupt handler for all cores
+//
+// # Panics
+// This function needs the memory allocator to be initialized, otherwise it
+// will panic. Therefore, this function should only be called after the
+// memory allocator has been initialized.
+pub fn register_irq() {
+    arch::irq::register(
+        IrqNumber::from(IRQ_VECTOR),
+        handle_irq,
+        "Local APIC Timer",
+    );
+}
+
 /// Initialize the Local APIC timer interrupt for the current core. This
 /// will configure the Local APIC timer to raise an IRQ specified by the
 /// [`IRQ_VECTOR`] in one shot mode with an divide configuration of 0b0011
@@ -90,13 +108,13 @@ pub unsafe fn calibrate() {
 #[init]
 pub unsafe fn setup() {
     // Enable the IRQ vector
-    apic::io::enable_irq(IRQ_VECTOR);
+    apic::io::enable_irq(IRQ_VECTOR.0);
 
     // Configure the Local APIC timer, respectivelly:
     // - Set the IRQ vector to 32, periodic mode
     // - Set the divide configuration to 0011 (divide by 16)
     // - Set the initial count to the computed value
-    apic::local::write(Register::LVT_TIMER, u32::from(IRQ_VECTOR) | 0x20000);
+    apic::local::write(Register::LVT_TIMER, u32::from(IRQ_VECTOR.0) | 0x20000);
     apic::local::write(Register::DIVIDE_CONFIGURATION, 0b0011);
     apic::local::write(Register::INITIAL_COUNT, INITIAL_COUNTER.read());
 }
@@ -149,12 +167,6 @@ pub fn internal_counter() -> u32 {
 #[must_use]
 pub fn initial_counter() -> u32 {
     INITIAL_COUNTER.read()
-}
-
-/// Check if the given IRQ is used by the Local APIC timer.
-#[must_use]
-pub const fn own_irq(irq: u8) -> bool {
-    irq == IRQ_VECTOR
 }
 
 /// Handle the Local APIC timer interrupt.

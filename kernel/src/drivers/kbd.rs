@@ -1,6 +1,7 @@
 use crate::{
     arch::{
         self,
+        irq::IrqNumber,
         x86_64::{io::Port, pic::IRQ_BASE},
     },
     library::spin::Spinlock,
@@ -22,21 +23,17 @@ static WAITING: Spinlock<Vec<Waker>> = Spinlock::new(Vec::new());
 /// The keyboard scancode stream.
 pub static QUEUE: SegQueue<u8> = SegQueue::new();
 
-pub const VECTOR: u8 = IRQ_BASE + IRQ;
-pub const IRQ: u8 = 1;
+pub const VECTOR: u8 = IRQ_BASE + IRQ.0;
+pub const IRQ: IrqNumber = IrqNumber(1);
 
 /// Setup the keyboard driver and enable the keyboard IRQ.
 pub fn setup() {
+    arch::irq::register(IRQ, handle_irq, "i8042 PS/2 Keyboard");
     // SAFETY: Enable the keyboard IRQ is safe and should not cause
     // any memory unsafety or undefined behavior.
     unsafe {
         arch::x86_64::apic::io::enable_irq(VECTOR);
     }
-}
-
-/// Check if the given IRQ is owned by the keyboard driver.
-pub const fn own_irq(irq: u8) -> bool {
-    irq == VECTOR
 }
 
 /// Handle the keyboard IRQ. It reads the scancode from the keyboard and pushes

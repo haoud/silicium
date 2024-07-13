@@ -40,6 +40,10 @@ pub unsafe extern "C" fn _entry() -> ! {
     // Setup the memory management system
     mm::setup(&info);
 
+    // Setup the architecture specific late setup that needs the
+    // memory management system to be setup first
+    arch::late_setup();
+
     // Setup the time system
     time::setup();
 

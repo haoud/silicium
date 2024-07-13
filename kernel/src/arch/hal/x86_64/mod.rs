@@ -69,3 +69,10 @@ pub fn setup() -> boot::Info {
         boot_allocated,
     }
 }
+
+/// Setup the architecture dependent parts of the kernel that need
+/// the memory management system to be setup.
+pub fn late_setup() {
+    // Register the local APIC timer
+    arch::x86_64::apic::local::timer::register_irq();
+}
