@@ -216,7 +216,7 @@ impl<'a> TerminalRenderer<'a> {
             y: self.y_border as i32 + cursor.y as i32 * 20 + 20,
         };
         let end = Point {
-            x: self.x_border as i32 + cursor.x as i32 * 10 + 10,
+            x: self.x_border as i32 + cursor.x as i32 * 10 + 9,
             y: self.y_border as i32 + cursor.y as i32 * 20 + 20,
         };
 
