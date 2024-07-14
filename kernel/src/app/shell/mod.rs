@@ -13,7 +13,7 @@ pub async fn shell(mut tty: drivers::tty::VirtualTerminal<'_>) {
     loop {
         write!(tty, "> ").unwrap();
         match tty.readline().await.as_str() {
-            "meminfo\n" => {
+            "meminfo" => {
                 let total = mm::physical::STATE.lock().frames_info().len() * 4;
                 let free = mm::physical::STATE
                     .lock()
@@ -53,7 +53,7 @@ pub async fn shell(mut tty: drivers::tty::VirtualTerminal<'_>) {
                 writeln!(tty, "Boot: {} KiB ({} Mib)", boot, boot / 1024)
                     .unwrap();
             }
-            "date\n" => {
+            "date" => {
                 let time = time::Date::from(time::Unix::current());
                 let month = match time.month {
                     1 => "January",

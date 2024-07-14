@@ -75,9 +75,10 @@ impl<'a> VirtualTerminal<'a> {
                 }
                 Some(Ok(char)) => {
                     self.write_char(char);
-                    line.push(char);
                     if char == '\n' {
                         break;
+                    } else {
+                        line.push(char);
                     }
                 }
                 None => todo!("Handle EOF"),

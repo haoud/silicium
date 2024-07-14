@@ -22,6 +22,9 @@ impl SleepFuture {
 impl Future for SleepFuture {
     type Output = ();
 
+    /// Polls the `SleepFuture`. If the sleep has not yet expired, the waker is
+    /// registered with the timer and the future returns `Pending`. If the sleep
+    /// has expired, the future returns `Ready`.
     fn poll(
         self: core::pin::Pin<&mut Self>,
         cx: &mut core::task::Context,

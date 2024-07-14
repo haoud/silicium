@@ -148,9 +148,6 @@ pub unsafe fn run() -> ! {
     arch::irq::enable();
     loop {
         EXECUTOR.run_once();
-        // TODO: Maybe we can wait until a task is ready to be polled
-        // instead of waiting for an interruption to occur ? Using an
-        // async task maybe...
         while EXECUTOR.chomage() {
             arch::irq::wait();
         }
