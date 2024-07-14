@@ -13,12 +13,12 @@ pub fn setup() {
         let stream = drivers::tty::input::KeyboardCharStream::new(kbd);
         let input = drivers::tty::input::TerminalInput::new(Box::pin(stream));
 
-        future::executor::spawn(future::Task::new(shell(
+        future::executor::schedule_detached(shell(
             drivers::tty::VirtualTerminal::new(
                 &drivers::fb::FRAMEBUFFER,
                 input,
             ),
-        )));
+        ));
     } else {
         log::warn!("No framebuffer available, terminal not initialized");
     }

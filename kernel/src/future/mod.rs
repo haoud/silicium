@@ -2,13 +2,8 @@ use core::time::Duration;
 
 pub mod executor;
 pub mod sleep;
-pub mod task;
 pub mod timeout;
 pub mod waker;
-
-pub use executor::{block_on, Executor};
-pub use task::Task;
-pub use waker::TaskWaker;
 
 /// Initialize the kernel async runtime
 ///
@@ -18,9 +13,9 @@ pub use waker::TaskWaker;
 #[init]
 pub unsafe fn setup() {
     executor::setup();
-    executor::spawn(Task::new(tic()));
-    executor::spawn(Task::new(tac()));
-    executor::spawn(Task::new(timeout_test()));
+    executor::schedule_detached(tic());
+    executor::schedule_detached(tac());
+    executor::schedule_detached(timeout_test());
 }
 
 async fn tic() {
