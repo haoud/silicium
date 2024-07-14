@@ -8,17 +8,17 @@ use core::fmt::Write;
 /// If no framebuffer is available, this function will do nothing but log a
 /// warning indicating that the terminal will not be initialized.
 pub fn setup() {
-    if drivers::fb::FRAMEBUFFER.lock().is_valid() {
+    if drivers::fb::FRAMEBUFFER.lock_blocking().is_valid() {
         let kbd = drivers::kbd::KeyboardScancodeStream::new();
         let stream = drivers::tty::input::KeyboardCharStream::new(kbd);
         let input = drivers::tty::input::TerminalInput::new(Box::pin(stream));
 
-        future::executor::schedule_detached(shell(
+        future::executor::schedule_detached(shell(future::executor::block_on(
             drivers::tty::VirtualTerminal::new(
                 Arc::clone(&drivers::fb::FRAMEBUFFER),
                 input,
             ),
-        ));
+        )));
     } else {
         log::warn!("No framebuffer available, terminal not initialized");
     }
@@ -30,8 +30,8 @@ pub fn setup() {
 /// of the kernel cool features. It reads the keyboard input and converts it
 /// to a character that is then written to the framebuffer.
 pub async fn shell(mut tty: drivers::tty::VirtualTerminal) {
-    tty.write_str("Silicium booted successfully\n");
-    tty.write_str("Welcome to Silicium !\n");
+    tty.write_str("Silicium booted successfully\n").await;
+    tty.write_str("Welcome to Silicium !\n").await;
 
     loop {
         write!(tty, "> ").unwrap();

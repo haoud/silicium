@@ -72,6 +72,16 @@ impl<T: Sized> Mutex<T> {
             .then(|| Some(MutexGuard { mutex: self }))
             .unwrap_or(None)
     }
+
+    /// Lock the mutex. If the lock is already held, this function will
+    /// spin until the lock is acquired, blocking the current thread.
+    pub fn lock_blocking(&self) -> MutexGuard<'_, T> {
+        loop {
+            if let Some(lock) = self.try_lock() {
+                break lock;
+            }
+        }
+    }
 }
 
 impl<T: Debug> Debug for Mutex<T> {

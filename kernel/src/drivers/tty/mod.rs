@@ -1,5 +1,6 @@
 use crate::{
-    drivers::fb::Framebuffer, future::executor, library::spin::Spinlock,
+    drivers::fb::Framebuffer,
+    future::{self, executor},
 };
 use async_task::Task;
 use core::time::Duration;
@@ -47,12 +48,12 @@ impl VirtualTerminal {
     /// Create a new virtual terminal that will use the provided framebuffer
     /// to render the text.
     #[must_use]
-    pub fn new(
-        framebuffer: Arc<Spinlock<Framebuffer<'static>>>,
+    pub async fn new(
+        framebuffer: Arc<future::Mutex<Framebuffer<'static>>>,
         input: TerminalInput,
     ) -> Self {
-        let height = framebuffer.lock().height / 20;
-        let width = framebuffer.lock().width / 10;
+        let height = framebuffer.lock().await.height / 20;
+        let width = framebuffer.lock().await.width / 10;
         log::trace!("Creating virtual terminal with size {}x{}", width, height);
 
         let renderer = Arc::new(TerminalRenderer::new(framebuffer));
@@ -90,11 +91,11 @@ impl VirtualTerminal {
                     // Only erase if there is a character to erase in the
                     // line to avoid cursor glitches
                     if line.pop().is_some() {
-                        self.erase_char();
+                        self.erase_char().await;
                     }
                 }
                 Some(Ok(char)) => {
-                    self.write_char(char);
+                    self.write_char(char).await;
                     if char == '\n' {
                         break;
                     } else {
@@ -110,7 +111,7 @@ impl VirtualTerminal {
 
     /// Write a character to the terminal. This function will _NOT_ update
     /// the cursor position, it is up to the caller to do so if needed.
-    pub fn write(&mut self, character: char) {
+    pub async fn write(&mut self, character: char) {
         match character {
             '\n' => {
                 self.cursor.y += 1;
@@ -121,13 +122,15 @@ impl VirtualTerminal {
             }
             _ => {
                 // Draw the character on the screen
-                self.renderer.draw_char(
-                    Position {
-                        x: self.cursor.x,
-                        y: self.cursor.y,
-                    },
-                    character,
-                );
+                self.renderer
+                    .draw_char(
+                        Position {
+                            x: self.cursor.x,
+                            y: self.cursor.y,
+                        },
+                        character,
+                    )
+                    .await;
 
                 // Update the character buffer
                 let position = self.cursor.y * self.width + self.cursor.x;
@@ -151,7 +154,7 @@ impl VirtualTerminal {
             self.characters.truncate(self.width * (self.height - 1));
             self.characters.extend((0..self.width).map(|_| ' '));
             self.cursor.y = self.height - 1;
-            self.flush();
+            self.flush().await;
         }
     }
 
@@ -159,7 +162,7 @@ impl VirtualTerminal {
     /// position accordingly. If the cursor is at the beginning of a line,
     /// the cursor will be moved to the end of the previous line. If the
     /// cursor is at the beginning of the first line, nothing will happen.
-    pub fn erase_char(&mut self) {
+    pub async fn erase_char(&mut self) {
         if self.cursor.x == 0 {
             if self.cursor.y > 0 {
                 self.cursor.y -= 1;
@@ -171,49 +174,51 @@ impl VirtualTerminal {
 
         let position = self.cursor.y * self.width + self.cursor.x;
         self.characters[position] = ' ';
-        self.renderer.clear_char(self.cursor);
-        self.update_cursor();
+        self.renderer.clear_char(self.cursor).await;
+        self.update_cursor().await;
     }
 
     /// Write a string to the terminal and update the cursor position
     /// accordingly.
-    pub fn write_str(&mut self, string: &str) {
+    pub async fn write_str(&mut self, string: &str) {
         for character in string.chars() {
-            self.write(character);
+            self.write(character).await;
         }
-        self.update_cursor();
+        self.update_cursor().await;
     }
 
     /// Write a character to the terminal and update the cursor position
     /// accordingly.
-    pub fn write_char(&mut self, character: char) {
-        self.write(character);
-        self.update_cursor();
+    pub async fn write_char(&mut self, character: char) {
+        self.write(character).await;
+        self.update_cursor().await;
     }
 
     /// Flush the terminal and redraw the screen
-    pub fn flush(&mut self) {
-        self.renderer.clear();
-        self.renderer.redraw_cursor_at(self.drawn_cursor);
+    pub async fn flush(&mut self) {
+        self.renderer.clear().await;
+        self.renderer.redraw_cursor_at(self.drawn_cursor).await;
         for (i, character) in self.characters.iter().enumerate() {
-            self.renderer.draw_char(
-                Position {
-                    x: i % self.width,
-                    y: i / self.width,
-                },
-                *character,
-            );
+            self.renderer
+                .draw_char(
+                    Position {
+                        x: i % self.width,
+                        y: i / self.width,
+                    },
+                    *character,
+                )
+                .await;
         }
     }
 
     /// Update the cursor position into the framebuffer. The cursor currently
     /// drawn on the screen will be erased and redrawn at the new position.
-    fn update_cursor(&mut self) {
+    async fn update_cursor(&mut self) {
         let offset = self.drawn_cursor.y * self.width + self.drawn_cursor.x;
         let char = self.characters[offset];
 
-        self.renderer.clear_cursor(self.drawn_cursor, char);
-        self.renderer.redraw_cursor_at(self.cursor);
+        self.renderer.clear_cursor(self.drawn_cursor, char).await;
+        self.renderer.redraw_cursor_at(self.cursor).await;
         self.drawn_cursor = self.cursor;
         self.create_blinking_task();
     }
@@ -251,7 +256,7 @@ impl VirtualTerminal {
 
 impl core::fmt::Write for VirtualTerminal {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        self.write_str(s);
+        executor::block_on(self.write_str(s));
         Ok(())
     }
 }

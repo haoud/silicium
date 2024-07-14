@@ -1,4 +1,4 @@
-use crate::library::spin::Spinlock;
+use crate::future;
 use embedded_graphics::{
     pixelcolor::Rgb888, prelude::*, primitives::Rectangle,
 };
@@ -6,8 +6,15 @@ use spin::Lazy;
 
 /// The kernel framebuffer object. This object provides a high-level
 /// interface to the framebuffer buffer.
-pub static FRAMEBUFFER: Lazy<Arc<Spinlock<Framebuffer>>> =
-    Lazy::new(|| Arc::new(Spinlock::new(Framebuffer::default())));
+///
+/// The object is wrapped in a asynchronous mutex because writing to
+/// the framebuffer can be an expensive operation depending on the
+/// amount of data to write, and spinning on the framebuffer mutex can
+/// waste a lot of CPU time. By using an asynchronous mutex, the
+/// kernel can yield the CPU to other tasks while waiting for the
+/// framebuffer to become available.
+pub static FRAMEBUFFER: Lazy<Arc<future::Mutex<Framebuffer>>> =
+    Lazy::new(|| Arc::new(future::Mutex::new(Framebuffer::none())));
 
 /// A request to get the framebuffer from the bootloader.
 static FB_REQUEST: limine::request::FramebufferRequest =
@@ -236,7 +243,7 @@ pub fn setup() -> Option<()> {
     let blue_mask = ((1 << fb.blue_mask_size()) - 1) << fb.blue_mask_shift();
     let red_mask = ((1 << fb.red_mask_size()) - 1) << fb.red_mask_shift();
 
-    *FRAMEBUFFER.lock() = Framebuffer {
+    *FRAMEBUFFER.lock_blocking() = Framebuffer {
         height: fb.height() as usize,
         width: fb.width() as usize,
         bpp: fb.bpp() as usize / 8,

@@ -6,6 +6,8 @@ pub mod sleep;
 pub mod timeout;
 pub mod waker;
 
+pub use mutex::Mutex;
+
 /// Initialize the kernel async runtime
 ///
 /// # Safety
