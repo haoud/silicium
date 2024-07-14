@@ -1,6 +1,5 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
-#![feature(panic_info_message)]
 #![feature(const_mut_refs)]
 #![feature(negative_impls)]
 #![feature(prelude_import)]
