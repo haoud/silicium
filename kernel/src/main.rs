@@ -11,6 +11,7 @@
 
 extern crate alloc;
 
+pub mod app;
 pub mod arch;
 pub mod boot;
 pub mod drivers;
@@ -65,26 +66,9 @@ pub unsafe extern "C" fn _entry() -> ! {
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully !");
 
-    // TODO: Use a more reliable stack (this stack will be
-    // deallocated in the future)
-    future::executor::spawn(future::Task::new(shell(tty)));
+    // TODO: Use a more reliable stack (this stack will be deallocated in
+    // the future because it is marked as boot reclaimable since it is
+    // provided by the bootloader)
+    future::executor::spawn(future::Task::new(app::shell::shell(tty)));
     future::executor::run();
-}
-
-/// The shell task.
-///
-/// Currently, it is not really a shell but a simple program that tests most
-/// of the kernel cool features. It reads the keyboard input and converts it
-/// to a character that is then written to the framebuffer.
-pub async fn shell(mut tty: drivers::tty::VirtualTerminal<'_>) {
-    use core::fmt::Write;
-
-    tty.write_str("Silicium booted successfully\n");
-    tty.write_str("Welcome to Silicium !\n");
-
-    loop {
-        write!(tty, "> ").unwrap();
-        let line = tty.readline().await;
-        write!(tty, "You typed: {}", line).unwrap();
-    }
 }

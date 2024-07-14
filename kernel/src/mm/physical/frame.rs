@@ -88,6 +88,12 @@ impl Info {
         }
         self.count == 0
     }
+
+    /// Returns the flags set on the frame.
+    #[must_use]
+    pub fn flags(&self) -> Flags {
+        self.flags
+    }
 }
 
 impl Default for Info {
