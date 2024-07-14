@@ -1,9 +1,12 @@
 use super::Position;
 use crate::{
     drivers::fb::{Color, Framebuffer},
+    future,
     library::spin::Spinlock,
 };
 use alloc::string::ToString;
+use async_task::Task;
+use core::time::Duration;
 use embedded_graphics::{
     mono_font::{ascii::FONT_10X20, MonoTextStyle},
     pixelcolor::Rgb888,
@@ -21,9 +24,9 @@ use embedded_graphics::{
 /// be centered on the screen by a few pixels to avoid having the text
 /// stuck to the left and top borders of the screen.
 #[derive(Debug)]
-pub struct TerminalRenderer<'a> {
+pub struct TerminalRenderer {
     /// The framebuffer to render to
-    framebuffer: &'a Spinlock<Framebuffer<'a>>,
+    framebuffer: Arc<Spinlock<Framebuffer<'static>>>,
 
     /// An offset to the left border of the screen to center the text
     /// on the screen if the character grid is not matching perfectly
@@ -36,14 +39,15 @@ pub struct TerminalRenderer<'a> {
     y_border: usize,
 }
 
-impl<'a> TerminalRenderer<'a> {
+impl TerminalRenderer {
     /// Create a new terminal renderer that will render to the provided
     /// framebuffer. All the framebuffer will be used to render the text
     /// (i.e a full screen terminal)
     #[must_use]
-    pub fn new(framebuffer: &'a Spinlock<Framebuffer<'a>>) -> Self {
+    pub fn new(framebuffer: Arc<Spinlock<Framebuffer<'static>>>) -> Self {
         let x_border = framebuffer.lock().width % 10 / 2;
         let y_border = framebuffer.lock().height % 20 / 2;
+
         Self {
             y_border,
             x_border,
@@ -52,7 +56,7 @@ impl<'a> TerminalRenderer<'a> {
     }
 
     /// Draw a character at the specified position on the screen
-    pub fn draw_char(&mut self, position: Position, character: char) {
+    pub fn draw_char(&self, position: Position, character: char) {
         let style = MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE);
         let point = Point {
             x: self.x_border as i32 + position.x as i32 * 10,
@@ -64,7 +68,7 @@ impl<'a> TerminalRenderer<'a> {
     }
 
     /// Clear the character at the specified position.
-    pub fn clear_char(&mut self, position: Position) {
+    pub fn clear_char(&self, position: Position) {
         let mut style = MonoTextStyle::new(&FONT_10X20, Rgb888::BLACK);
         let point = Point {
             x: self.x_border as i32 + position.x as i32 * 10,
@@ -78,7 +82,7 @@ impl<'a> TerminalRenderer<'a> {
 
     /// Remove the cursor at the specified position and replace it with
     /// the specified character.
-    pub fn clear_cursor(&mut self, cursor: Position, character: char) {
+    pub fn clear_cursor(&self, cursor: Position, character: char) {
         self.clear_char(cursor);
         self.draw_char(cursor, character);
     }
@@ -86,7 +90,7 @@ impl<'a> TerminalRenderer<'a> {
     /// Redraw the cursor at the specified position. This function does not
     /// clear the previous cursor position (if any)!: this is the caller's
     /// responsibility to do so if needed.
-    pub fn redraw_cursor_at(&mut self, cursor: Position) {
+    pub fn redraw_cursor_at(&self, cursor: Position) {
         let start = Point {
             x: self.x_border as i32 + cursor.x as i32 * 10,
             y: self.y_border as i32 + cursor.y as i32 * 20 + 20,
@@ -107,7 +111,34 @@ impl<'a> TerminalRenderer<'a> {
     }
 
     /// Clear the terminal screen by filling it with black.
-    pub fn clear(&mut self) {
+    pub fn clear(&self) {
         self.framebuffer.lock().clear(Color::BLACK);
+    }
+}
+
+#[derive(Debug)]
+pub struct BlinkingCursor {
+    /// The renderer to use to draw the cursor
+    pub renderer: Arc<TerminalRenderer>,
+
+    /// The position of the cursor on the screen. The position is in the
+    /// terminal grid, not in the framebuffer grid.
+    pub position: Position,
+
+    /// The speed at which the cursor should blink
+    pub speed: Duration,
+
+    /// The character located at the cursor position, used to redraw the
+    /// cursor when it blinks.
+    pub character: char,
+}
+
+pub async fn blink_cursor(cursor: BlinkingCursor) {
+    let renderer = &cursor.renderer;
+    loop {
+        renderer.redraw_cursor_at(cursor.position);
+        future::sleep::sleep(cursor.speed).await;
+        renderer.clear_cursor(cursor.position, cursor.character);
+        future::sleep::sleep(cursor.speed).await;
     }
 }

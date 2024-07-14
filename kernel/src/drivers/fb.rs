@@ -2,11 +2,12 @@ use crate::library::spin::Spinlock;
 use embedded_graphics::{
     pixelcolor::Rgb888, prelude::*, primitives::Rectangle,
 };
+use spin::Lazy;
 
 /// The kernel framebuffer object. This object provides a high-level
 /// interface to the framebuffer buffer.
-pub static FRAMEBUFFER: Spinlock<Framebuffer> =
-    Spinlock::new(Framebuffer::none());
+pub static FRAMEBUFFER: Lazy<Arc<Spinlock<Framebuffer>>> =
+    Lazy::new(|| Arc::new(Spinlock::new(Framebuffer::default())));
 
 /// A request to get the framebuffer from the bootloader.
 static FB_REQUEST: limine::request::FramebufferRequest =

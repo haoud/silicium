@@ -1,7 +1,11 @@
-use crate::{drivers::fb::Framebuffer, library::spin::Spinlock};
+use crate::{
+    drivers::fb::Framebuffer, future::executor, library::spin::Spinlock,
+};
+use async_task::Task;
+use core::time::Duration;
 use futures::StreamExt;
 use input::TerminalInput;
-use renderer::TerminalRenderer;
+use renderer::{BlinkingCursor, TerminalRenderer};
 
 pub mod input;
 pub mod renderer;
@@ -12,13 +16,16 @@ pub mod renderer;
 /// terminal behavior. The rendering is done using the `TerminalRenderer`
 /// structure.
 #[derive(Debug)]
-pub struct VirtualTerminal<'a> {
+pub struct VirtualTerminal {
     /// The character buffer. It represents the characters
     /// visible on the screen.
-    character: Vec<char>,
+    characters: Vec<char>,
 
     /// The framebuffer to render to
-    renderer: TerminalRenderer<'a>,
+    renderer: Arc<TerminalRenderer>,
+
+    /// The blinking cursor task
+    blinking: Task<()>,
 
     /// The terminal input
     input: TerminalInput,
@@ -36,22 +43,38 @@ pub struct VirtualTerminal<'a> {
     width: usize,
 }
 
-impl<'a> VirtualTerminal<'a> {
+impl VirtualTerminal {
     /// Create a new virtual terminal that will use the provided framebuffer
     /// to render the text.
     #[must_use]
     pub fn new(
-        framebuffer: &'a Spinlock<Framebuffer<'a>>,
+        framebuffer: Arc<Spinlock<Framebuffer<'static>>>,
         input: TerminalInput,
     ) -> Self {
         let height = framebuffer.lock().height / 20;
         let width = framebuffer.lock().width / 10;
         log::trace!("Creating virtual terminal with size {}x{}", width, height);
+
+        let renderer = Arc::new(TerminalRenderer::new(framebuffer));
+
+        // Create a new blinking task with the terminal renderer at the cursor
+        // position with the character to blink and the blinking speed and
+        // schedule the task to be run.
+        let (runnable, blinking) =
+            executor::spawn(renderer::blink_cursor(BlinkingCursor {
+                renderer: Arc::clone(&renderer),
+                position: Position { x: 0, y: 0 },
+                speed: Duration::from_millis(500),
+                character: ' ',
+            }));
+        runnable.schedule();
+
         Self {
-            character: vec![' '; height * width],
-            renderer: TerminalRenderer::new(framebuffer),
+            characters: vec![' '; height * width],
             drawn_cursor: Position { x: 0, y: 0 },
             cursor: Position { x: 0, y: 0 },
+            blinking,
+            renderer,
             height,
             width,
             input,
@@ -108,7 +131,7 @@ impl<'a> VirtualTerminal<'a> {
 
                 // Update the character buffer
                 let position = self.cursor.y * self.width + self.cursor.x;
-                self.character[position] = character;
+                self.characters[position] = character;
                 self.cursor.x += 1;
             }
         }
@@ -124,9 +147,9 @@ impl<'a> VirtualTerminal<'a> {
         // to make the cursor visible. We must move all the characters
         // one line up and remove the last line.
         if self.cursor.y >= self.height {
-            self.character.copy_within(self.width.., 0);
-            self.character.truncate(self.width * (self.height - 1));
-            self.character.extend((0..self.width).map(|_| ' '));
+            self.characters.copy_within(self.width.., 0);
+            self.characters.truncate(self.width * (self.height - 1));
+            self.characters.extend((0..self.width).map(|_| ' '));
             self.cursor.y = self.height - 1;
             self.flush();
         }
@@ -147,7 +170,7 @@ impl<'a> VirtualTerminal<'a> {
         }
 
         let position = self.cursor.y * self.width + self.cursor.x;
-        self.character[position] = ' ';
+        self.characters[position] = ' ';
         self.renderer.clear_char(self.cursor);
         self.update_cursor();
     }
@@ -172,7 +195,7 @@ impl<'a> VirtualTerminal<'a> {
     pub fn flush(&mut self) {
         self.renderer.clear();
         self.renderer.redraw_cursor_at(self.drawn_cursor);
-        for (i, character) in self.character.iter().enumerate() {
+        for (i, character) in self.characters.iter().enumerate() {
             self.renderer.draw_char(
                 Position {
                     x: i % self.width,
@@ -187,15 +210,46 @@ impl<'a> VirtualTerminal<'a> {
     /// drawn on the screen will be erased and redrawn at the new position.
     fn update_cursor(&mut self) {
         let offset = self.drawn_cursor.y * self.width + self.drawn_cursor.x;
-        let char = self.character[offset];
+        let char = self.characters[offset];
 
         self.renderer.clear_cursor(self.drawn_cursor, char);
         self.renderer.redraw_cursor_at(self.cursor);
         self.drawn_cursor = self.cursor;
+        self.create_blinking_task();
+    }
+
+    /// Cancel the current blinking task and create a new one at the cursor
+    /// position. The new blinking task will be scheduled in the background
+    /// when the old one has been canceled, avoiding having multiple blinking
+    /// tasks running at the same time.
+    fn create_blinking_task(&mut self) {
+        let offset = self.cursor.y * self.width + self.cursor.x;
+        let char = self.characters[offset];
+
+        // Create a new blinking task with the terminal renderer at the cursor
+        // position with the character to blink and the blinking speed.
+        let (runnable, blinking) =
+            executor::spawn(renderer::blink_cursor(BlinkingCursor {
+                renderer: Arc::clone(&self.renderer),
+                position: self.cursor,
+                speed: Duration::from_millis(500),
+                character: char,
+            }));
+
+        // Replace the old blinking task with the new one. The new task will
+        // not be scheduled immediately, but only after the old one has been
+        // canceled to avoid having multiple blinking tasks running at the
+        // same time. We do this in the background to avoid blocking the caller.
+        let outdated = core::mem::replace(&mut self.blinking, blinking);
+        executor::schedule_detached(async move {
+            outdated.cancel().await;
+            // TODO: Clean the old cursor position
+            runnable.schedule();
+        });
     }
 }
 
-impl core::fmt::Write for VirtualTerminal<'_> {
+impl core::fmt::Write for VirtualTerminal {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         self.write_str(s);
         Ok(())

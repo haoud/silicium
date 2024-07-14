@@ -15,7 +15,7 @@ pub fn setup() {
 
         future::executor::schedule_detached(shell(
             drivers::tty::VirtualTerminal::new(
-                &drivers::fb::FRAMEBUFFER,
+                Arc::clone(&drivers::fb::FRAMEBUFFER),
                 input,
             ),
         ));
@@ -29,7 +29,7 @@ pub fn setup() {
 /// Currently, it is not really a shell but a simple program that tests most
 /// of the kernel cool features. It reads the keyboard input and converts it
 /// to a character that is then written to the framebuffer.
-pub async fn shell(mut tty: drivers::tty::VirtualTerminal<'_>) {
+pub async fn shell(mut tty: drivers::tty::VirtualTerminal) {
     tty.write_str("Silicium booted successfully\n");
     tty.write_str("Welcome to Silicium !\n");
 
