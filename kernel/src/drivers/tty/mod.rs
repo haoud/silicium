@@ -214,20 +214,24 @@ impl VirtualTerminal {
     /// Update the cursor position into the framebuffer. The cursor currently
     /// drawn on the screen will be erased and redrawn at the new position.
     async fn update_cursor(&mut self) {
-        let offset = self.drawn_cursor.y * self.width + self.drawn_cursor.x;
-        let char = self.characters[offset];
+        // TODO: Only needed if the cursor blinking is disabled
+        // let offset = self.drawn_cursor.y * self.width + self.drawn_cursor.x;
+        // let char = self.characters[offset];
+        //self.renderer.clear_cursor(self.drawn_cursor, char).await;
+        //self.renderer.redraw_cursor_at(self.cursor).await;
 
-        self.renderer.clear_cursor(self.drawn_cursor, char).await;
-        self.renderer.redraw_cursor_at(self.cursor).await;
+        let old_cursor = self.drawn_cursor;
+        let old_offset = old_cursor.y * self.width + old_cursor.x;
+        let old_char = self.characters[old_offset];
         self.drawn_cursor = self.cursor;
-        self.create_blinking_task();
+        self.create_blinking_task(old_cursor, old_char);
     }
 
     /// Cancel the current blinking task and create a new one at the cursor
     /// position. The new blinking task will be scheduled in the background
     /// when the old one has been canceled, avoiding having multiple blinking
     /// tasks running at the same time.
-    fn create_blinking_task(&mut self) {
+    fn create_blinking_task(&mut self, old_cursor: Position, old_char: char) {
         let offset = self.cursor.y * self.width + self.cursor.x;
         let char = self.characters[offset];
 
@@ -241,14 +245,11 @@ impl VirtualTerminal {
                 character: char,
             }));
 
-        // Replace the old blinking task with the new one. The new task will
-        // not be scheduled immediately, but only after the old one has been
-        // canceled to avoid having multiple blinking tasks running at the
-        // same time. We do this in the background to avoid blocking the caller.
+        // Replace the old blinking task with the new one.
         let outdated = core::mem::replace(&mut self.blinking, blinking);
-        executor::schedule_detached(async move {
+        executor::block_on(async {
             outdated.cancel().await;
-            // TODO: Clean the old cursor position
+            self.renderer.clear_cursor(old_cursor, old_char).await;
             runnable.schedule();
         });
     }
