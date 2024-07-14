@@ -4,6 +4,11 @@ use crate::{
 };
 use macros::init;
 
+/// Check if the boot allocator is available or not.
+pub fn available() -> bool {
+    boot::allocator::available()
+}
+
 /// Allocate a memory region using the boot allocator.
 ///
 /// # Panics

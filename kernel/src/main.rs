@@ -1,17 +1,19 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
-#![feature(panic_info_message)]
 #![feature(const_mut_refs)]
 #![feature(negative_impls)]
 #![feature(prelude_import)]
 #![feature(const_option)]
 #![feature(step_trait)]
+#![feature(new_uninit)]
 #![allow(internal_features)]
 
 extern crate alloc;
 
+pub mod app;
 pub mod arch;
 pub mod boot;
+pub mod drivers;
 pub mod future;
 pub mod library;
 pub mod mm;
@@ -39,16 +41,33 @@ pub unsafe extern "C" fn _entry() -> ! {
     // Setup the memory management system
     mm::setup(&info);
 
+    // Setup the architecture specific late setup that needs the
+    // memory management system to be setup first
+    arch::late_setup();
+
     // Setup the time system
     time::setup();
 
     // Setup the async runtime
     future::setup();
 
-    // Log that the kernel has successfully booted
-    log::info!("Silicium booted successfully");
+    // Setup the keyboard driver
+    drivers::kbd::setup();
 
-    // TODO: Use a more reliable stack (this stack will be
-    // deallocated in the future)
+    // Setup the terminal driver. It needs the framebuffer to be initialized
+    // and will create an input stream from the keyboard driver.
+    let fb = drivers::fb::setup();
+    let kbd = drivers::kbd::KeyboardScancodeStream::new();
+    let stream = drivers::tty::input::KeyboardCharStream::new(kbd);
+    let input = drivers::tty::input::TerminalInput::new(Box::pin(stream));
+    let tty = drivers::tty::VirtualTerminal::new(fb, input);
+
+    // Log that the kernel has successfully booted
+    log::info!("Silicium booted successfully !");
+
+    // TODO: Use a more reliable stack (this stack will be deallocated in
+    // the future because it is marked as boot reclaimable since it is
+    // provided by the bootloader)
+    future::executor::spawn(future::Task::new(app::shell::shell(tty)));
     future::executor::run();
 }

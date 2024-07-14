@@ -4,9 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = [
-    "crates/*",
-]
+members = ["crates/*"]
 
 [workspace.lints.clippy]
 undocumented_unsafe_blocks = "warn"
@@ -20,12 +18,15 @@ macros = { path = "crates/silicium-macros", package = "silicium-macros" }
 config = { path = "crates/silicium-config", package = "silicium-config" }
 hal = { path = "crates/silicium-hal", package = "silicium-hal" }
 
-crossbeam = { version = "0.8.0", default-features = false, features = ["alloc"] }
+crossbeam = { version = "0.8.0", default-features = false, features = [
+    "alloc",
+] }
 futures = { version = "0.3.30", default-features = false, features = ["alloc"] }
 arrayvec = { version = "0.7.4", default-features = false }
 talc = { version = "4.3.1", features = ["counters"] }
 elf = { version = "0.7.4", default-features = false }
 static_assertions = "1.1.0"
+hashbrown = "0.14.5"
 zerocopy = "0.7.32"
 bitfield = "0.15.0"
 bitflags = "2.4.2"
@@ -35,7 +36,12 @@ limine = "0.2"
 log = "0.4.20"
 
 [dependencies]
+embedded-graphics = "0.8.1"
+pc-keyboard = "0.7.0"
+spin = "0.9.8"
+
 crossbeam = { workspace = true }
+hashbrown = { workspace = true }
 arrayvec = { workspace = true }
 bitfield = { workspace = true }
 bitflags = { workspace = true }
@@ -55,7 +61,7 @@ lock_api = "0.4.12"
 [features]
 default = ["panic_info", "logging"]
 
-# Enable panic messages at the cost of increased binary size, 
+# Enable panic messages at the cost of increased binary size,
 # but useful for debugging
 panic_info = []
 
@@ -65,5 +71,5 @@ logging = []
 
 [profile.release]
 codegen-units = 1
-opt-level = "s"
+opt-level = 2
 lto = true

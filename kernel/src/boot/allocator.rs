@@ -24,6 +24,15 @@ pub fn setup(mmap: ArrayVec<mmap::Entry, 32>) {
     MMAP.lock().replace(mmap);
 }
 
+/// Verify if the boot allocator is available or not. This function can be used
+/// to check if the boot allocator is available before attempting to allocate
+/// memory. If the boot allocator is not available, it probably means that the
+/// memory manager has been initialized and the boot allocator is no longer
+/// safe to use.
+pub fn available() -> bool {
+    MMAP.lock().is_some()
+}
+
 /// Disable the kernel boot memory allocator and return the memory map request.
 /// The memory map is sanitized to ensure that all usable memory regions base
 /// address are aligned to the page size.

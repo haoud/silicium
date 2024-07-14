@@ -9,6 +9,7 @@ pub mod percpu;
 pub mod physical;
 pub mod time;
 
+#[cfg(not(test))]
 pub mod lang;
 
 /// Request for the `HHDM` (High Half Direct Mapping) feature. This will order
@@ -67,4 +68,14 @@ pub fn setup() -> boot::Info {
         mmap,
         boot_allocated,
     }
+}
+
+/// Setup the architecture dependent parts of the kernel that need
+/// the memory management system to be setup.
+pub fn late_setup() {
+    // Register the local APIC timer
+    arch::x86_64::apic::local::timer::register_irq();
+
+    // Start the APs
+    arch::x86_64::smp::setup();
 }

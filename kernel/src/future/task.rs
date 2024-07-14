@@ -30,6 +30,13 @@ impl Task {
         }
     }
 
+    /// Get the size of the future. This is used to determine the size of the
+    /// saved task in the executor, useful for debugging.
+    #[must_use]
+    pub fn future_size(&self) -> usize {
+        core::mem::size_of_val(&*self.future)
+    }
+
     /// Poll the task
     pub fn poll(&mut self, context: &mut Context) -> Poll<()> {
         self.future.as_mut().poll(context)
@@ -116,6 +123,12 @@ impl YieldFuture {
     #[must_use]
     pub const fn new() -> Self {
         Self { polled: false }
+    }
+}
+
+impl Default for YieldFuture {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

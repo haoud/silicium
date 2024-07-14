@@ -35,7 +35,7 @@ pub unsafe fn setup() {
     // Initialized the per-cpu variable for this core and setup the
     // local kernel stack for the current core
     percpu::setup(0);
-    percpu::setup_kernel_stack();
+    percpu::setup_kernel_stack_early();
 
     // Setup the pagingation
     paging::setup();
@@ -72,9 +72,6 @@ pub unsafe fn setup() {
 
     // Calibrate the APIC timer only on the boot CPU
     apic::local::timer::calibrate();
-
-    // Start the APs
-    smp::setup();
 
     // Load the kernel PML4
     paging::load_kernel_pml4();

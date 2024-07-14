@@ -1,8 +1,12 @@
 use super::{apic, paging};
 use crate::{
-    arch::x86_64::{
-        cpu::{self, rflags::Flags},
-        opcode,
+    arch::{
+        self,
+        irq::{InterruptVector, IrqNumber},
+        x86_64::{
+            cpu::{self, rflags::Flags},
+            opcode,
+        },
     },
     time,
 };
@@ -111,16 +115,14 @@ pub fn without<T, F: FnOnce() -> T>(f: F) -> T {
 /// is triggered. It will call the appropriate interrupt handler for the given
 /// interrupt.
 #[no_mangle]
-pub extern "C" fn irq_handler(irq: u8) {
-    if apic::io::is_irq(irq) {
+pub extern "C" fn irq_handler(itv: InterruptVector) {
+    if apic::io::is_irq(itv.0) {
         apic::local::end_of_interrupt();
-        if apic::local::timer::own_irq(irq) {
-            apic::local::timer::handle_irq();
-        }
-    } else if paging::tlb::own_irq(irq) {
+        arch::irq::handle(IrqNumber::from(itv));
+    } else if paging::tlb::own_irq(itv.0) {
         paging::tlb::flush();
     } else {
-        log::warn!("Unhandled interrupt: {:?}", irq);
+        log::warn!("Unhandled interrupt: {:?}", itv);
     }
 
     time::timer::handle();

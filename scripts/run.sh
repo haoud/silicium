@@ -23,9 +23,11 @@ case $1 in
     ;;
   x86_64)
     qemu-system-x86_64            \
+      -display gtk,gl=on          \
       -cdrom bin/silicium.iso     \
       -rtc base=localtime         \
       -serial stdio               \
+      -vga virtio                 \
       -cpu max                    \
       -smp 2                      \
       -m 128                      \
@@ -49,4 +51,3 @@ if [ $code -eq 3 ]; then
 else
     exit $code
 fi
-

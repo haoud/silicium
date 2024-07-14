@@ -284,9 +284,18 @@ pub unsafe fn setup(lapic_id: u64) {
     let percpu_end = core::ptr::addr_of!(__percpu_end) as usize;
     let percpu_length = percpu_end - percpu_start;
 
-    // Allocate a per-CPU section for the current code and copy
-    // original per-cpu section to the allocated one
-    let percpu = bump::boot_allocate(percpu_length);
+    // Allocate a per-CPU section for the current code and copy original
+    // per-cpu section to the allocated one
+    let percpu = match bump::available() {
+        true => bump::boot_allocate(percpu_length),
+        false => {
+            // Allocate a zeroed vector
+            Box::leak(vec![0; percpu_length].into_boxed_slice()).as_mut_ptr()
+        }
+    };
+
+    log::debug!("Allocated per-CPU section at {:#x}", percpu as usize);
+
     core::ptr::copy_nonoverlapping(
         percpu_start as *const u8,
         percpu,
@@ -317,14 +326,45 @@ pub unsafe fn setup(lapic_id: u64) {
 /// stack for each thread and use a bigger kernel stack per core, saving memory
 /// and avoiding stack overflow.
 ///
+/// The difference between this function and `setup_kernel_stack` is that
+/// this function is called during the early initialization of the kernel,
+/// where memory allocation is not available. This function will allocate
+/// the kernel stack using the bump boot allocator.
+///
+/// # Safety
+/// This function should only be called once per core and only during the
+/// initialization of the kernel. Failing to do so will result in undefined
+/// behavior.
+///
+/// # Panics
+/// Panics if the kernel stack cannot be allocated or if the memory allocator
+/// was initialized, which means that the boot allocator is not available
+/// anymore.
+#[init]
+pub unsafe fn setup_kernel_stack_early() {
+    let kstack = bump::boot_allocate(KSTACK_SIZE);
+    let rsp = kstack.byte_add(KSTACK_SIZE).cast::<usize>();
+    set_kernel_stack(rsp);
+}
+
+/// Allocate a kernel stack for the current CPU and initialize the GS:16
+/// location with the freshly allocated stack. This kernel stack will be
+/// used when the user code enter into kernel mode, after saving its state
+/// on the small stack located in the TSS. This allow to have a small kernel
+/// stack for each thread and use a bigger kernel stack per core, saving memory
+/// and avoiding stack overflow.
+///
 /// # Safety
 /// This function should only be called once per core and only during the
 /// initialization of the kernel. Failing to do so will result in undefined
 /// behavior.
 #[init]
 pub unsafe fn setup_kernel_stack() {
-    let kstack = bump::boot_allocate(KSTACK_SIZE);
-    let rsp = kstack.byte_add(KSTACK_SIZE).cast::<usize>();
+    let kstack = Box::<[u8; KSTACK_SIZE]>::new_zeroed().assume_init();
+    let rsp = Box::leak(kstack)
+        .as_mut_ptr()
+        .byte_add(KSTACK_SIZE)
+        .cast::<usize>();
     set_kernel_stack(rsp);
 }
 

@@ -1,4 +1,4 @@
-use crate::arch::x86_64::opcode;
+use crate::arch::x86_64::{opcode, smp};
 pub use cpuid::cpuid;
 
 pub mod cpuid;
@@ -61,16 +61,22 @@ pub struct InterruptFrame {
 }
 
 /// Return an unique identifier for the current CPU core. This identifier is
-/// unique for each core and is used to identify the core in the SMP.
+/// unique for each core and is used to identify the core in the SMP. If this
+/// function is called before the APs are booted, it will always return 0
+/// even if the BSP is not core 0.
 #[must_use]
 pub fn id() -> u64 {
-    let id: u64;
-    // SAFETY: This is safe because the gs points to the per-cpu data, and gs:8
-    // contains the lapic_id of the current core
-    unsafe {
-        core::arch::asm!("mov {}, gs:8", out(reg) id);
+    if smp::ap_booted() {
+        // SAFETY: This is safe because the gs points to the per-cpu data,
+        // and gs:8 contains the lapic_id of the current core
+        let id: u64;
+        unsafe {
+            core::arch::asm!("mov {}, gs:8", out(reg) id);
+        }
+        id
+    } else {
+        0
     }
-    id
 }
 
 /// Halt the current CPU core indefinitely. This function is used to permanently

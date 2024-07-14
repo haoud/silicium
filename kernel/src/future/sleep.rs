@@ -1,18 +1,11 @@
-use crate::time::{
-    instant::Instant,
-    timer::{self, Timer},
-};
-use core::{task::Waker, time::Duration};
+use crate::time::{instant::Instant, timer::Timer};
+use core::time::Duration;
 use futures::Future;
 
 /// A future that resolves after a specified duration of time has elapsed.
 pub struct SleepFuture {
     /// The time when the sleep should expire.
     expire: Instant,
-
-    /// The timer guard that is used to cancel the timer if the future is
-    /// dropped or the sleep is completed without the timer being triggered.
-    guard: Option<timer::Guard>,
 }
 
 impl SleepFuture {
@@ -22,7 +15,6 @@ impl SleepFuture {
     pub fn new(expire: Duration) -> Self {
         Self {
             expire: Instant::now() + expire,
-            guard: None,
         }
     }
 }
@@ -35,35 +27,9 @@ impl Future for SleepFuture {
         cx: &mut core::task::Context,
     ) -> core::task::Poll<Self::Output> {
         if self.expire > Instant::now() {
-            if self.guard.is_none() {
-                // Register the timer to wake up the task if it hasn't been
-                // registered yet. The timer will wake up the task by calling
-                // `wake_by_ref` on the waker.
-                let guard = Timer::register(
-                    self.expire,
-                    Box::new(cx.waker().clone()),
-                    |timer| {
-                        timer
-                            .data()
-                            .downcast_mut::<Waker>()
-                            .unwrap()
-                            .wake_by_ref();
-                    },
-                );
-
-                // If no guard was returned, the timer has already expired
-                // and the callback has been executed. In this case, return
-                // `Poll::Ready(())` immediately.
-                if let Some(guard) = guard {
-                    self.get_mut().guard = Some(guard);
-                } else {
-                    return core::task::Poll::Ready(());
-                }
-            }
+            Timer::register(self.expire, Box::new(cx.waker().clone()));
             core::task::Poll::Pending
         } else {
-            // Drop the guard to cancel the timer and return `Poll::Ready(())`
-            core::mem::drop(self.get_mut().guard.take());
             core::task::Poll::Ready(())
         }
     }

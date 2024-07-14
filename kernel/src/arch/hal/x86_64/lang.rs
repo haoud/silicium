@@ -3,7 +3,7 @@ use crate::arch::x86_64::{
     apic::local::{IpiDestination, IpiPriority},
     cpu, smp,
 };
-use core::sync::atomic::AtomicBool;
+use core::sync::atomic::{AtomicBool, Ordering};
 
 /// This flag is used to prevent the kernel from panicking multiple times
 /// in a row. This often means that the kernel has panicked in the panic
@@ -11,13 +11,12 @@ use core::sync::atomic::AtomicBool;
 /// process.
 static PANICKED: AtomicBool = AtomicBool::new(false);
 
-#[atomic]
 #[panic_handler]
 #[cfg(feature = "panic_info")]
 pub fn panic(info: &core::panic::PanicInfo) -> ! {
     // If we have already panicked, we should not panic again because it
     // means that we have panicked in the panic handler itself.
-    if PANICKED.swap(true, core::sync::atomic::Ordering::SeqCst) {
+    if PANICKED.swap(true, Ordering::SeqCst) {
         cpu::halt();
     }
 
@@ -28,15 +27,13 @@ pub fn panic(info: &core::panic::PanicInfo) -> ! {
         unsafe {
             apic::local::send_ipi(
                 IpiDestination::AllExcludingSelf,
-                IpiPriority::Nmi,
+                IpiPriority::Fixed,
                 0x02,
             );
         }
     }
 
-    log::error!(
-        "The kernel has encountered a fatal error that it cannot recover from"
-    );
+    log::error!("The kernel has encountered a fatal error !");
     log::error!("The kernel must stop to prevent further damage");
 
     if let Some(location) = info.location() {
@@ -49,7 +46,6 @@ pub fn panic(info: &core::panic::PanicInfo) -> ! {
     cpu::halt();
 }
 
-#[atomic]
 #[panic_handler]
 #[cfg(not(feature = "panic_info"))]
 pub fn panic(_: &core::panic::PanicInfo) -> ! {
@@ -60,8 +56,9 @@ pub fn panic(_: &core::panic::PanicInfo) -> ! {
         unsafe {
             apic::local::send_ipi(
                 IpiDestination::AllExcludingSelf,
-                IpiPriority::Nmi,
-                0x00,
+                IpiPriority::Fixed,
+                0x02,
+                Nmi,
             );
         }
     }

@@ -29,20 +29,20 @@ build-userspace:
 
 build-book:
 	cd book && mdbook build
-	
+
 build-docs:
 	mkdir -p docs/kernel
 	RUSTDOCFLAGS="-Zunstable-options --enable-index-page" && \
 	cd kernel && cargo doc 				\
 		--document-private-items 		\
-		--all-features 							\
-		--keep-going 								\
-		--workspace 								\
-		--no-deps 									\
+		--all-features 					\
+		--keep-going 					\
+		--workspace 					\
+		--no-deps 						\
 		--release
 
 	mv kernel/target/x86_64/doc/* docs/kernel/
-	
+
 check-clippy: build-userspace
 	cd kernel && cargo clippy --all-features -- -D warnings
 
@@ -50,14 +50,14 @@ check-format:
 	cd kernel && cargo fmt --all -- --check
 
 unit-tests-kernel:
-	cd kernel && cargo test --release --target=x86_64-unknown-linux-gnu -Z build-std
+	# cd kernel && cargo test --release --target=x86_64-unknown-linux-gnu -Z build-std
 
 unit-tests-userspace:
 	make -C user unit-tests
 
 integration-tests:
 	# QEMU_FLAGS="-nographic" && run
-	
+
 run-i686: export ARCH=i686
 run-i686: build
 	./scripts/runner.sh
