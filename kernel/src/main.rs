@@ -54,13 +54,11 @@ pub unsafe extern "C" fn _entry() -> ! {
     // Setup the keyboard driver
     drivers::kbd::setup();
 
-    // Setup the terminal driver. It needs the framebuffer to be initialized
-    // and will create an input stream from the keyboard driver.
-    let fb = drivers::fb::setup();
-    let kbd = drivers::kbd::KeyboardScancodeStream::new();
-    let stream = drivers::tty::input::KeyboardCharStream::new(kbd);
-    let input = drivers::tty::input::TerminalInput::new(Box::pin(stream));
-    let tty = drivers::tty::VirtualTerminal::new(fb, input);
+    // Setup the framebuffer driver
+    drivers::fb::setup();
+
+    // Setup the terminal.
+    app::shell::setup();
 
     // Log that the kernel has successfully booted
     log::info!("Silicium booted successfully !");
@@ -68,6 +66,5 @@ pub unsafe extern "C" fn _entry() -> ! {
     // TODO: Use a more reliable stack (this stack will be deallocated in
     // the future because it is marked as boot reclaimable since it is
     // provided by the bootloader)
-    future::executor::spawn(future::Task::new(app::shell::shell(tty)));
     future::executor::run();
 }

@@ -50,6 +50,7 @@ pub unsafe fn access<T, Object: FromBytes>(
 /// - The physical memory range should be valid and free to use.
 /// - The physical memory start address should be properly aligned to
 ///   the type `T`.
+/// - The memory must represent a valid object of type `T`.
 /// - After this function call, the physical memory range can only be
 ///   referenced through the returned reference. If the reference is lost,
 ///   the physical range will be leaked.
@@ -66,6 +67,7 @@ pub unsafe fn leak<T: FromBytes>(start: impl Into<Physical>) -> &'static mut T {
 /// - The physical memory range should be valid and free to use.
 /// - The physical memory start address should be properly aligned
 ///   to the type `T`.
+/// - The memory must represent a valid slice of type `T`.
 /// - After this function call, the physical memory range can only
 ///   be referenced through the returned reference. If the reference
 ///   is lost, the physical range will be leaked definitely.
