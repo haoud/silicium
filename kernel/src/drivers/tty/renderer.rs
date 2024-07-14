@@ -5,7 +5,6 @@ use crate::{
     library::spin::Spinlock,
 };
 use alloc::string::ToString;
-use async_task::Task;
 use core::time::Duration;
 use embedded_graphics::{
     mono_font::{ascii::FONT_10X20, MonoTextStyle},

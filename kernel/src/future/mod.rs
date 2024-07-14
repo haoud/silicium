@@ -1,6 +1,7 @@
 use core::time::Duration;
 
 pub mod executor;
+pub mod mutex;
 pub mod sleep;
 pub mod timeout;
 pub mod waker;
