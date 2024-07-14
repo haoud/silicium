@@ -1,5 +1,28 @@
-use crate::{drivers, mm, time};
+use crate::{drivers, future, mm, time};
 use core::fmt::Write;
+
+/// Setup the terminal. This function will initialize the terminal if a
+/// framebuffer is available. The terminal will use the framebuffer as the
+/// output device and the keyboard as the input device.
+///
+/// If no framebuffer is available, this function will do nothing but log a
+/// warning indicating that the terminal will not be initialized.
+pub fn setup() {
+    if drivers::fb::FRAMEBUFFER.lock().is_valid() {
+        let kbd = drivers::kbd::KeyboardScancodeStream::new();
+        let stream = drivers::tty::input::KeyboardCharStream::new(kbd);
+        let input = drivers::tty::input::TerminalInput::new(Box::pin(stream));
+
+        future::executor::spawn(future::Task::new(shell(
+            drivers::tty::VirtualTerminal::new(
+                &drivers::fb::FRAMEBUFFER,
+                input,
+            ),
+        )));
+    } else {
+        log::warn!("No framebuffer available, terminal not initialized");
+    }
+}
 
 /// The shell task.
 ///
@@ -13,7 +36,7 @@ pub async fn shell(mut tty: drivers::tty::VirtualTerminal<'_>) {
     loop {
         write!(tty, "> ").unwrap();
         match tty.readline().await.as_str() {
-            "meminfo\n" => {
+            "meminfo" => {
                 let total = mm::physical::STATE.lock().frames_info().len() * 4;
                 let free = mm::physical::STATE
                     .lock()
@@ -53,7 +76,7 @@ pub async fn shell(mut tty: drivers::tty::VirtualTerminal<'_>) {
                 writeln!(tty, "Boot: {} KiB ({} Mib)", boot, boot / 1024)
                     .unwrap();
             }
-            "date\n" => {
+            "date" => {
                 let time = time::Date::from(time::Unix::current());
                 let month = match time.month {
                     1 => "January",

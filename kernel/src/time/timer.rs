@@ -1,6 +1,5 @@
-use alloc::collections::BinaryHeap;
-
 use crate::{library::spin::Spinlock, time::instant::Instant};
+use alloc::collections::BinaryHeap;
 use core::{cmp::Reverse, task::Waker};
 
 /// The list of active timers. This is a priority queue that is sorted by the

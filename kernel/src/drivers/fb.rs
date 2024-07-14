@@ -1,6 +1,16 @@
+use crate::library::spin::Spinlock;
 use embedded_graphics::{
     pixelcolor::Rgb888, prelude::*, primitives::Rectangle,
 };
+
+/// The kernel framebuffer object. This object provides a high-level
+/// interface to the framebuffer buffer.
+pub static FRAMEBUFFER: Spinlock<Framebuffer> =
+    Spinlock::new(Framebuffer::none());
+
+/// A request to get the framebuffer from the bootloader.
+static FB_REQUEST: limine::request::FramebufferRequest =
+    limine::request::FramebufferRequest::new();
 
 /// A framebuffer object that provides a high-level interface to a
 /// framebuffer buffer. It provides a safe interface to draw pixels
@@ -50,6 +60,17 @@ impl Framebuffer<'_> {
             green_mask: 0,
             blue_mask: 0,
         }
+    }
+
+    /// Verify if the framebuffer is valid. If the framebuffer is invalid, this
+    /// probably means that the framebuffer is not initialized or doesn't
+    /// exist.
+    #[must_use]
+    pub const fn is_valid(&self) -> bool {
+        !self.buffer.is_empty()
+            && self.width > 0
+            && self.height > 0
+            && self.bpp > 0
     }
 
     /// Set the color of a pixel at the specified coordinates without
@@ -174,21 +195,13 @@ impl Color {
     };
 }
 
-/// A request to get the framebuffer from the bootloader.
-static FB_REQUEST: limine::request::FramebufferRequest =
-    limine::request::FramebufferRequest::new();
-
 /// Setup the framebuffer by getting the framebuffer response from the
-/// bootloader and create a framebuffer object from the response.
-pub fn setup() -> Framebuffer<'static> {
-    let response = FB_REQUEST
-        .get_response()
-        .expect("Failed to get framebuffer response");
-
-    let fb = response
-        .framebuffers()
-        .next()
-        .expect("No framebuffers found");
+/// bootloader and create a framebuffer object from the response. If no
+/// framebuffers are found in the response, this function will not initialize
+/// the `FRAMEBUFFER` global variable.
+pub fn setup() -> Option<()> {
+    let response = FB_REQUEST.get_response()?;
+    let fb = response.framebuffers().next()?;
 
     // Check if the framebuffer is in a supported format. For simplicity
     // and performance reasons, we only support 32-bit framebuffers with
@@ -222,7 +235,7 @@ pub fn setup() -> Framebuffer<'static> {
     let blue_mask = ((1 << fb.blue_mask_size()) - 1) << fb.blue_mask_shift();
     let red_mask = ((1 << fb.red_mask_size()) - 1) << fb.red_mask_shift();
 
-    Framebuffer {
+    *FRAMEBUFFER.lock() = Framebuffer {
         height: fb.height() as usize,
         width: fb.width() as usize,
         bpp: fb.bpp() as usize / 8,
@@ -230,5 +243,6 @@ pub fn setup() -> Framebuffer<'static> {
         blue_mask,
         red_mask,
         buffer,
-    }
+    };
+    Some(())
 }
