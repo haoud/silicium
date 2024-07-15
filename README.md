@@ -60,7 +60,7 @@
 > Silicium is a work in progress and is not ready for production use.
 
 Silicium is a *kernel* written in Rust. It try to be a fast, portable kernel with a modern design. Its main goals are:
- - **Being portable**: Silicium is designed to be able to run on many architectures, by including good abstractions since the beginning of the project. 
+ - **Being portable**: Silicium is designed to be able to run on many architectures, by including good abstractions since the beginning of the project.
  - **Being fast**: Silicium is designed to be fast, efficient and scalable. It should be able to run on low-end hardware as well as on high-end hardware and to take advantage of modern hardware features and design.
  - **Being ABI-agnostic**, meaning that it should be able to run, in theory, any program written for Linux, Windows or MacOS by using a server that will translate foreign ABIs to Silicium's ABI.
  - **Being secure**: Silicium is designed to be secure by default. It should be able to run untrusted code without any risk of compromising the system.
