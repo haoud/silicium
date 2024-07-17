@@ -88,22 +88,27 @@ impl Stream for KeyboardCharStream {
             };
 
             // Get the key from the scancode
-            let key = self
+            if let Some(key) = self
                 .as_mut()
                 .set
                 .advance_state(scancode)
                 .expect("Failed to advance the keyboard state")
-                .unwrap();
-
-            // If the key is pressed, try to decode it. If it is a character,
-            // return it, otherwise, ignore it and read the next scancode,
-            // hoping it will be a character.
-            if key.state == KeyState::Down {
-                if let Some(DecodedKey::Unicode(c)) =
-                    self.as_mut().decoder.process_keyevent(key)
-                {
-                    return core::task::Poll::Ready(Some(Ok(c)));
-                };
+            {
+                // If the key is pressed, try to decode it. If it is a
+                // character, return it, otherwise, ignore it and read
+                // the next scancode, hoping it will be a character.
+                if key.state == KeyState::Down {
+                    if let Some(DecodedKey::Unicode(c)) =
+                        self.as_mut().decoder.process_keyevent(key)
+                    {
+                        return core::task::Poll::Ready(Some(Ok(c)));
+                    };
+                } else {
+                    // If the key is released, we still need to process it to
+                    // update the state of the keyboard in case the key is
+                    // a modifier key (e.g. Shift, Control, Alt...)
+                    self.as_mut().decoder.process_keyevent(key);
+                }
             }
         }
     }
