@@ -61,12 +61,8 @@ pub fn setup() -> boot::Info {
     // Get the memory map from the bootloader and convert it to the
     // kernel's memory map format. This is needed to support different
     // bootloaders and architectures.
-    let boot_allocated = boot::allocator::allocated_size();
-    let mmap = boot::allocator::disable();
-
     boot::Info {
-        mmap,
-        boot_allocated,
+        mmap: boot::allocator::disable(),
     }
 }
 

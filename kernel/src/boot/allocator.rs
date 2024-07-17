@@ -5,13 +5,9 @@ use crate::{
 };
 use arrayvec::ArrayVec;
 use config::PAGE_SIZE;
-use core::sync::atomic::{AtomicUsize, Ordering};
 
 /// The request that will order the Limine bootloader to provide a memory map.
 static MMAP: Spinlock<Option<ArrayVec<mmap::Entry, 32>>> = Spinlock::new(None);
-
-/// The total amount of memory allocated by the boot allocator.
-static ALLOCATED: AtomicUsize = AtomicUsize::new(0);
 
 /// Initializes the kernel boot memory allocator with the given memory map
 /// request.
@@ -60,12 +56,6 @@ pub fn disable() -> ArrayVec<mmap::Entry, 32> {
             region.start -= correction;
         });
     mmap
-}
-
-/// Returns the total amount of memory allocated by the boot allocator.
-#[must_use]
-pub fn allocated_size() -> usize {
-    ALLOCATED.load(Ordering::Relaxed)
 }
 
 /// Allocates a physical frame during the kernel initialization, when there is
@@ -157,8 +147,6 @@ pub unsafe fn allocate_align_physical(size: usize, align: usize) -> Physical {
 
     // Update the total amount of memory allocated by the boot allocator
     update_memory_map(mmap, Physical::new(address), size + offset);
-
-    ALLOCATED.fetch_add(size + offset, Ordering::Relaxed);
     Physical::new_unchecked(address + offset)
 }
 
@@ -175,9 +163,7 @@ fn update_memory_map(
     // exist, create a new one.
     let index = mmap
         .iter_mut()
-        .position(|region| {
-            region.end() == start && region.kind == mmap::Kind::Kernel
-        })
+        .position(|region| region.end() == start && region.kind.is_kernel())
         .unwrap_or_else(|| {
             mmap.push(mmap::Entry {
                 start,
