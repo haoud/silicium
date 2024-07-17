@@ -125,6 +125,20 @@ impl VirtualTerminal {
         line
     }
 
+    /// Clear the terminal screen and move the cursor to the top-left corner.
+    pub async fn clear(&mut self) {
+        self.characters = vec![
+            Character::space(CharStyle {
+                foreground: self.char_foreground,
+                background: self.char_background,
+                effects: CharEffects::empty(),
+            });
+            self.height * self.width
+        ];
+        self.cursor = Position { x: 0, y: 0 };
+        self.flush().await;
+    }
+
     /// Write a character to the terminal. This function will _NOT_ update
     /// the cursor position, it is up to the caller to do so if needed.
     pub async fn write(&mut self, character: char) {
