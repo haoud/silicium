@@ -1,4 +1,4 @@
-use crate::{drivers, future, mm, time};
+use crate::{arch, drivers, future, mm, time};
 use core::fmt::Write;
 
 /// Setup the terminal. This function will initialize the terminal if a
@@ -36,6 +36,14 @@ pub async fn shell(mut tty: drivers::tty::VirtualTerminal) {
     loop {
         write!(tty, "> ").unwrap();
         match tty.readline().await.as_str() {
+            "reboot" => {
+                arch::x86_64::cpu::reboot();
+                writeln!(tty, "Failed to reboot").unwrap();
+            }
+            "poweroff" => {
+                arch::x86_64::cpu::poweroff();
+                writeln!(tty, "Failed to poweroff").unwrap();
+            }
             "meminfo" => {
                 let total = mm::physical::STATE.lock().frames_info().len() * 4;
                 let free = mm::physical::STATE
