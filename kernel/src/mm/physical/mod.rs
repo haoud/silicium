@@ -144,9 +144,6 @@ impl State {
             free -= 1;
         }
 
-        poisoned -= info.boot_allocated / usize::from(PAGE_SIZE);
-        kernel += info.boot_allocated / usize::from(PAGE_SIZE);
-
         log::info!(
             "Physical: {} KiB poisoned, {} KiB reserved, {} KiB kernel, {} KiB bootloader, {} KiB free",
             (poisoned * usize::from(PAGE_SIZE)) / 1024,

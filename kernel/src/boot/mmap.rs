@@ -78,6 +78,14 @@ impl Kind {
                 | Self::BootloaderReclaimable
         )
     }
+
+    /// Returns `true` if the memory region belongs to the kernel, and `false`
+    /// otherwise. Kernel memory is memory that is used by the kernel and is
+    /// not available for allocation. This includes the kernel itself and any
+    /// modules that are loaded by the kernel.
+    pub const fn is_kernel(self) -> bool {
+        matches!(self, Self::Kernel)
+    }
 }
 
 impl From<limine::memory_map::EntryType> for Kind {

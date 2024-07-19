@@ -5,14 +5,9 @@ use crate::{
 };
 use arrayvec::ArrayVec;
 use config::PAGE_SIZE;
-use core::sync::atomic::{AtomicUsize, Ordering};
-use macros::init;
 
 /// The request that will order the Limine bootloader to provide a memory map.
 static MMAP: Spinlock<Option<ArrayVec<mmap::Entry, 32>>> = Spinlock::new(None);
-
-/// The total amount of memory allocated by the boot allocator.
-static ALLOCATED: AtomicUsize = AtomicUsize::new(0);
 
 /// Initializes the kernel boot memory allocator with the given memory map
 /// request.
@@ -61,12 +56,6 @@ pub fn disable() -> ArrayVec<mmap::Entry, 32> {
             region.start -= correction;
         });
     mmap
-}
-
-/// Returns the total amount of memory allocated by the boot allocator.
-#[must_use]
-pub fn allocated_size() -> usize {
-    ALLOCATED.load(Ordering::Relaxed)
 }
 
 /// Allocates a physical frame during the kernel initialization, when there is
@@ -156,6 +145,34 @@ pub unsafe fn allocate_align_physical(size: usize, align: usize) -> Physical {
     region.start = Physical::new(address + offset + size);
     region.length -= offset + size;
 
-    ALLOCATED.fetch_add(size + offset, Ordering::Relaxed);
+    // Update the total amount of memory allocated by the boot allocator
+    update_memory_map(mmap, Physical::new(address), size + offset);
     Physical::new_unchecked(address + offset)
+}
+
+/// Update the memory map to reflect the allocation of a memory region either
+/// by updating an existing region that precedes the allocated memory or by
+/// adding a new region if necessary.
+fn update_memory_map(
+    mmap: &mut ArrayVec<mmap::Entry, 32>,
+    start: Physical,
+    size: usize,
+) {
+    // Find the kernel memory region where the end address is the base address
+    // of the allocated memory and update its length. If the region does not
+    // exist, create a new one.
+    let index = mmap
+        .iter_mut()
+        .position(|region| region.end() == start && region.kind.is_kernel())
+        .unwrap_or_else(|| {
+            mmap.push(mmap::Entry {
+                start,
+                length: 0,
+                kind: mmap::Kind::Kernel,
+            });
+            mmap.len() - 1
+        });
+
+    // Update the length of the region to reflect the allocation
+    mmap[index].length += size;
 }
