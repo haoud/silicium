@@ -3,6 +3,7 @@ use crate::{
     future::{self, executor},
 };
 use async_task::Task;
+use bitflags::bitflags;
 use core::time::Duration;
 use futures::StreamExt;
 use input::TerminalInput;
@@ -20,10 +21,16 @@ pub mod renderer;
 pub struct VirtualTerminal {
     /// The character buffer. It represents the characters
     /// visible on the screen.
-    characters: Vec<char>,
+    characters: Vec<Character>,
 
     /// The framebuffer to render to
     renderer: Arc<TerminalRenderer>,
+
+    /// The foreground color of the text
+    char_foreground: AnsiColor16,
+
+    /// The background color of the text
+    char_background: AnsiColor16,
 
     /// The blinking cursor task
     blinking: Task<()>,
@@ -58,6 +65,13 @@ impl VirtualTerminal {
 
         let renderer = Arc::new(TerminalRenderer::new(framebuffer));
 
+        // The default style of the characters
+        let style = CharStyle {
+            foreground: AnsiColor16::White,
+            background: AnsiColor16::Black,
+            effects: CharEffects::empty(),
+        };
+
         // Create a new blinking task with the terminal renderer at the cursor
         // position with the character to blink and the blinking speed and
         // schedule the task to be run.
@@ -66,12 +80,14 @@ impl VirtualTerminal {
                 renderer: Arc::clone(&renderer),
                 position: Position { x: 0, y: 0 },
                 speed: Duration::from_millis(500),
-                character: ' ',
+                character: Character::space(style),
             }));
         runnable.schedule();
 
         Self {
-            characters: vec![' '; height * width],
+            characters: vec![Character::space(style); height * width],
+            char_foreground: AnsiColor16::White,
+            char_background: AnsiColor16::Black,
             drawn_cursor: Position { x: 0, y: 0 },
             cursor: Position { x: 0, y: 0 },
             blinking,
@@ -109,6 +125,20 @@ impl VirtualTerminal {
         line
     }
 
+    /// Clear the terminal screen and move the cursor to the top-left corner.
+    pub async fn clear(&mut self) {
+        self.characters = vec![
+            Character::space(CharStyle {
+                foreground: self.char_foreground,
+                background: self.char_background,
+                effects: CharEffects::empty(),
+            });
+            self.height * self.width
+        ];
+        self.cursor = Position { x: 0, y: 0 };
+        self.flush().await;
+    }
+
     /// Write a character to the terminal. This function will _NOT_ update
     /// the cursor position, it is up to the caller to do so if needed.
     pub async fn write(&mut self, character: char) {
@@ -122,15 +152,21 @@ impl VirtualTerminal {
             }
             _ => {
                 // Draw the character on the screen
-                self.renderer
-                    .draw_char(
-                        Position {
-                            x: self.cursor.x,
-                            y: self.cursor.y,
-                        },
-                        character,
-                    )
-                    .await;
+                let character = Character {
+                    value: character,
+                    style: CharStyle {
+                        foreground: self.char_foreground,
+                        background: self.char_background,
+                        effects: CharEffects::empty(),
+                    },
+                };
+
+                let position = Position {
+                    x: self.cursor.x,
+                    y: self.cursor.y,
+                };
+
+                self.renderer.draw_char(position, character).await;
 
                 // Update the character buffer
                 let position = self.cursor.y * self.width + self.cursor.x;
@@ -152,7 +188,13 @@ impl VirtualTerminal {
         if self.cursor.y >= self.height {
             self.characters.copy_within(self.width.., 0);
             self.characters.truncate(self.width * (self.height - 1));
-            self.characters.extend((0..self.width).map(|_| ' '));
+            self.characters.extend((0..self.width).map(|_| {
+                Character::space(CharStyle {
+                    foreground: self.char_foreground,
+                    background: self.char_background,
+                    effects: CharEffects::empty(),
+                })
+            }));
             self.cursor.y = self.height - 1;
             self.flush().await;
         }
@@ -173,8 +215,14 @@ impl VirtualTerminal {
         }
 
         let position = self.cursor.y * self.width + self.cursor.x;
-        self.characters[position] = ' ';
-        self.renderer.clear_char(self.cursor).await;
+        let character = Character::space(CharStyle {
+            foreground: self.char_foreground,
+            background: self.char_background,
+            effects: CharEffects::empty(),
+        });
+
+        self.characters[position] = character;
+        self.renderer.draw_char(self.cursor, character).await;
         self.update_cursor().await;
     }
 
@@ -231,7 +279,11 @@ impl VirtualTerminal {
     /// position. The new blinking task will be scheduled in the background
     /// when the old one has been canceled, avoiding having multiple blinking
     /// tasks running at the same time.
-    fn create_blinking_task(&mut self, old_cursor: Position, old_char: char) {
+    fn create_blinking_task(
+        &mut self,
+        old_cursor: Position,
+        old_char: Character,
+    ) {
         let offset = self.cursor.y * self.width + self.cursor.x;
         let char = self.characters[offset];
 
@@ -260,6 +312,69 @@ impl core::fmt::Write for VirtualTerminal {
         executor::block_on(self.write_str(s));
         Ok(())
     }
+}
+
+/// Represents a 16-color ANSI color. The colors are the same as the ones
+/// used in the traditional VGA text mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(u8)]
+pub enum AnsiColor16 {
+    Black,
+    Blue,
+    Green,
+    Cyan,
+    Red,
+    Magenta,
+    Brown,
+    LightGray,
+    Gray,
+    LightBlue,
+    LightGreen,
+    LightCyan,
+    LightRed,
+    LightMagenta,
+    Yellow,
+    White,
+}
+
+bitflags! {
+    #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct CharEffects : u8 {
+        // No effect implemented yet
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Character {
+    /// The character to display
+    pub value: char,
+
+    /// The style of the character
+    pub style: CharStyle,
+}
+
+impl Character {
+    /// Create a new space character with the given style. This is useful
+    /// for displaying empty spaces on the screen or for an placeholder
+    /// character.
+    #[must_use]
+    pub fn space(style: CharStyle) -> Self {
+        Self { value: ' ', style }
+    }
+}
+
+/// Represents the style of a character on the screen
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CharStyle {
+    /// The foreground color of the character
+    pub foreground: AnsiColor16,
+
+    /// The background color of the character
+    pub background: AnsiColor16,
+
+    /// The effects applied to the character; e.g. bold, italic, underline...
+    /// Each effect is represented by a bit in the `CharEffect` bitfield.
+    pub effects: CharEffects,
 }
 
 /// Represents a 2D position on the screen

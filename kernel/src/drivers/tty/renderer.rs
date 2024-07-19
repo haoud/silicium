@@ -1,4 +1,4 @@
-use super::Position;
+use super::{AnsiColor16, Character, Position};
 use crate::{
     drivers::fb::{Color, Framebuffer},
     future,
@@ -10,7 +10,7 @@ use embedded_graphics::{
     pixelcolor::Rgb888,
     prelude::*,
     primitives::{Line, PrimitiveStyle, StyledDrawable},
-    text::{renderer::CharacterStyle, Text},
+    text::Text,
 };
 
 /// A terminal renderer to an framebuffer. This structure is responsible
@@ -54,35 +54,27 @@ impl TerminalRenderer {
     }
 
     /// Draw a character at the specified position on the screen
-    pub async fn draw_char(&self, position: Position, character: char) {
-        let style = MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE);
-        let point = Point {
-            x: self.x_border as i32 + position.x as i32 * 10,
-            y: self.y_border as i32 + position.y as i32 * 20 + 20,
-        };
-        Text::new(&character.to_string(), point, style)
-            .draw(&mut *self.framebuffer.lock().await)
-            .expect("Failed to draw character");
-    }
+    pub async fn draw_char(&self, position: Position, char: Character) {
+        let mut style = MonoTextStyle::new(&FONT_10X20, Rgb888::WHITE);
+        style.background_color = Some(map_ansi_color(char.style.background));
+        style.text_color = Some(map_ansi_color(char.style.foreground));
 
-    /// Clear the character at the specified position.
-    pub async fn clear_char(&self, position: Position) {
-        let mut style = MonoTextStyle::new(&FONT_10X20, Rgb888::BLACK);
         let point = Point {
             x: self.x_border as i32 + position.x as i32 * 10,
             y: self.y_border as i32 + position.y as i32 * 20 + 20,
         };
-        style.set_background_color(Some(Rgb888::BLACK));
-        Text::new(" ", point, style)
+
+        Text::new(&char.value.to_string(), point, style)
             .draw(&mut *self.framebuffer.lock().await)
             .expect("Failed to draw character");
     }
 
     /// Remove the cursor at the specified position and replace it with
     /// the specified character.
-    pub async fn clear_cursor(&self, cursor: Position, character: char) {
-        self.clear_char(cursor).await;
-        self.draw_char(cursor, character).await;
+    pub async fn clear_cursor(&self, cursor: Position, char: Character) {
+        let space = Character::space(char.style);
+        self.draw_char(cursor, space).await;
+        self.draw_char(cursor, char).await;
     }
 
     /// Redraw the cursor at the specified position. This function does not
@@ -112,6 +104,14 @@ impl TerminalRenderer {
     }
 }
 
+/// A blinking cursor that can be displayed on the screen. This structure
+/// contains everything needed to display a blinking cursor at a specific
+/// position on the screen:
+/// - The renderer to use to draw the cursor
+/// - The position of the cursor on the screen
+/// - The speed at which the cursor should blink
+/// - The character located at the cursor position, used remove the cursor
+///   when it blinks.
 #[derive(Debug)]
 pub struct BlinkingCursor {
     /// The renderer to use to draw the cursor
@@ -126,7 +126,7 @@ pub struct BlinkingCursor {
 
     /// The character located at the cursor position, used to redraw the
     /// cursor when it blinks.
-    pub character: char,
+    pub character: Character,
 }
 
 /// Blink the cursor at the specified position. This function will draw
@@ -142,5 +142,27 @@ pub async fn blink_cursor(cursor: BlinkingCursor) {
         future::sleep::sleep(cursor.speed).await;
         renderer.clear_cursor(pos, char).await;
         future::sleep::sleep(cursor.speed).await;
+    }
+}
+
+/// Translate an ANSI color to a pixel color
+pub fn map_ansi_color(ansi: AnsiColor16) -> Rgb888 {
+    match ansi {
+        AnsiColor16::Black => Rgb888::BLACK,
+        AnsiColor16::Blue => Rgb888::BLUE,
+        AnsiColor16::Green => Rgb888::GREEN,
+        AnsiColor16::Cyan => Rgb888::CYAN,
+        AnsiColor16::Red => Rgb888::CSS_DARK_RED,
+        AnsiColor16::Magenta => Rgb888::CSS_DARK_MAGENTA,
+        AnsiColor16::Brown => Rgb888::CSS_BROWN,
+        AnsiColor16::LightGray => Rgb888::CSS_LIGHT_GRAY,
+        AnsiColor16::Gray => Rgb888::CSS_GRAY,
+        AnsiColor16::LightBlue => Rgb888::CSS_LIGHT_BLUE,
+        AnsiColor16::LightGreen => Rgb888::CSS_LIGHT_GREEN,
+        AnsiColor16::LightCyan => Rgb888::CSS_LIGHT_CYAN,
+        AnsiColor16::LightRed => Rgb888::RED,
+        AnsiColor16::LightMagenta => Rgb888::CSS_MAGENTA,
+        AnsiColor16::Yellow => Rgb888::YELLOW,
+        AnsiColor16::White => Rgb888::WHITE,
     }
 }

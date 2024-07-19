@@ -1,4 +1,7 @@
-use crate::arch::x86_64::{opcode, smp};
+use crate::arch::{
+    self,
+    x86_64::{opcode, smp},
+};
 pub use cpuid::cpuid;
 
 pub mod cpuid;
@@ -84,10 +87,35 @@ pub fn id() -> u64 {
 /// low-power state.
 /// This action is irreversible and the only way to recover from it is to reset
 /// the entire system.
-#[inline]
+#[cold]
 pub fn halt() -> ! {
     loop {
         opcode::cli();
         opcode::hlt();
+    }
+}
+
+/// Power off the system. If the system does not support power off, this
+/// function will return the control to the caller, which must handle the
+/// situation.
+/// TODO: Implement power off for real hardware. The code below only
+/// works on QEMU.
+#[cold]
+pub fn poweroff() {
+    // SAFETY: This should be safe on QEMU... But I don't know about real
+    // hardware...
+    unsafe {
+        arch::x86_64::opcode::outw(0x604, 0x2000);
+    }
+}
+
+/// Reboot the system. If the reboot fails (very unlikely, almost impossible on
+/// the `x86_64` architecture because a simple triple fault will reboot the
+/// system in the last resort), this function will return the control to the
+/// caller, which must handle the situation.
+#[cold]
+pub fn reboot() {
+    unsafe {
+        arch::x86_64::opcode::outb(0x64, 0xFE);
     }
 }
