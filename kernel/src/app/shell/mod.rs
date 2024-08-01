@@ -1,21 +1,8 @@
 use crate::{arch, drivers, future, mm, time};
-use alloc::format;
 use core::fmt::Write;
+use utils::{print, println};
 
-/// Format a string and write it to the terminal.
-macro_rules! print {
-    ($tty:expr, $($arg:tt)*) => {
-        $tty.write_str(format!($($arg)*).as_str()).await;
-    };
-}
-
-/// Format a string and write it to the terminal, appending a newline.
-macro_rules! println {
-    ($tty:expr, $($arg:tt)*) => {
-        $tty.write_str(format!($($arg)*).as_str()).await;
-        $tty.write_str("\n").await;
-    };
-}
+pub mod utils;
 
 /// Setup the terminal. This function will initialize the terminal if a
 /// framebuffer is available. The terminal will use the framebuffer as the
@@ -84,13 +71,13 @@ pub async fn shell(mut tty: drivers::tty::VirtualTerminal) {
 }
 
 pub async fn poweroff(tty: &mut drivers::tty::VirtualTerminal) {
-    countdown(tty, "Powering off", 5).await;
+    utils::countdown(tty, "Powering off", 5).await;
     arch::x86_64::cpu::poweroff();
     println!(tty, "Failed to power off !");
 }
 
 pub async fn reboot(tty: &mut drivers::tty::VirtualTerminal) {
-    countdown(tty, "Rebooting", 5).await;
+    utils::countdown(tty, "Rebooting", 5).await;
     arch::x86_64::cpu::reboot();
     println!(tty, "Failed to reboot !");
 }
@@ -105,8 +92,6 @@ pub async fn meminfo(tty: &mut drivers::tty::VirtualTerminal) {
         .count()
         * 4;
 
-    // FIXME: The memory used by the boot allocator is not accounted for
-    // kernel memory usage. Fix this ASAP.
     let kernel = mm::physical::STATE
         .lock()
         .frames_info()
@@ -133,39 +118,11 @@ pub async fn meminfo(tty: &mut drivers::tty::VirtualTerminal) {
 
 pub fn date(tty: &mut drivers::tty::VirtualTerminal) {
     let time = time::Date::from(time::Unix::current());
-    let month = match time.month {
-        1 => "January",
-        2 => "February",
-        3 => "March",
-        4 => "April",
-        5 => "May",
-        6 => "June",
-        7 => "July",
-        8 => "August",
-        9 => "September",
-        10 => "October",
-        11 => "November",
-        12 => "December",
-        _ => "Unknown",
-    };
+    let month = utils::month_name(time.month);
     writeln!(
         tty,
-        "Date: {}:{}:{} {} {} {}\n",
+        "Date: {:02}:{:02}:{:02} {} {} {}\n",
         time.hour, time.minute, time.second, time.day, month, time.year
     )
     .unwrap();
-}
-
-/// Countdown from `secs` to 0, printing the current number to the terminal
-/// every second. The `event` string will be printed before the countdown.
-pub async fn countdown(
-    tty: &mut drivers::tty::VirtualTerminal,
-    event: &str,
-    secs: u64,
-) {
-    print!(tty, "{event} in ");
-    for i in (1..=secs).rev() {
-        write!(tty, "{i}... ").unwrap();
-        future::sleep::sleep(core::time::Duration::from_secs(1)).await;
-    }
 }
