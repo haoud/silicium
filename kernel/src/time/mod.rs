@@ -129,6 +129,49 @@ impl From<Unix> for Date {
     }
 }
 
+/// A month in the Gregorian calendar. The month is represented by a number
+/// between 1 and 12, where January is 1 and December is 12.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Month {
+    January = 1,
+    February = 2,
+    March = 3,
+    April = 4,
+    May = 5,
+    June = 6,
+    July = 7,
+    August = 8,
+    September = 9,
+    October = 10,
+    November = 11,
+    December = 12,
+}
+
+impl core::fmt::Display for Month {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+/// A weekday in the Gregorian calendar. The weekday is represented by a
+/// number between 1 and 7, where Monday is 1 and Sunday is 7.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Weekday {
+    Monday = 1,
+    Tuesday = 2,
+    Wednesday = 3,
+    Thursday = 4,
+    Friday = 5,
+    Saturday = 6,
+    Sunday = 7,
+}
+
+impl core::fmt::Display for Weekday {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 /// # Safety
 /// The caller must ensure that the function is only called once, and only
 /// during the kernel initialization.
