@@ -36,14 +36,14 @@ pub use prelude::*;
 #[no_mangle]
 pub unsafe extern "C" fn _entry() -> ! {
     // Call the architecture specific setup function
-    let info = arch::setup();
+    let info = arch::entry();
 
     // Setup the memory management system
     mm::setup(&info);
 
     // Setup the architecture specific late setup that needs the
     // memory management system to be setup first
-    arch::late_setup();
+    arch::setup();
 
     // Setup the time system
     time::setup();

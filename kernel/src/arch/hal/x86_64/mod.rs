@@ -34,7 +34,7 @@ static MMAP_REQUEST: limine::request::MemoryMapRequest =
 /// This function will panic if the boot process fails
 #[inline]
 #[must_use]
-pub fn setup() -> boot::Info {
+pub fn entry() -> boot::Info {
     // Initialize logging if this feature is enabled
     #[cfg(feature = "logging")]
     log::setup();
@@ -68,7 +68,7 @@ pub fn setup() -> boot::Info {
 
 /// Setup the architecture dependent parts of the kernel that need
 /// the memory management system to be setup.
-pub fn late_setup() {
+pub fn setup() {
     // Register the local APIC timer
     arch::x86_64::apic::local::timer::register_irq();
 

@@ -1,12 +1,12 @@
-use crate::{library::spin::Spinlock, time::instant::Instant};
+use crate::{arch, time::instant::Instant};
 use alloc::collections::BinaryHeap;
 use core::{cmp::Reverse, task::Waker};
 
 /// The list of active timers. This is a priority queue that is sorted by the
 /// deadline of the timers. The first timer in the queue is the one that will
 /// expire the soonest.
-static TIMERS: Spinlock<BinaryHeap<Reverse<Timer>>> =
-    Spinlock::new(BinaryHeap::new());
+static TIMERS: spin::Mutex<BinaryHeap<Reverse<Timer>>> =
+    spin::Mutex::new(BinaryHeap::new());
 
 /// A timer that will expire at a given deadline and wake up a task.
 #[derive(Debug)]
@@ -27,9 +27,9 @@ impl Timer {
         if deadline <= Instant::now() {
             waker.wake();
         } else {
-            TIMERS
-                .lock_irq_safe()
-                .push(Reverse(Timer { deadline, waker }));
+            arch::irq::without(|| {
+                TIMERS.lock().push(Reverse(Timer { deadline, waker }))
+            });
         }
     }
 
@@ -63,13 +63,15 @@ impl Eq for Timer {}
 /// Execute all expired timers and remove them from the list of active
 /// timers.
 pub fn handle() {
-    let mut timers = TIMERS.lock_irq_safe();
-    while let Some(timer) = timers.peek() {
-        if timer.0.expired() {
-            let timer = timers.pop().unwrap();
-            timer.0.waker.wake();
-        } else {
-            break;
+    arch::irq::without(|| {
+        let mut timers = TIMERS.lock();
+        while let Some(timer) = timers.peek() {
+            if timer.0.expired() {
+                let timer = timers.pop().unwrap();
+                timer.0.waker.wake();
+            } else {
+                break;
+            }
         }
-    }
+    });
 }

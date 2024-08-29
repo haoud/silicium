@@ -1,6 +1,6 @@
-use crate::{
-    arch::x86_64::serial::{Port, Serial},
-    library::spin::Spinlock,
+use crate::arch::{
+    self,
+    x86_64::serial::{Port, Serial},
 };
 use core::fmt::Write;
 
@@ -12,7 +12,7 @@ static LOGGER: Logger = Logger::uninitialized();
 /// The logger for the `x86_64` architecture. It's a simple logger that
 /// encapsulates a serial port (COM1) and writes messages to it.
 struct Logger {
-    serial: Spinlock<Option<Serial>>,
+    serial: spin::Mutex<Option<Serial>>,
 }
 
 impl Logger {
@@ -20,7 +20,7 @@ impl Logger {
     #[must_use]
     pub const fn uninitialized() -> Self {
         Self {
-            serial: Spinlock::new(None),
+            serial: spin::Mutex::new(None),
         }
     }
 }
@@ -32,16 +32,18 @@ impl log::Log for Logger {
 
     fn log(&self, record: &log::Record) {
         if self.enabled(record.metadata()) {
-            if let Some(serial) = self.serial.lock_irq_safe().as_mut() {
-                let level = match record.level() {
-                    log::Level::Error => "\x1B[1m\x1b[31m[!]\x1b[0m",
-                    log::Level::Warn => "\x1B[1m\x1b[33m[-]\x1b[0m",
-                    log::Level::Info => "\x1B[1m\x1b[32m[*]\x1b[0m",
-                    log::Level::Debug => "\x1B[1m\x1b[34m[#]\x1b[0m",
-                    log::Level::Trace => "\x1B[1m\x1b[35m[~]\x1b[0m",
-                };
-                _ = writeln!(serial, "{} {}", level, record.args());
-            }
+            arch::irq::without(|| {
+                if let Some(serial) = self.serial.lock().as_mut() {
+                    let level = match record.level() {
+                        log::Level::Error => "\x1B[1m\x1b[31m[!]\x1b[0m",
+                        log::Level::Warn => "\x1B[1m\x1b[33m[-]\x1b[0m",
+                        log::Level::Info => "\x1B[1m\x1b[32m[*]\x1b[0m",
+                        log::Level::Debug => "\x1B[1m\x1b[34m[#]\x1b[0m",
+                        log::Level::Trace => "\x1B[1m\x1b[35m[~]\x1b[0m",
+                    };
+                    _ = writeln!(serial, "{} {}", level, record.args());
+                }
+            });
         }
     }
 
@@ -60,11 +62,13 @@ pub fn setup() {
 /// or not available, this function does nothing. If an error occurs while
 /// writing the message, the error is ignored.
 pub fn write(message: &str) {
-    if let Some(serial) = LOGGER.serial.lock_irq_safe().as_ref() {
-        for character in message.bytes() {
-            _ = serial.send(character);
+    arch::irq::without(|| {
+        if let Some(serial) = LOGGER.serial.lock().as_ref() {
+            for character in message.bytes() {
+                _ = serial.send(character);
+            }
         }
-    }
+    });
 }
 
 /// Force the logger to unlock the serial port. This is useful when a panic
