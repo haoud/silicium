@@ -197,7 +197,7 @@ pub trait Write {
 
     /// Flush the writer. This function is used to make sure that the buffer is
     /// written into the underlying storage.
-    fn flush(&mut self);
+    fn flush(&mut self) -> Result<(), Error>;
 
     /// Attempts to write an entire buffer into this writer.
     ///

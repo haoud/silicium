@@ -34,6 +34,7 @@ log = "0.4.20"
 [dependencies]
 async-task = { version = "4.7.1", default-features = false }
 embedded-graphics = "0.8.1"
+trait-variant = "0.1.2"
 pc-keyboard = "0.7.0"
 lock_api = "0.4.12"
 spin = "0.9.8"

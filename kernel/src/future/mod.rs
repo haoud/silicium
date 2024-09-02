@@ -1,4 +1,5 @@
 pub mod executor;
+pub mod io;
 pub mod mutex;
 pub mod sleep;
 pub mod timeout;

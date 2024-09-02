@@ -235,6 +235,7 @@ dependencies = [
  "silicium-macros",
  "spin",
  "talc",
+ "trait-variant",
  "zerocopy",
 ]
 
@@ -382,6 +383,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04be12ec299aadd63a0bf781d893e4b6139d33cdca6dcd6f6be31f849cedcac8"
 dependencies = [
  "lock_api",
+]
+
+[[package]]
+name = "trait-variant"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70977707304198400eb4835a78f6a9f928bf41bba420deb8fdb175cd965d77a7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
