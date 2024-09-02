@@ -4,16 +4,24 @@ use core::{iter::Step, marker::PhantomData};
 /// kernel-space address.
 pub trait Type: Copy {}
 
-/// A user-space virtual address.
+/// A user-space virtual address marker.
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct User;
 impl Type for User {}
 
-/// A kernel-space virtual address.
+/// A kernel-space virtual address marker.
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Kernel;
 impl Type for Kernel {}
 
+/// A virtual address is an address that points to a location in the virtual
+/// memory of the system. The virtual memory is an abstraction that provides
+/// each process with its own address space, which is isolated from the address
+/// spaces of other processes. The address spaces are divided into two regions:
+/// the user-space and the kernel-space. The user-space is used to store the
+/// code and data of the process, while the kernel-space is used to store the
+/// code and data of the kernel. The kernel-space is shared between all
+/// processes, while the user-space is private to each process.
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Virtual<T>(usize, PhantomData<T>);

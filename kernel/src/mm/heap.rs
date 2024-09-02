@@ -9,7 +9,6 @@ use config::PAGE_SHIFT;
 /// relatively small chunks of memory. Large allocations should be done using
 /// the virtual memory allocator (not yet implemented).
 #[global_allocator]
-#[cfg(not(test))]
 static ALLOCATOR: talc::Talck<spin::Mutex<()>, OomHandler> =
     talc::Talck::new(talc::Talc::new(OomHandler {}));
 

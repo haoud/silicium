@@ -89,8 +89,8 @@ impl Stream for KeyboardScancodeStream {
         } else {
             arch::irq::without(|| {
                 WAITING.lock().push(cx.waker().clone());
-            });
-            Poll::Pending
+                Poll::Pending
+            })
         }
     }
 }

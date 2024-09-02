@@ -71,7 +71,7 @@ impl State {
 
         // Initialize the frame info array with default values and create it
         // from the computed location and size
-        // SAFETY: This is sae because the memory region is valid and free to
+        // SAFETY: This is safe because the memory region is valid and free to
         // use, and is properly aligned to the type `frame::Info`.
         let array = unsafe {
             arch::physical::init_and_leak_slice(

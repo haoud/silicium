@@ -11,7 +11,6 @@ use crate::{
     },
     boot, mm,
 };
-use macros::init;
 
 /// The page map level 4 table. This table is the root of the page table
 /// hierarchy and is used to translate virtual addresses to physical addresses.

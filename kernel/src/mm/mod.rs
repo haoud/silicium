@@ -1,5 +1,4 @@
 use crate::boot;
-use macros::init;
 
 pub mod heap;
 pub mod physical;

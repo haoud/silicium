@@ -3,14 +3,12 @@ use crate::{arch, boot};
 pub mod context;
 pub mod date;
 pub mod irq;
+pub mod lang;
 pub mod log;
 pub mod paging;
 pub mod percpu;
 pub mod physical;
 pub mod time;
-
-#[cfg(not(test))]
-pub mod lang;
 
 /// Request for the `HHDM` (High Half Direct Mapping) feature. This will order
 /// Limine to map all physical memory to the high half of the virtual address
