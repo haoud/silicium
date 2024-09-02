@@ -1,9 +1,8 @@
+use super::Frame;
 use core::{
     iter::Step,
     ops::{Add, AddAssign, Sub, SubAssign},
 };
-
-use super::Frame;
 
 /// A physical address is an address that points to a location in the physical
 /// memory of the system. The physical memory is the actual RAM that is used

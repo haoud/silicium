@@ -7,9 +7,6 @@ edition = "2021"
 members = ["crates/*"]
 
 [workspace.lints.clippy]
-undocumented_unsafe_blocks = "warn"
-inline_asm_x86_att_syntax = "warn"
-if_then_some_else_none = "warn"
 pedantic = "warn"
 all = "warn"
 
@@ -30,7 +27,6 @@ hashbrown = "0.14.5"
 zerocopy = "0.7.32"
 bitfield = "0.15.0"
 bitflags = "2.4.2"
-tailcall = "1.0.1"
 cfg-if = "1.0.0"
 limine = "0.2"
 log = "0.4.20"
@@ -47,7 +43,6 @@ hashbrown = { workspace = true }
 arrayvec = { workspace = true }
 bitfield = { workspace = true }
 bitflags = { workspace = true }
-tailcall = { workspace = true }
 zerocopy = { workspace = true }
 futures = { workspace = true }
 limine = { workspace = true }

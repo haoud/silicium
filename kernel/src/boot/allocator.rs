@@ -1,13 +1,13 @@
 use crate::{
     arch::x86_64::addr::{Frame, Physical},
     boot::mmap,
-    library::spin::Spinlock,
 };
 use arrayvec::ArrayVec;
 use config::PAGE_SIZE;
 
 /// The request that will order the Limine bootloader to provide a memory map.
-static MMAP: Spinlock<Option<ArrayVec<mmap::Entry, 32>>> = Spinlock::new(None);
+static MMAP: spin::Mutex<Option<ArrayVec<mmap::Entry, 32>>> =
+    spin::Mutex::new(None);
 
 /// Initializes the kernel boot memory allocator with the given memory map
 /// request.

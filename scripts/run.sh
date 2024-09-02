@@ -11,16 +11,6 @@ die() {
 # options. For example, the ARM architecture requires to specify
 # the machine type and the CPU model.
 case $1 in
-  i686)
-    qemu-system-i386              \
-      -device isa-debug-exit      \
-      -cdrom bin/silicium.iso     \
-      -rtc base=localtime         \
-      -serial stdio               \
-      -cpu max                    \
-      -smp 2                      \
-      -m 128                      \
-    ;;
   x86_64)
     qemu-system-x86_64            \
       -display gtk,gl=on          \
@@ -31,14 +21,6 @@ case $1 in
       -cpu max                    \
       -smp 2                      \
       -m 128                      \
-    ;;
-  aarch64)
-    qemu-system-aarch64           \
-      -cdrom bin/silicium.iso     \
-      -device ramfb               \
-      -serial stdio               \
-      -cpu cortex-a53             \
-      -M virt
     ;;
   *)
     die "unsupported architecture: $1"

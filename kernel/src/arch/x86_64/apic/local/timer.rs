@@ -13,7 +13,6 @@ use core::{
     sync::atomic::{AtomicU64, Ordering},
     time::Duration,
 };
-use macros::init;
 
 /// The IRQ vector used by the Local APIC timer interrupt
 pub const IRQ_VECTOR: InterruptVector = InterruptVector::new(IOAPIC_IRQ_BASE);

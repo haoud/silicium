@@ -4,8 +4,8 @@ use crate::{
         x86_64::addr::{Frame, Physical},
     },
     boot,
-    library::spin::Spinlock,
 };
+
 use config::PAGE_SIZE;
 use macros::init;
 
@@ -14,12 +14,12 @@ pub mod frame;
 
 /// The global allocator for the physical memory manager. This is used to
 /// allocate and deallocate contiguous physical memory regions.
-pub static ALLOCATOR: Spinlock<allocator::Allocator> =
-    Spinlock::new(allocator::Allocator::new());
+pub static ALLOCATOR: spin::Mutex<allocator::Allocator> =
+    spin::Mutex::new(allocator::Allocator::new());
 
 /// The global state of the physical memory manager. This is used to track
 /// the state of each frame in the system.
-pub static STATE: Spinlock<State> = Spinlock::new(State::uninitialized());
+pub static STATE: spin::Mutex<State> = spin::Mutex::new(State::uninitialized());
 
 /// The state of the physical memory manager. This is used to track the state
 /// of each frame in the system. It contains an array of `frame::Info` that is
@@ -71,7 +71,7 @@ impl State {
 
         // Initialize the frame info array with default values and create it
         // from the computed location and size
-        // SAFETY: This is sae because the memory region is valid and free to
+        // SAFETY: This is safe because the memory region is valid and free to
         // use, and is properly aligned to the type `frame::Info`.
         let array = unsafe {
             arch::physical::init_and_leak_slice(

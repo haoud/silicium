@@ -30,12 +30,10 @@ use core::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-use super::spin::Spinlock;
-
 /// A sequential lock
 pub struct Seqlock<T> {
+    spin: spin::Mutex<()>,
     data: UnsafeCell<T>,
-    spin: Spinlock<()>,
     seq: AtomicUsize,
 }
 
@@ -52,9 +50,9 @@ impl<T: Copy> Seqlock<T> {
     #[must_use]
     pub const fn new(data: T) -> Self {
         Self {
+            spin: spin::Mutex::new(()),
             data: UnsafeCell::new(data),
             seq: AtomicUsize::new(0),
-            spin: Spinlock::new(()),
         }
     }
 

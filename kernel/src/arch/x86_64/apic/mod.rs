@@ -1,5 +1,3 @@
-use macros::init;
-
 pub mod io;
 pub mod local;
 

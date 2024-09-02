@@ -11,8 +11,6 @@ use crate::{
     },
     boot, mm,
 };
-use macros::init;
-use tailcall::tailcall;
 
 /// The page map level 4 table. This table is the root of the page table
 /// hierarchy and is used to translate virtual addresses to physical addresses.
@@ -100,7 +98,6 @@ impl Pml4 {
         )
     }
 
-    #[tailcall]
     unsafe fn fetch_entry<T: addr::virt::Type>(
         table: &mut [page::Entry],
         addr: Virtual<T>,

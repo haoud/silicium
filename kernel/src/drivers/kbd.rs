@@ -1,10 +1,7 @@
-use crate::{
-    arch::{
-        self,
-        irq::IrqNumber,
-        x86_64::{io::Port, pic::IRQ_BASE},
-    },
-    library::spin::Spinlock,
+use crate::arch::{
+    self,
+    irq::IrqNumber,
+    x86_64::{io::Port, pic::IRQ_BASE},
 };
 use core::{
     pin::Pin,
@@ -18,7 +15,7 @@ static COMMAND: Port<u8> = Port::new(0x64);
 static DATA: Port<u8> = Port::new(0x60);
 
 /// A list of wakers waiting for a scancode to be available.
-static WAITING: Spinlock<Vec<Waker>> = Spinlock::new(Vec::new());
+static WAITING: spin::Mutex<Vec<Waker>> = spin::Mutex::new(Vec::new());
 
 /// The keyboard scancode stream.
 pub static QUEUE: SegQueue<u8> = SegQueue::new();
@@ -90,8 +87,10 @@ impl Stream for KeyboardScancodeStream {
         if let Some(scancode) = QUEUE.pop() {
             Poll::Ready(Some(scancode))
         } else {
-            WAITING.lock_irq_safe().push(cx.waker().clone());
-            Poll::Pending
+            arch::irq::without(|| {
+                WAITING.lock().push(cx.waker().clone());
+                Poll::Pending
+            })
         }
     }
 }

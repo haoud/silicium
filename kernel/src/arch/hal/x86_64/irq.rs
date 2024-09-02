@@ -1,8 +1,5 @@
 pub use crate::arch::x86_64::irq::*;
-use crate::{
-    arch::x86_64::pic::{IRQ_BASE, IRQ_COUNT},
-    library::spin::Spinlock,
-};
+use crate::arch::x86_64::pic::{IRQ_BASE, IRQ_COUNT};
 
 /// An interrupt vector. This is a number that represents an interrupt, and is
 /// used to index into the IDT when an interrupt occurs.
@@ -72,8 +69,8 @@ struct RegisteredHandler<'a> {
 }
 
 /// A list of registered interrupt handlers for each interrupt vector.
-static IRQ_HANDLERS: Spinlock<[Vec<RegisteredHandler>; IRQ_COUNT]> =
-    Spinlock::new([const { Vec::new() }; IRQ_COUNT]);
+static IRQ_HANDLERS: spin::Mutex<[Vec<RegisteredHandler>; IRQ_COUNT]> =
+    spin::Mutex::new([const { Vec::new() }; IRQ_COUNT]);
 
 /// Register an interrupt handler for a specific interrupt vector. The handler
 /// will be called whenever the interrupt occurs. The name is used to identify

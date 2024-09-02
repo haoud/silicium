@@ -111,7 +111,8 @@ pub fn entry_count() -> u8 {
     unsafe { IRQ_COUNT }
 }
 
-/// Check if an interrupt is an IRQ from the IOAPIC
+/// Check if an interrupt is an IRQ from the IOAPIC. If the IOAPIC is not
+/// initialized, this will always return false.
 #[must_use]
 pub fn is_irq(vector: u8) -> bool {
     entry_count() != 0
@@ -128,8 +129,8 @@ pub fn is_irq(vector: u8) -> bool {
 /// lead to undefined behavior depending on the register and value.
 pub unsafe fn write(reg: Register, value: u32) {
     // Tell IOREGSEL what register we want to write to
+    // Then write the value to IOWIN
     IOAPIC_BASE.as_mut_ptr::<u32>().write_volatile(reg.0);
-    // Write the value to IOWIN
     IOAPIC_BASE
         .as_mut_ptr::<u32>()
         .byte_add(0x10)
@@ -145,7 +146,7 @@ pub unsafe fn write(reg: Register, value: u32) {
 #[must_use]
 pub unsafe fn read(reg: Register) -> u32 {
     // Tell IOREGSEL what register we want to read from
-    // And then read the value from IOWIN
+    // Then read the value from IOWIN
     IOAPIC_BASE.as_mut_ptr::<u32>().write_volatile(reg.0);
     IOAPIC_BASE.as_ptr::<u32>().byte_add(0x10).read_volatile()
 }
